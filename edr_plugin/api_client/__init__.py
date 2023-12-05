@@ -62,6 +62,12 @@ class EDRApiClient:
 
     def get_collections(self):
         response = self.get_request(self.collections_path)
-        collections_with_links = response.json()
-        collections = collections_with_links["collections"]
+        response_json = response.json()
+        collections = response_json["collections"]
         return collections
+
+    def get_collection_instances(self, collection_id):
+        response = self.get_request(self.collection_instances_path(collection_id))
+        response_json = response.json()
+        collection_instances = response_json["instances"]
+        return collection_instances
