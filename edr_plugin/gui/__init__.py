@@ -129,6 +129,7 @@ class EDRDialog(QDialog):
         for parameter, parameter_data in parameter_names.items():
             parameter_description = parameter_data["description"]
             self.parameters_cbo.addItem(parameter_description, parameter)
+        self.parameters_cbo.selectAllOptions()
         collection_extent = collection["extent"]
         try:
             self.temporal_grp.setEnabled(True)
