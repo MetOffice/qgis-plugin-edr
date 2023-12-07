@@ -3,9 +3,12 @@ import os
 from qgis.core import QgsCoordinateReferenceSystem
 from qgis.gui import QgsCollapsibleGroupBox, QgsProjectionSelectionWidget
 from qgis.PyQt import uic
-from qgis.PyQt.QtWidgets import QCheckBox, QComboBox, QDialog, QDateTimeEdit
 from qgis.PyQt.QtCore import QDateTime, Qt
+from qgis.PyQt.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QDialog
+
 from edr_plugin.api_client import EDRApiClient, EDRApiClientError
+from edr_plugin.gui.query_tools import AreaQueryBuilderTool
+from edr_plugin.models.enumerators import EDRDataQuery
 
 
 class EDRDialog(QDialog):
@@ -18,10 +21,15 @@ class EDRDialog(QDialog):
         self.populate_collections()
         self.populate_collection_data()
         self.cancel_pb.clicked.connect(self.close)
-        self.new_pb.clicked.connect(self.populate_collections)
+        self.new_pb.clicked.connect(self.define_data_query)
         self.collection_cbo.currentIndexChanged.connect(self.populate_collection_data)
         self.instance_cbo.currentIndexChanged.connect(self.populate_data_queries)
         self.query_cbo.currentIndexChanged.connect(self.populate_data_query_attributes)
+
+    @property
+    def data_query_tools(self):
+        query_tools_map = {EDRDataQuery.AREA.value: AreaQueryBuilderTool}
+        return query_tools_map
 
     @property
     def collection_level_widgets(self):
@@ -150,3 +158,49 @@ class EDRDialog(QDialog):
             self.intervals_cbo.selectAllOptions()
         except KeyError:
             self.vertical_grp.setDisabled(True)
+
+    def collect_query_parameters(self):
+        collection = self.collection_cbo.currentData()
+        collection_id = collection["id"]
+        instance = self.instance_cbo.currentText() if self.instance_cbo.isEnabled() else None
+        crs = self.crs_widget.crs().authid()
+        output_format = self.format_cbo.currentText()
+        parameters = self.parameters_cbo.checkedItems()
+        if self.temporal_grp.isEnabled():
+            from_datetime = self.from_datetime.dateTime().toString(Qt.ISODate)
+            to_datetime = self.to_datetime.dateTime().toString(Qt.ISODate)
+            temporal_range = (
+                (from_datetime,)
+                if not to_datetime
+                else (
+                    from_datetime,
+                    to_datetime,
+                )
+            )
+        else:
+            temporal_range = None
+        if self.vertical_grp.isEnabled():
+            intervals = self.intervals_cbo.checkedItems()
+            is_min_max_range = self.use_range_cbox.isChecked()
+            vertical_extent = (intervals, is_min_max_range)
+        else:
+            vertical_extent = None
+        return collection_id, instance, crs, output_format, parameters, temporal_range, vertical_extent
+
+    def define_data_query(self):
+        data_query = self.query_cbo.currentText()
+        if not data_query:
+            return
+        try:
+            data_query_tool_cls = self.data_query_tools[data_query]
+            data_query_tool = data_query_tool_cls(self)
+            res = data_query_tool.exec_()
+            if res == QDialog.Accepted:
+                data_query_definition = data_query_tool.get_query_definition()
+                print(data_query_definition.as_request_payload())
+            else:
+                return
+        except KeyError:
+            self.plugin.communication.show_warn(
+                f"Missing implementation for '{data_query}' data queries. " f"Action aborted."
+            )
