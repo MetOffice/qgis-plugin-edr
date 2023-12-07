@@ -72,9 +72,12 @@ class EDRDialog(QDialog):
 
     def populate_collections(self):
         self.clear_widgets(self.collection_cbo, *self.collection_level_widgets)
-        for collection in self.api_client.get_collections():
-            collection_name = collection["title"]
-            self.collection_cbo.addItem(collection_name, collection)
+        try:
+            for collection in self.api_client.get_collections():
+                collection_name = collection["title"]
+                self.collection_cbo.addItem(collection_name, collection)
+        except EDRApiClientError as e:
+            self.plugin.communication.show_error(f"Fetching collections failed due to the following error:\n{e}")
 
     def populate_collection_data(self):
         self.clear_widgets(*self.collection_level_widgets)
@@ -165,7 +168,7 @@ class EDRDialog(QDialog):
         instance = self.instance_cbo.currentText() if self.instance_cbo.isEnabled() else None
         crs = self.crs_widget.crs().authid()
         output_format = self.format_cbo.currentText()
-        parameters = self.parameters_cbo.checkedItems()
+        parameters = self.parameters_cbo.checkedItemsData()
         if self.temporal_grp.isEnabled():
             from_datetime = self.from_datetime.dateTime().toString(Qt.ISODate)
             to_datetime = self.to_datetime.dateTime().toString(Qt.ISODate)
@@ -197,10 +200,14 @@ class EDRDialog(QDialog):
             res = data_query_tool.exec_()
             if res == QDialog.Accepted:
                 data_query_definition = data_query_tool.get_query_definition()
-                print(data_query_definition.as_request_payload())
+                print(data_query_definition.as_request_parameters())
             else:
                 return
         except KeyError:
             self.plugin.communication.show_warn(
                 f"Missing implementation for '{data_query}' data queries. " f"Action aborted."
             )
+            return
+        endpoint_parameters, payload = data_query_definition.as_request_parameters()
+        r = self.api_client.get_edr_data(*endpoint_parameters, payload)
+        print(r.status_code)

@@ -71,3 +71,11 @@ class EDRApiClient:
         response_json = response.json()
         collection_instances = response_json["instances"]
         return collection_instances
+
+    def get_edr_data(self, collection_id, instance_id, data_query_name, payload):
+        data_endpoint = f"{self.root}/collections/{collection_id}"
+        if instance_id:
+            data_endpoint += f"/instances/{instance_id}"
+        data_endpoint += f"/{data_query_name}"
+        response = self.get_request(data_endpoint, params=payload)
+        return response
