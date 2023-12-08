@@ -1,12 +1,12 @@
 import requests
 
 
-class EDRApiClientError(Exception):
+class EdrApiClientError(Exception):
     pass
 
 
-class EDRApiClient:
-    def __init__(self, root, authorization=None):
+class EdrApiClient:
+    def __init__(self, root="https://labs.metoffice.gov.uk/edr", authorization=None):
         self.root = root
         self.authorization = authorization
 

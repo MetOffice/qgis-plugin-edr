@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple
 
-from edr_plugin.models.enumerators import EDRDataQuery
+from edr_plugin.models.enumerators import EdrDataQuery
 
 
 class EDRDataQueryDefinition:
@@ -45,7 +45,7 @@ class EDRDataQueryDefinition:
 
 
 class AreaQueryDefinition(EDRDataQueryDefinition):
-    NAME = EDRDataQuery.AREA.value
+    NAME = EdrDataQuery.AREA.value
 
     def __init__(self, *parameters, wkt_polygon):
         super().__init__(*parameters)

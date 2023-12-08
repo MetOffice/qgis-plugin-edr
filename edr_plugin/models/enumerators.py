@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class EDRDataQuery(Enum):
+class EdrDataQuery(Enum):
     AREA = "area"
     CORRIDOR = "corridor"
     CUBE = "cube"

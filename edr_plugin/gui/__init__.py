@@ -4,20 +4,22 @@ from qgis.core import QgsCoordinateReferenceSystem
 from qgis.gui import QgsCollapsibleGroupBox, QgsProjectionSelectionWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, Qt
-from qgis.PyQt.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QDialog
+from qgis.PyQt.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QDialog, QFileDialog
 
-from edr_plugin.api_client import EDRApiClient, EDRApiClientError
+from edr_plugin.api_client import EdrApiClient, EdrApiClientError
 from edr_plugin.gui.query_tools import AreaQueryBuilderTool
-from edr_plugin.models.enumerators import EDRDataQuery
+from edr_plugin.models.enumerators import EdrDataQuery
+from edr_plugin.threading import EdrDataDownloader
+from edr_plugin.utils import is_dir_writable
 
 
-class EDRDialog(QDialog):
+class EdrDialog(QDialog):
     def __init__(self, plugin, parent=None):
         QDialog.__init__(self, parent)
         ui_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "edr.ui")
         self.ui = uic.loadUi(ui_filepath, self)
         self.plugin = plugin
-        self.api_client = EDRApiClient("https://labs.metoffice.gov.uk/edr")
+        self.api_client = EdrApiClient()
         self.populate_collections()
         self.populate_collection_data()
         self.cancel_pb.clicked.connect(self.close)
@@ -28,7 +30,7 @@ class EDRDialog(QDialog):
 
     @property
     def data_query_tools(self):
-        query_tools_map = {EDRDataQuery.AREA.value: AreaQueryBuilderTool}
+        query_tools_map = {EdrDataQuery.AREA.value: AreaQueryBuilderTool}
         return query_tools_map
 
     @property
@@ -76,7 +78,7 @@ class EDRDialog(QDialog):
             for collection in self.api_client.get_collections():
                 collection_name = collection["title"]
                 self.collection_cbo.addItem(collection_name, collection)
-        except EDRApiClientError as e:
+        except EdrApiClientError as e:
             self.plugin.communication.show_error(f"Fetching collections failed due to the following error:\n{e}")
 
     def populate_collection_data(self):
@@ -190,6 +192,14 @@ class EDRDialog(QDialog):
             vertical_extent = None
         return collection_id, instance, crs, output_format, parameters, temporal_range, vertical_extent
 
+    def pick_download_directory(self):
+        download_dir = QFileDialog.getExistingDirectory(self, "Pick download directory")
+        if is_dir_writable(download_dir):
+            return download_dir
+        else:
+            self.plugin.communication.bar_warn("Can't write to the selected location. Please pick another folder.")
+            return
+
     def define_data_query(self):
         data_query = self.query_cbo.currentText()
         if not data_query:
@@ -200,14 +210,33 @@ class EDRDialog(QDialog):
             res = data_query_tool.exec_()
             if res == QDialog.Accepted:
                 data_query_definition = data_query_tool.get_query_definition()
-                print(data_query_definition.as_request_parameters())
             else:
                 return
         except KeyError:
             self.plugin.communication.show_warn(
-                f"Missing implementation for '{data_query}' data queries. " f"Action aborted."
+                f"Missing implementation for '{data_query}' data queries. Action aborted."
             )
             return
-        endpoint_parameters, payload = data_query_definition.as_request_parameters()
-        r = self.api_client.get_edr_data(*endpoint_parameters, payload)
-        print(r.status_code)
+        download_dir = self.pick_download_directory()
+        if not download_dir:
+            return
+        download_worker = EdrDataDownloader(data_query_definition, download_dir)
+        download_worker.signals.download_progress.connect(self.on_progress_signal)
+        download_worker.signals.download_success.connect(self.on_success_signal)
+        download_worker.signals.download_failure.connect(self.on_failure_signal)
+        self.plugin.downloader_pool.start(download_worker)
+        self.close()
+
+    def on_progress_signal(self, message, current_progress, total_progress):
+        """Feedback on getting data progress signal."""
+        self.plugin.communication.progress_bar(message, 0, total_progress, current_progress, clear_msg_bar=True)
+
+    def on_success_signal(self, message):
+        """Feedback on getting data success signal."""
+        self.plugin.communication.clear_message_bar()
+        self.plugin.communication.bar_info(message)
+
+    def on_failure_signal(self, error_message):
+        """Feedback on getting data failure signal."""
+        self.plugin.communication.clear_message_bar()
+        self.plugin.communication.bar_error(error_message)

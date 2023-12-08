@@ -4,8 +4,7 @@ from qgis.PyQt.QtCore import QThreadPool
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
-from edr_plugin.gui import EDRDialog
-from edr_plugin.gui.settings import EDRSettingsDialog
+from edr_plugin.gui import EdrDialog
 from edr_plugin.utils.communication import UICommunication
 
 
@@ -27,7 +26,6 @@ class EDRPlugin:
         self.downloader_pool = QThreadPool()
         self.downloader_pool.setMaxThreadCount(self.MAX_SIMULTANEOUS_DOWNLOADS)
         self.main_dialog = None
-        self.settings_dialog = EDRSettingsDialog(self)
         self.communication = UICommunication(self.iface, self.PLUGIN_NAME)
         self.actions = []
 
@@ -70,13 +68,6 @@ class EDRPlugin:
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         icon_path = os.path.join(self.plugin_dir, "icon.svg")
         self.add_action(icon_path, text=self.PLUGIN_NAME, callback=self.run, parent=self.iface.mainWindow())
-        self.add_action(
-            icon_path,
-            text="Settings",
-            callback=self.show_settings,
-            parent=self.iface.mainWindow(),
-            add_to_toolbar=False,
-        )
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -86,16 +77,10 @@ class EDRPlugin:
         # remove the toolbar
         del self.toolbar
 
-    def show_settings(self):
-        """Show plugin settings dialog."""
-        self.settings_dialog.show()
-        self.settings_dialog.raise_()
-        self.settings_dialog.activateWindow()
-
     def run(self):
         """Run method that loads and starts the plugin"""
         if self.main_dialog is None:
-            self.main_dialog = EDRDialog(self)
+            self.main_dialog = EdrDialog(self)
         self.main_dialog.show()
         self.main_dialog.raise_()
         self.main_dialog.activateWindow()
