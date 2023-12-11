@@ -1,9 +1,8 @@
 import os
 
-from qgis.core import QgsCoordinateReferenceSystem
 from qgis.gui import QgsCollapsibleGroupBox, QgsProjectionSelectionWidget
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QDateTime, Qt
+from qgis.PyQt.QtCore import QDateTime, QSettings, Qt
 from qgis.PyQt.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QDialog, QFileDialog
 
 from edr_plugin.api_client import EdrApiClient, EdrApiClientError
@@ -46,7 +45,7 @@ class EdrDialog(QDialog):
     @property
     def query_level_widgets(self):
         widgets = [
-            self.crs_widget,
+            self.crs_cbo,
             self.format_cbo,
             self.parameters_cbo,
             self.temporal_grp,
@@ -131,18 +130,17 @@ class EdrDialog(QDialog):
         if not data_query:
             return
         data_query_variables = data_query["link"]["variables"]
-        crs_str = data_query_variables["crs_details"][0]["crs"]  # TODO: Handle multiple CRS
-        crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_str)
+        crs_list = [crs_details["crs"] for crs_details in data_query_variables["crs_details"]]
         output_formats = data_query_variables["output_formats"]
         default_output_format = data_query_variables["default_output_format"]
-        self.crs_widget.setCrs(crs)
+        self.crs_cbo.addItems(crs_list)
         self.format_cbo.addItems(output_formats)
         self.format_cbo.setCurrentText(default_output_format)
         parameter_names = collection["parameter_names"]
         for parameter, parameter_data in parameter_names.items():
             parameter_description = parameter_data["description"]
             self.parameters_cbo.addItem(parameter_description, parameter)
-        self.parameters_cbo.selectAllOptions()
+        self.parameters_cbo.toggleItemCheckState(0)
         collection_extent = collection["extent"]
         try:
             self.temporal_grp.setEnabled(True)
@@ -168,7 +166,7 @@ class EdrDialog(QDialog):
         collection = self.collection_cbo.currentData()
         collection_id = collection["id"]
         instance = self.instance_cbo.currentText() if self.instance_cbo.isEnabled() else None
-        crs = self.crs_widget.crs().authid()
+        crs = self.crs_cbo.currentText()
         output_format = self.format_cbo.currentText()
         parameters = self.parameters_cbo.checkedItemsData()
         if self.temporal_grp.isEnabled():
@@ -193,8 +191,11 @@ class EdrDialog(QDialog):
         return collection_id, instance, crs, output_format, parameters, temporal_range, vertical_extent
 
     def pick_download_directory(self):
-        download_dir = QFileDialog.getExistingDirectory(self, "Pick download directory")
+        settings = QSettings()
+        download_dir = settings.value("edr_plugin/download_dir", "", type=str)
+        download_dir = QFileDialog.getExistingDirectory(self, "Pick download directory", download_dir)
         if is_dir_writable(download_dir):
+            settings.setValue("edr_plugin/download_dir", download_dir)
             return download_dir
         else:
             self.plugin.communication.bar_warn("Can't write to the selected location. Please pick another folder.")
