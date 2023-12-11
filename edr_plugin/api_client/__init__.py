@@ -2,10 +2,14 @@ import requests
 
 
 class EdrApiClientError(Exception):
+    """EDR API exception class."""
+
     pass
 
 
 class EdrApiClient:
+    """EDR API client class."""
+
     def __init__(self, root="https://labs.metoffice.gov.uk/edr", authorization=None):
         self.root = root
         self.authorization = authorization

@@ -13,6 +13,8 @@ from edr_plugin.utils import is_dir_writable
 
 
 class EdrDialog(QDialog):
+    """Main EDR plugin dialog."""
+
     def __init__(self, plugin, parent=None):
         QDialog.__init__(self, parent)
         ui_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "edr.ui")
@@ -22,28 +24,32 @@ class EdrDialog(QDialog):
         self.populate_collections()
         self.populate_collection_data()
         self.cancel_pb.clicked.connect(self.close)
-        self.new_pb.clicked.connect(self.define_data_query)
+        self.new_pb.clicked.connect(self.query_data_collection)
         self.collection_cbo.currentIndexChanged.connect(self.populate_collection_data)
         self.instance_cbo.currentIndexChanged.connect(self.populate_data_queries)
         self.query_cbo.currentIndexChanged.connect(self.populate_data_query_attributes)
 
     @property
     def data_query_tools(self):
+        """Return query builder tool associated with type of the query."""
         query_tools_map = {EdrDataQuery.AREA.value: AreaQueryBuilderTool}
         return query_tools_map
 
     @property
     def collection_level_widgets(self):
+        """Collection level widgets."""
         widgets = [self.instance_cbo] + self.instance_level_widgets
         return widgets
 
     @property
     def instance_level_widgets(self):
+        """Instance level widgets."""
         widgets = [self.query_cbo] + self.query_level_widgets
         return widgets
 
     @property
     def query_level_widgets(self):
+        """Query level widgets."""
         widgets = [
             self.crs_cbo,
             self.format_cbo,
@@ -59,6 +65,7 @@ class EdrDialog(QDialog):
 
     @staticmethod
     def clear_widgets(*widgets):
+        """Clear widgets."""
         for widget in widgets:
             if isinstance(widget, QgsProjectionSelectionWidget):
                 pass
@@ -72,6 +79,7 @@ class EdrDialog(QDialog):
                 pass
 
     def populate_collections(self):
+        """Populate available collections."""
         self.clear_widgets(self.collection_cbo, *self.collection_level_widgets)
         try:
             for collection in self.api_client.get_collections():
@@ -81,6 +89,7 @@ class EdrDialog(QDialog):
             self.plugin.communication.show_error(f"Fetching collections failed due to the following error:\n{e}")
 
     def populate_collection_data(self):
+        """Populate collection data."""
         self.clear_widgets(*self.collection_level_widgets)
         collection = self.collection_cbo.currentData()
         if not collection:
@@ -93,6 +102,7 @@ class EdrDialog(QDialog):
             self.populate_data_queries()
 
     def populate_instances(self):
+        """Populate instances."""
         self.clear_widgets(*self.collection_level_widgets)
         self.instance_cbo.setEnabled(True)
         collection = self.collection_cbo.currentData()
@@ -106,6 +116,7 @@ class EdrDialog(QDialog):
         self.populate_data_queries()
 
     def populate_data_queries(self):
+        """Populate collection data queries."""
         self.clear_widgets(*self.instance_level_widgets)
         if self.instance_cbo.isEnabled():
             collection = self.instance_cbo.currentData()
@@ -119,6 +130,7 @@ class EdrDialog(QDialog):
         self.populate_data_query_attributes()
 
     def populate_data_query_attributes(self):
+        """Populate data query attributes."""
         self.clear_widgets(*self.query_level_widgets)
         if self.instance_cbo.isEnabled():
             collection = self.instance_cbo.currentData()
@@ -163,6 +175,7 @@ class EdrDialog(QDialog):
             self.vertical_grp.setDisabled(True)
 
     def collect_query_parameters(self):
+        """Collect query parameters from the widgets."""
         collection = self.collection_cbo.currentData()
         collection_id = collection["id"]
         instance = self.instance_cbo.currentText() if self.instance_cbo.isEnabled() else None
@@ -191,6 +204,7 @@ class EdrDialog(QDialog):
         return collection_id, instance, crs, output_format, parameters, temporal_range, vertical_extent
 
     def pick_download_directory(self):
+        """Pick download directory."""
         settings = QSettings()
         download_dir = settings.value("edr_plugin/download_dir", "", type=str)
         download_dir = QFileDialog.getExistingDirectory(self, "Pick download directory", download_dir)
@@ -201,7 +215,8 @@ class EdrDialog(QDialog):
             self.plugin.communication.bar_warn("Can't write to the selected location. Please pick another folder.")
             return
 
-    def define_data_query(self):
+    def query_data_collection(self):
+        """Define data query and get the data collection."""
         data_query = self.query_cbo.currentText()
         if not data_query:
             return

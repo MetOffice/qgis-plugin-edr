@@ -7,6 +7,8 @@ from edr_plugin.queries import AreaQueryDefinition
 
 
 class AreaQueryBuilderTool(QDialog):
+    """Dialog for defining area data query."""
+
     def __init__(self, edr_dialog):
         QDialog.__init__(self, parent=edr_dialog)
         ui_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "query_area.ui")
@@ -18,6 +20,7 @@ class AreaQueryBuilderTool(QDialog):
         self.accept_pb.clicked.connect(self.accept)
 
     def get_query_definition(self):
+        """Return query definition object based on user input."""
         current_extent = self.extent_grp.outputExtent()
         wkt_extent_polygon = current_extent.asWktPolygon()
         query_parameters = self.edr_dialog.collect_query_parameters()

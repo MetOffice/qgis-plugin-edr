@@ -5,12 +5,16 @@ from edr_plugin.utils import download_response_file
 
 
 class EdrDataDownloaderSignals(QObject):
+    """EDR downloader signals."""
+
     download_progress = pyqtSignal(str, int, int)
     download_success = pyqtSignal(str, str)
     download_failure = pyqtSignal(str)
 
 
 class EdrDataDownloader(QRunnable):
+    """Runnable class for retrieving EDR data within separate thread."""
+
     def __init__(self, data_query_definition, download_dir):
         super().__init__()
         self.api_client = EdrApiClient()
@@ -20,6 +24,7 @@ class EdrDataDownloader(QRunnable):
 
     @pyqtSlot()
     def run(self):
+        """Run download task."""
         try:
             self.report_progress(f"Requesting '{self.data_query_definition.collection_id}' collection data..")
             endpoint_parameters, payload = self.data_query_definition.as_request_parameters()
