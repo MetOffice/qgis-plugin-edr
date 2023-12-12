@@ -3,7 +3,7 @@ import os
 from qgis.gui import QgsCollapsibleGroupBox, QgsProjectionSelectionWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, QSettings, Qt
-from qgis.PyQt.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QDialog, QFileDialog
+from qgis.PyQt.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QDialog, QFileDialog, QInputDialog
 
 from edr_plugin.api_client import EdrApiClient, EdrApiClientError
 from edr_plugin.gui.query_tools import AreaQueryBuilderTool
@@ -15,19 +15,34 @@ from edr_plugin.utils import is_dir_writable
 class EdrDialog(QDialog):
     """Main EDR plugin dialog."""
 
+    DEFAULT_ROOT = "https://labs.metoffice.gov.uk/edr"
+
     def __init__(self, plugin, parent=None):
         QDialog.__init__(self, parent)
         ui_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "edr.ui")
         self.ui = uic.loadUi(ui_filepath, self)
         self.plugin = plugin
-        self.api_client = EdrApiClient()
+        settings = QSettings()
+        server_url = settings.value("edr_plugin/server_url", self.DEFAULT_ROOT, type=str)
+        self.server_url_le.setText(server_url)
+        self.api_client = EdrApiClient(server_url)
         self.populate_collections()
         self.populate_collection_data()
         self.cancel_pb.clicked.connect(self.close)
         self.new_pb.clicked.connect(self.query_data_collection)
+        self.change_serve_pb.clicked.connect(self.change_edr_server_url)
         self.collection_cbo.currentIndexChanged.connect(self.populate_collection_data)
         self.instance_cbo.currentIndexChanged.connect(self.populate_data_queries)
         self.query_cbo.currentIndexChanged.connect(self.populate_data_query_attributes)
+
+    def change_edr_server_url(self):
+        server_url, accept = QInputDialog.getText(self, "Set EDR Server URL", "Type EDR Server URL:")
+        if accept is False:
+            return
+        server_url = server_url.strip("/")
+        QSettings().setValue("edr_plugin/server_url", server_url)
+        self.server_url_le.setText(server_url)
+        self.api_client = EdrApiClient(server_url)
 
     @property
     def data_query_tools(self):
@@ -236,7 +251,8 @@ class EdrDialog(QDialog):
         download_dir = self.pick_download_directory()
         if not download_dir:
             return
-        download_worker = EdrDataDownloader(data_query_definition, download_dir)
+        worker_api_client = EdrApiClient(self.server_url_le.text())
+        download_worker = EdrDataDownloader(worker_api_client, data_query_definition, download_dir)
         download_worker.signals.download_progress.connect(self.on_progress_signal)
         download_worker.signals.download_success.connect(self.on_success_signal)
         download_worker.signals.download_failure.connect(self.on_failure_signal)

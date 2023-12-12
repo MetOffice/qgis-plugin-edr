@@ -1,6 +1,6 @@
 from qgis.PyQt.QtCore import QObject, QRunnable, pyqtSignal, pyqtSlot
 
-from edr_plugin.api_client import EdrApiClient, EdrApiClientError
+from edr_plugin.api_client import EdrApiClientError
 from edr_plugin.utils import download_reply_file
 
 
@@ -15,9 +15,9 @@ class EdrDataDownloaderSignals(QObject):
 class EdrDataDownloader(QRunnable):
     """Runnable class for retrieving EDR data within separate thread."""
 
-    def __init__(self, data_query_definition, download_dir):
+    def __init__(self, api_client, data_query_definition, download_dir):
         super().__init__()
-        self.api_client = EdrApiClient()
+        self.api_client = api_client
         self.data_query_definition = data_query_definition
         self.download_dir = download_dir
         self.signals = EdrDataDownloaderSignals()
