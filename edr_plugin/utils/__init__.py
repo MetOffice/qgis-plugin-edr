@@ -3,6 +3,23 @@ import re
 from uuid import uuid4
 
 
+def download_reply_file(reply, download_dir, download_filename=None):
+    """Download and write content from the QgsNetworkReplyContent object."""
+    if not download_filename:
+        raw_content_disposition_header = reply.rawHeader("content-disposition".encode())
+        if raw_content_disposition_header:
+            content_disposition_header = raw_content_disposition_header.data().decode()
+            download_filename = reply.extractFileNameFromContentDispositionHeader(content_disposition_header)
+        else:
+            request_url = reply.request().url().toDisplayString()
+            collection_name = re.findall("collections/(.+?)/", request_url)[0]
+            download_filename = f"{collection_name}_{uuid4()}.json"
+    download_filepath = os.path.join(download_dir, download_filename)
+    with open(download_filepath, "wb") as f:
+        f.write(reply.content())
+    return download_filepath
+
+
 def download_response_file(response, download_dir, download_filename=None, chunk_size=1024**2):
     """Download and write content from the response object."""
     if not download_filename:

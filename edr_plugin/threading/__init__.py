@@ -1,7 +1,7 @@
 from qgis.PyQt.QtCore import QObject, QRunnable, pyqtSignal, pyqtSlot
 
 from edr_plugin.api_client import EdrApiClient, EdrApiClientError
-from edr_plugin.utils import download_response_file
+from edr_plugin.utils import download_reply_file
 
 
 class EdrDataDownloaderSignals(QObject):
@@ -28,10 +28,9 @@ class EdrDataDownloader(QRunnable):
         try:
             self.report_progress(f"Requesting '{self.data_query_definition.collection_id}' collection data..")
             endpoint_parameters, payload = self.data_query_definition.as_request_parameters()
-            response = self.api_client.get_edr_data(*endpoint_parameters, payload)
-            response.raise_for_status()
+            reply = self.api_client.get_edr_data(*endpoint_parameters, payload)
             self.report_progress(f"Downloading '{self.data_query_definition.collection_id}' collection data..")
-            download_filepath = download_response_file(response, self.download_dir)
+            download_filepath = download_reply_file(reply, self.download_dir)
             self.report_success(f"Downloading '{download_filepath}' file finished.", download_filepath)
         except EdrApiClientError as err:
             self.report_error(str(err))

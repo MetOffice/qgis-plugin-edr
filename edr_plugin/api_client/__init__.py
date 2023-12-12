@@ -1,4 +1,8 @@
-import requests
+import json
+
+from PyQt5.QtNetwork import QNetworkRequest
+from qgis.core import QgsBlockingNetworkRequest
+from qgis.PyQt.QtCore import QUrl, QUrlQuery
 
 
 class EdrApiClientError(Exception):
@@ -15,10 +19,21 @@ class EdrApiClient:
         self.authorization = authorization
 
     @staticmethod
-    def get_request(url, params=None, **kwargs):
-        response = requests.get(url=url, params=params, **kwargs)
-        response.raise_for_status()
-        return response
+    def get_request(url, **params):
+        request_url = QUrl(url)
+        request_query = QUrlQuery()
+        for k, v in params.items():
+            request_query.addQueryItem(k, v)
+        request_url.setQuery(request_query)
+        network_request = QNetworkRequest(request_url)
+        blocking_network_request = QgsBlockingNetworkRequest()
+        blocking_network_request.get(network_request)
+        return blocking_network_request
+
+    def get_request_reply(self, url, **params):
+        network_request = self.get_request(url, **params)
+        reply = network_request.reply()
+        return reply
 
     @property
     def landing_page_path(self):
@@ -65,14 +80,16 @@ class EdrApiClient:
         return url
 
     def get_collections(self):
-        response = self.get_request(self.collections_path)
-        response_json = response.json()
+        response = self.get_request_reply(self.collections_path)
+        raw_content = response.content().data().decode()
+        response_json = json.loads(raw_content)
         collections = response_json["collections"]
         return collections
 
     def get_collection_instances(self, collection_id):
-        response = self.get_request(self.collection_instances_path(collection_id))
-        response_json = response.json()
+        response = self.get_request_reply(self.collection_instances_path(collection_id))
+        raw_content = response.content().data().decode()
+        response_json = json.loads(raw_content)
         collection_instances = response_json["instances"]
         return collection_instances
 
@@ -81,5 +98,5 @@ class EdrApiClient:
         if instance_id:
             data_endpoint += f"/instances/{instance_id}"
         data_endpoint += f"/{data_query_name}"
-        response = self.get_request(data_endpoint, params=payload)
+        response = self.get_request_reply(data_endpoint, **payload)
         return response
