@@ -28,6 +28,9 @@ class EdrApiClient:
         network_request = QNetworkRequest(request_url)
         blocking_network_request = QgsBlockingNetworkRequest()
         blocking_network_request.get(network_request)
+        error_message = blocking_network_request.errorMessage()
+        if error_message:
+            raise EdrApiClientError(error_message)
         return blocking_network_request
 
     def get_request_reply(self, url, **params):
