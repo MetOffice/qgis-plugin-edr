@@ -1,11 +1,25 @@
 import os
 import re
+from types import MappingProxyType
 from uuid import uuid4
+
+CONTENT_TYPE_EXTENSIONS = MappingProxyType(
+    {
+        "application/json": "json",
+        "application/cov+json": "covjson",
+        "application/geo+json": "geojson",
+        "application/geopackage+sqlite3": "gpkg",
+        "application/x-netcdf4": "nc",
+        "text/csv": "csv",
+    }
+)
 
 
 def download_reply_file(reply, download_dir, download_filename=None):
     """Download and write content from the QgsNetworkReplyContent object."""
     if not download_filename:
+        raw_content_type_header = reply.rawHeader("content-type".encode())
+        content_type_header = raw_content_type_header.data().decode()
         raw_content_disposition_header = reply.rawHeader("content-disposition".encode())
         if raw_content_disposition_header:
             content_disposition_header = raw_content_disposition_header.data().decode()
@@ -13,7 +27,10 @@ def download_reply_file(reply, download_dir, download_filename=None):
         else:
             request_url = reply.request().url().toDisplayString()
             collection_name = re.findall("collections/(.+?)/", request_url)[0]
-            download_filename = f"{collection_name}_{uuid4()}.json"
+            extension = CONTENT_TYPE_EXTENSIONS.get(content_type_header, "")
+            download_filename = f"{collection_name}_{uuid4()}"
+            if extension:
+                download_filename += f".{extension}"
     download_filepath = os.path.join(download_dir, download_filename)
     with open(download_filepath, "wb") as f:
         f.write(reply.content())

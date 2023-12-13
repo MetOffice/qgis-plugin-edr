@@ -259,16 +259,17 @@ class EdrDialog(QDialog):
         self.plugin.downloader_pool.start(download_worker)
         self.close()
 
-    def on_progress_signal(self, message, current_progress, total_progress):
+    def on_progress_signal(self, message, current_progress, total_progress, download_filepath):
         """Feedback on getting data progress signal."""
         self.plugin.communication.progress_bar(message, 0, total_progress, current_progress, clear_msg_bar=True)
 
-    def on_success_signal(self, message):
+    def on_success_signal(self, message, download_filepath):
         """Feedback on getting data success signal."""
         self.plugin.communication.clear_message_bar()
         self.plugin.communication.bar_info(message)
+        self.plugin.layer_manager.add_layer_from_file(download_filepath)
 
-    def on_failure_signal(self, error_message):
+    def on_failure_signal(self, error_message, download_filepath):
         """Feedback on getting data failure signal."""
         self.plugin.communication.clear_message_bar()
         self.plugin.communication.bar_error(error_message)

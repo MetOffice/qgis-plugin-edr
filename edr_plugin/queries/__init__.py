@@ -49,9 +49,7 @@ class AreaQueryDefinition(EDRDataQueryDefinition):
 
     def __init__(self, *parameters, wkt_polygon):
         super().__init__(*parameters)
-        self.wkt_polygon = (
-            wkt_polygon  #  "POLYGON((-5.869 49.811,-5.892 51.366,-2.681 51.367,-2.674 49.845,-5.869 49.811))"
-        )
+        self.wkt_polygon = wkt_polygon
 
     def as_request_parameters(self) -> Tuple[Tuple, Dict]:
         endpoint_parameters, query_parameters = super().as_request_parameters()

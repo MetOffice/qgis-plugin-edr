@@ -6,6 +6,7 @@ from qgis.PyQt.QtWidgets import QAction
 
 from edr_plugin.gui import EdrDialog
 from edr_plugin.utils.communication import UICommunication
+from edr_plugin.visualization import EdrLayerManager
 
 
 def classFactory(iface):
@@ -26,6 +27,7 @@ class EDRPlugin:
         self.downloader_pool = QThreadPool()
         self.downloader_pool.setMaxThreadCount(self.MAX_SIMULTANEOUS_DOWNLOADS)
         self.main_dialog = None
+        self.layer_manager = EdrLayerManager(self)
         self.communication = UICommunication(self.iface, self.PLUGIN_NAME)
         self.actions = []
 
