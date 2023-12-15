@@ -257,12 +257,14 @@ class CoverageJSONReader:
 
         return raster_shader
 
-    def save_temp_raster(self, filename: str, data: np.ndarray, data_type: int = gdal.GDT_Float32) -> str:
+    def save_temp_raster(
+        self, filename_without_extension: str, data: np.ndarray, data_type: int = gdal.GDT_Float32
+    ) -> str:
         """Save raster to temporary file and return filename."""
         x_coords = self._get_axe_values("x")
         y_coords = self._get_axe_values("y")
 
-        file_to_save = f"{tempfile.gettempdir()}/{filename}.tif"
+        file_to_save = f"{tempfile.gettempdir()}/{filename_without_extension}.tif"
 
         dp, file_name = self._prepare_empty_raster(
             file_to_save,
@@ -297,15 +299,15 @@ class CoverageJSONReader:
         time_step = self._get_time_step()
 
         for key, data in formatted_data.items():
-            full_name = f"{parameter_name}_{key}"
+            layer_name = f"{parameter_name}_{key}"
 
             filename = self.save_temp_raster(
-                f"{full_name}.tif",
+                layer_name,
                 data.raster,
                 self._data_type(parameter_name),
             )
 
-            layer = QgsRasterLayer(filename, full_name, "gdal")
+            layer = QgsRasterLayer(filename, layer_name, "gdal")
 
             if time_step and data.time:
                 layer.temporalProperties().setIsActive(True)
