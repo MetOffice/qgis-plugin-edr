@@ -6,7 +6,7 @@ from uuid import uuid4
 CONTENT_TYPE_EXTENSIONS = MappingProxyType(
     {
         "application/json": "json",
-        "application/cov+json": "covjson",
+        "application/prs.coverage+json": "covjson",
         "application/geo+json": "geojson",
         "application/geopackage+sqlite3": "gpkg",
         "application/x-netcdf4": "nc",

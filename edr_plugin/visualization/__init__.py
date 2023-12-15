@@ -2,6 +2,8 @@ import os
 
 from qgis.core import QgsMeshLayer, QgsProject, QgsRasterLayer, QgsVectorLayer
 
+from edr_plugin.visualization.coverage_json_reader import CoverageJSONReader
+
 
 class EdrLayerManager:
     def __init__(self, plugin):
@@ -34,4 +36,18 @@ class EdrLayerManager:
         layer = layer_cls(filepath, layer_name, provider)
         self.project.addMapLayer(layer)
         self.loaded_layers[layer.id()] = layer
+        return True
+
+    def load_layers_from_coveragejson(self, filepath: str) -> bool:
+        try:
+            coverage_json_reader = CoverageJSONReader(filepath)
+        except ValueError as e:
+            self.plugin.communication.bar_warn(f"Can't load CoverageJSON: '{e}'.")
+            return False
+
+        for layer in coverage_json_reader.map_layers():
+            QgsProject.instance().addMapLayer(layer)
+            self.loaded_layers[layer.id()] = layer
+
+        coverage_json_reader.qgsproject_setup_time_settings()
         return True
