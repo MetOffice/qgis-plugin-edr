@@ -38,16 +38,16 @@ class EdrLayerManager:
         self.loaded_layers[layer.id()] = layer
         return True
 
-    def load_layers_from_coveragejson(self, filepath: str) -> bool:
+    def load_layers_from_coverage_json(self, filepath: str) -> bool:
         try:
-            coverage_json_reader = CoverageJSONReader(filepath)
+            covjson_reader = CoverageJSONReader(filepath)
         except ValueError as e:
             self.plugin.communication.bar_warn(f"Can't load CoverageJSON: '{e}'.")
             return False
 
-        for layer in coverage_json_reader.map_layers():
+        for layer in covjson_reader.map_layers():
             QgsProject.instance().addMapLayer(layer)
             self.loaded_layers[layer.id()] = layer
 
-        coverage_json_reader.qgsproject_setup_time_settings()
+        covjson_reader.qgsproject_setup_time_settings()
         return True

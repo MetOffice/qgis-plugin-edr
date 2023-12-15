@@ -3,14 +3,7 @@ import os
 from qgis.gui import QgsCollapsibleGroupBox, QgsProjectionSelectionWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, QSettings, Qt
-from qgis.PyQt.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QDateTimeEdit,
-    QDialog,
-    QFileDialog,
-    QInputDialog,
-)
+from qgis.PyQt.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QDialog, QFileDialog, QInputDialog
 
 from edr_plugin.api_client import EdrApiClient, EdrApiClientError
 from edr_plugin.gui.query_tools import AreaQueryBuilderTool
@@ -275,7 +268,7 @@ class EdrDialog(QDialog):
         self.plugin.communication.clear_message_bar()
         self.plugin.communication.bar_info(message)
         if download_filepath.endswith(".covjson"):
-            self.plugin.layer_manager.load_layers_from_coveragejson(download_filepath)
+            self.plugin.layer_manager.load_layers_from_coverage_json(download_filepath)
         else:
             self.plugin.layer_manager.add_layer_from_file(download_filepath)
 
