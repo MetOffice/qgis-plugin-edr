@@ -45,7 +45,7 @@ class EdrLayerManager:
             self.plugin.communication.bar_warn(f"Can't load CoverageJSON: '{e}'.")
             return False
 
-        for layer in coverage_json_reader.get_map_layers():
+        for layer in coverage_json_reader.map_layers():
             QgsProject.instance().addMapLayer(layer)
             self.loaded_layers[layer.id()] = layer
 

@@ -289,7 +289,7 @@ class CoverageJSONReader:
 
         return None
 
-    def get_raster_layers(self, parameter_name: str) -> typing.List[QgsRasterLayer]:
+    def raster_layers(self, parameter_name: str) -> typing.List[QgsRasterLayer]:
         """Crete list of raster layers for given parameter. The size of the list can be 1 or more."""
         formatted_data = self._format_values_into_rasters(parameter_name)
         layers = []
@@ -344,11 +344,11 @@ class CoverageJSONReader:
             QgsProject.instance().timeSettings().setTemporalRange(self._get_time_range())
             QgsProject.instance().timeSettings().setTimeStep(self._get_time_step())
 
-    def get_map_layers(self) -> typing.List[QgsMapLayer]:
+    def map_layers(self) -> typing.List[QgsMapLayer]:
         """Get list of map layers for all parameters in the CoverageJSON file."""
         layers = []
         if self.get_domain_type() == "Grid":
             for parameter in self.parameters:
-                layers.extend(self.get_raster_layers(parameter))
+                layers.extend(self.raster_layers(parameter))
             return layers
         raise ValueError("Domain type not supported yet.")
