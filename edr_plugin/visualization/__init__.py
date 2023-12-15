@@ -26,13 +26,6 @@ class EdrLayerManager:
 
     def add_layer_from_file(self, filepath, layer_name=None):
         file_extension = filepath.rsplit(".", 1)[-1].lower()
-        if file_extension == filepath:
-            try:
-                self.load_from_coverage_json(filepath)
-                return True
-            except ValueError as e:
-                self.plugin.communication.bar_warn(f"Can't load CoverageJSON: '{e}'.")
-            return False
         try:
             layer_cls, provider = self.extension_layer_type[file_extension]
         except KeyError:
@@ -45,10 +38,16 @@ class EdrLayerManager:
         self.loaded_layers[layer.id()] = layer
         return True
 
-    def load_from_coverage_json(self, filepath: str):
-        coverage_reader = CoverageJSONReader(filepath)
-        layers = coverage_reader.get_map_layers()
-        for layer in layers:
-            self.project.addMapLayer(layer)
+    def load_layers_from_coveragejson(self, filepath: str) -> bool:
+        try:
+            coverage_json_reader = CoverageJSONReader(filepath)
+        except ValueError as e:
+            self.plugin.communication.bar_warn(f"Can't load CoverageJSON: '{e}'.")
+            return False
+
+        for layer in coverage_json_reader.get_map_layers():
+            QgsProject.instance().addMapLayer(layer)
             self.loaded_layers[layer.id()] = layer
-        coverage_reader.qgsproject_setup_time_settings()
+
+        coverage_json_reader.qgsproject_setup_time_settings()
+        return True
