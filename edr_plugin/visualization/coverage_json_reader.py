@@ -1,4 +1,3 @@
-import datetime
 import json
 import tempfile
 import typing
@@ -15,6 +14,7 @@ from qgis.core import (
     QgsRasterShader,
     QgsSingleBandPseudoColorRenderer,
 )
+from qgis.PyQt.QtCore import QDateTime, Qt
 from qgis.PyQt.QtGui import QColor
 
 
@@ -22,9 +22,13 @@ class RasterWithTZ:
     """Simple class to hold raster data with time and z information."""
 
     def __init__(
-        self, raster: np.ndarray, time: typing.Optional[datetime.datetime] = None, z: typing.Optional[float] = None
+        self, raster: np.ndarray, time: typing.Optional[QDateTime] = None, z: typing.Optional[float] = None
     ) -> None:
-        self.time = time
+        if time:
+            if time.isValid():
+                self.time = time
+        else:
+            self.time = None
         self.z = z
         self.raster = raster
 
@@ -148,11 +152,11 @@ class CoverageJSONReader:
         if self.has_t_in_data(parameter_name) and self.has_z_in_data(parameter_name):
             for t_i, t in enumerate(self._get_axe_values("t")):
                 for z_i, z in enumerate(self._get_axe_values("z")):
-                    data_dict[f"{t}_{z}"] = RasterWithTZ(values[t_i, z_i, ...], self._convert_to_datetime(t), z)
+                    data_dict[f"{t}_{z}"] = RasterWithTZ(values[t_i, z_i, ...], QDateTime.fromString(t, Qt.ISODate), z)
 
         elif self.has_t_in_data(parameter_name):
             for t_i, t in enumerate(self._get_axe_values("t")):
-                data_dict[f"{t}"] = RasterWithTZ(values[t_i, ...], time=self._convert_to_datetime(t))
+                data_dict[f"{t}"] = RasterWithTZ(values[t_i, ...], time=QDateTime.fromString(t, Qt.ISODate))
 
         elif self.has_z_in_data(parameter_name):
             for z_i, z in enumerate(self._get_axe_values("z")):
@@ -273,29 +277,15 @@ class CoverageJSONReader:
 
         return file_name
 
-    def _convert_to_datetime(self, date_time: str) -> typing.Optional[datetime.datetime]:
-        """Try to convert string to datetime using several formats."""
-        # format with only hours no seconds
-        try:
-            return datetime.datetime.strptime(date_time, "%Y-%m-%dT%H:%MZ")
-        except ValueError:
-            pass
-        # format including seconds
-        try:
-            return datetime.datetime.strptime(date_time, "%Y-%m-%dT%H:%M:%SZ")
-        except ValueError:
-            pass
-        return None
-
-    def _get_time_step(self) -> typing.Optional[datetime.timedelta]:
+    def _get_time_step(self) -> typing.Optional[float]:
         """Extract time step if it exists."""
         if self.has_t:
             t = self._get_axe_values("t")
-            t0 = self._convert_to_datetime(t[0])
-            t1 = self._convert_to_datetime(t[1])
+            t0 = QDateTime.fromString(t[0], Qt.ISODate)
+            t1 = QDateTime.fromString(t[1], Qt.ISODate)
 
-            if t0 and t1:
-                return t1 - t0
+            if t0.isValid() and t1.isValid():
+                return t0.secsTo(t1)
 
         return None
 
@@ -320,7 +310,9 @@ class CoverageJSONReader:
             if time_step and data.time:
                 layer.temporalProperties().setIsActive(True)
                 layer.temporalProperties().setFixedTemporalRange(
-                    QgsDateTimeRange(data.time - (time_step / 2), data.time + (time_step / 2))
+                    QgsDateTimeRange(
+                        data.time.addSecs(int(-1 * (time_step / 2))), data.time.addSecs(int(time_step / 2))
+                    )
                 )
 
             shader = self.get_raster_shader(parameter_name)
@@ -338,10 +330,10 @@ class CoverageJSONReader:
         """Extract time range from `t` axis if it exists."""
         if self.has_t:
             t = self._get_axe_values("t")
-            t0 = self._convert_to_datetime(t[0])
-            t1 = self._convert_to_datetime(t[-1])
+            t0 = QDateTime.fromString(t[0], Qt.ISODate)
+            t1 = QDateTime.fromString(t[-1], Qt.ISODate)
 
-            if t0 and t1:
+            if t0.isValid() and t1.isValid():
                 return QgsDateTimeRange(t0, t1)
         return None
 
