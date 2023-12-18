@@ -43,6 +43,8 @@ class EdrDialog(QDialog):
         QSettings().setValue("edr_plugin/server_url", server_url)
         self.server_url_le.setText(server_url)
         self.api_client = EdrApiClient(server_url)
+        self.populate_collections()
+        self.populate_collection_data()
 
     @property
     def data_query_tools(self):
@@ -98,7 +100,8 @@ class EdrDialog(QDialog):
         self.clear_widgets(self.collection_cbo, *self.collection_level_widgets)
         try:
             for collection in self.api_client.get_collections():
-                collection_name = collection["title"]
+                collection_id = collection["id"]
+                collection_name = collection.get("title", collection_id)
                 self.collection_cbo.addItem(collection_name, collection)
         except EdrApiClientError as e:
             self.plugin.communication.show_error(f"Fetching collections failed due to the following error:\n{e}")
@@ -109,7 +112,11 @@ class EdrDialog(QDialog):
         collection = self.collection_cbo.currentData()
         if not collection:
             return
-        if "instances" in collection["data_queries"]:
+        try:
+            data_queries = collection["data_queries"]
+        except KeyError:
+            return
+        if "instances" in data_queries:
             self.instance_cbo.setEnabled(True)
             self.populate_instances()
         else:
@@ -139,7 +146,10 @@ class EdrDialog(QDialog):
             collection = self.collection_cbo.currentData()
         if not collection:
             return
-        data_queries = collection["data_queries"]
+        try:
+            data_queries = collection["data_queries"]
+        except KeyError:
+            return
         for query_name, data_query in data_queries.items():
             self.query_cbo.addItem(query_name, data_query)
         self.populate_data_query_attributes()
@@ -156,16 +166,25 @@ class EdrDialog(QDialog):
         data_query = self.query_cbo.currentData()
         if not data_query:
             return
-        data_query_variables = data_query["link"]["variables"]
-        crs_list = [crs_details["crs"] for crs_details in data_query_variables["crs_details"]]
-        output_formats = data_query_variables["output_formats"]
-        default_output_format = data_query_variables["default_output_format"]
+        crs_list = collection.get("crs", [])
+        output_formats = collection.get("output_formats", [])
+        default_output_format = ""
+        data_link = data_query["link"]
+        data_query_variables = data_link.get("variables", {})
+        if data_query_variables:
+            crs_details = data_query_variables.get("crs_details", [])
+            if crs_details:
+                crs_list = [crs_details["crs"] for crs_details in crs_details]
+            output_formats = data_query_variables.get("output_formats", output_formats)
+            default_output_format = data_query_variables.get("default_output_format", default_output_format)
         self.crs_cbo.addItems(crs_list)
         self.format_cbo.addItems(output_formats)
         self.format_cbo.setCurrentText(default_output_format)
         parameter_names = collection["parameter_names"]
         for parameter, parameter_data in parameter_names.items():
-            parameter_description = parameter_data["description"]
+            observed_property = parameter_data["observedProperty"]
+            observed_property_label = observed_property["label"]
+            parameter_description = parameter_data.get("description", observed_property_label)
             self.parameters_cbo.addItem(parameter_description, parameter)
         self.parameters_cbo.toggleItemCheckState(0)
         collection_extent = collection["extent"]

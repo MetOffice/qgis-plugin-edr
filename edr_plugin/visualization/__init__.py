@@ -18,7 +18,7 @@ class EdrLayerManager:
             "geojson": (QgsVectorLayer, "ogr"),
             "gpkg": (QgsVectorLayer, "ogr"),
             "grib2": (QgsMeshLayer, "mdal"),
-            "nc": (QgsMeshLayer, "mdal"),
+            "nc": (QgsRasterLayer, "gdal"),
             "tif": (QgsRasterLayer, "gdal"),
             "tiff": (QgsRasterLayer, "gdal"),
         }
