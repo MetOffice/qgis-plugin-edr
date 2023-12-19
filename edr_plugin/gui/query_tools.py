@@ -1,5 +1,6 @@
 import os
 
+from qgis._core import QgsCoordinateReferenceSystem
 from qgis.PyQt import uic
 from qgis.PyQt.QtWidgets import QDialog
 
@@ -16,6 +17,12 @@ class AreaQueryBuilderTool(QDialog):
         self.edr_dialog = edr_dialog
         self.map_canvas = self.edr_dialog.plugin.iface.mapCanvas()
         self.extent_grp.setMapCanvas(self.map_canvas)
+        crs_name, crs_wkt = self.edr_dialog.crs_cbo.currentText(), self.edr_dialog.crs_cbo.currentData()
+        if crs_wkt:
+            self.output_crs = QgsCoordinateReferenceSystem.fromWkt(crs_wkt)
+        else:
+            self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
+        self.extent_grp.setOutputCrs(self.output_crs)
         self.cancel_pb.clicked.connect(self.reject)
         self.accept_pb.clicked.connect(self.accept)
 

@@ -1,5 +1,6 @@
 import os
 
+from qgis.core import QgsCoordinateReferenceSystem
 from qgis.gui import QgsCollapsibleGroupBox, QgsProjectionSelectionWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, QSettings, Qt
@@ -203,7 +204,11 @@ class EdrDialog(QDialog):
         data_query = self.query_cbo.currentData()
         if not data_query:
             return
-        crs_list = collection.get("crs", [])
+        crs_data = []
+        for crs_name in collection.get("crs", []):
+            crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
+            crs_wkt = crs.toWkt()
+            crs_data.append((crs_name, crs_wkt))
         output_formats = collection.get("output_formats", [])
         default_output_format = ""
         data_link = data_query["link"]
@@ -211,10 +216,15 @@ class EdrDialog(QDialog):
         if data_query_variables:
             crs_details = data_query_variables.get("crs_details", [])
             if crs_details:
-                crs_list = [crs_details["crs"] for crs_details in crs_details]
+                del crs_data[:]
+            for crs_detail in crs_details:
+                crs_name = crs_detail["crs"]
+                crs_wkt = crs_detail["wkt"]
+                crs_data.append((crs_name, crs_wkt))
             output_formats = data_query_variables.get("output_formats", output_formats)
             default_output_format = data_query_variables.get("default_output_format", default_output_format)
-        self.crs_cbo.addItems(crs_list)
+        for crs_name, crs_wkt in crs_data:
+            self.crs_cbo.addItem(crs_name, crs_wkt)
         self.format_cbo.addItems(output_formats)
         self.format_cbo.setCurrentText(default_output_format)
         parameter_names = collection["parameter_names"]
