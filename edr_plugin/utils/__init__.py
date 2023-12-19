@@ -12,6 +12,7 @@ CONTENT_TYPE_EXTENSIONS = MappingProxyType(
         "application/geo+json": "geojson",
         "application/geopackage+sqlite3": "gpkg",
         "application/x-netcdf4": "nc",
+        "application/vnd.google-earth.kml+xml": "kml",
         "text/csv": "csv",
     }
 )
