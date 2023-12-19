@@ -35,7 +35,8 @@ class RasterWithTZ:
 
 class CoverageJSONReader:
     def __init__(self, filename: str) -> None:
-        with open(filename, encoding="utf-8") as file:
+        self.filename = filename
+        with open(self.filename, encoding="utf-8") as file:
             self.coverage_json = json.load(file)
 
         if "type" not in self.coverage_json:
@@ -51,7 +52,7 @@ class CoverageJSONReader:
 
     @property
     def referencing(self) -> typing.Dict:
-        "Get referencing element."
+        """Get referencing element."""
         if "referencing" not in self.domain:
             raise ValueError("Missing `referencing` element in domain.")
 
@@ -67,12 +68,12 @@ class CoverageJSONReader:
 
     @property
     def has_z(self) -> bool:
-        """Check if there is `z` in axes definition."""
+        """Check if there is a `z` in axes definition."""
         return "z" in self.domain["axes"]
 
     @property
     def has_t(self) -> bool:
-        """Check if there is `t` in axes definition."""
+        """Check if there is a `t` in axes definition."""
         return "t" in self.domain["axes"]
 
     def get_crs(self) -> QgsCoordinateReferenceSystem:
@@ -91,7 +92,7 @@ class CoverageJSONReader:
         return crs
 
     def parameter_names(self) -> typing.List[str]:
-        """Extract list of paramter names."""
+        """Extract list of parameter names."""
         return [x for x in self.parameters.keys()]
 
     def get_parameter(self, name: str) -> typing.Dict:
@@ -115,7 +116,8 @@ class CoverageJSONReader:
 
         return axes[axe]["values"]
 
-    def _validate_axis_names(self, existing_axis: typing.List[str]) -> None:
+    @staticmethod
+    def _validate_axis_names(existing_axis: typing.List[str]) -> None:
         """Check that axis names are in standard order. This is needed for further processing."""
         axis_according_to_standard = ["y", "x"]
         if "z" in existing_axis:
@@ -197,10 +199,10 @@ class CoverageJSONReader:
         dp.SetGeoTransform([x_min, (x_max - x_min) / len(x_coords), 0, y_max, 0, -((y_max - y_min) / len(y_coords))])
         dp.SetProjection(self.get_crs().toWkt())
 
-        return (dp, file_name)
+        return dp, file_name
 
+    @staticmethod
     def _write_array_to_band(
-        self,
         dp: gdal.Dataset,
         band_number: int,
         np_array: np.ndarray,
@@ -343,8 +345,9 @@ class CoverageJSONReader:
         """Set time range and time step to QgsProject if the data supports it."""
         time_range = self._get_time_range()
         if time_range:
-            QgsProject.instance().timeSettings().setTemporalRange(self._get_time_range())
-            QgsProject.instance().timeSettings().setTimeStep(self._get_time_step())
+            time_settings = QgsProject.instance().timeSettings()
+            time_settings.setTemporalRange(self._get_time_range())
+            time_settings.setTimeStep(self._get_time_step())
 
     def map_layers(self) -> typing.List[QgsMapLayer]:
         """Get list of map layers for all parameters in the CoverageJSON file."""

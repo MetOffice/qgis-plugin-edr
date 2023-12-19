@@ -3,6 +3,8 @@ import re
 from types import MappingProxyType
 from uuid import uuid4
 
+from qgis.core import QgsLayerTreeGroup, QgsLayerTreeLayer
+
 CONTENT_TYPE_EXTENSIONS = MappingProxyType(
     {
         "application/json": "json",
@@ -65,3 +67,20 @@ def is_dir_writable(working_dir):
     except (PermissionError, OSError):
         return False
     return True
+
+
+def spawn_layer_group(project, name, top_insert=True):
+    """Creating layer tree group."""
+    r = project.layerTreeRoot()
+    group = QgsLayerTreeGroup(name)
+    r.insertChildNode(0 if top_insert else -1, group)
+    return group
+
+
+def add_to_layer_group(project, group, layer, top_insert=False, expanded=False, add_to_legend=False):
+    """Add layer to the group."""
+    root = project.layerTreeRoot()
+    project.addMapLayer(layer, add_to_legend)
+    group.insertChildNode(0 if top_insert else -1, QgsLayerTreeLayer(layer))
+    layer_node = root.findLayer(layer.id())
+    layer_node.setExpanded(expanded)

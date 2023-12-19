@@ -286,10 +286,7 @@ class EdrDialog(QDialog):
         """Feedback on getting data success signal."""
         self.plugin.communication.clear_message_bar()
         self.plugin.communication.bar_info(message)
-        if download_filepath.endswith(".covjson"):
-            self.plugin.layer_manager.load_layers_from_coverage_json(download_filepath)
-        else:
-            self.plugin.layer_manager.add_layer_from_file(download_filepath)
+        self.plugin.layer_manager.add_layer_from_file(download_filepath)
 
     def on_failure_signal(self, error_message, download_filepath):
         """Feedback on getting data failure signal."""
