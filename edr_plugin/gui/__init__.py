@@ -25,17 +25,23 @@ class EdrDialog(QDialog):
         settings = QSettings()
         server_url = settings.value("edr_plugin/server_url", self.DEFAULT_ROOT, type=str)
         self.server_url_le.setText(server_url)
+        download_dir = settings.value("edr_plugin/download_dir", "", type=str)
+        self.download_dir_le.setText(download_dir)
         self.api_client = EdrApiClient(server_url)
         self.populate_collections()
         self.populate_collection_data()
         self.cancel_pb.clicked.connect(self.close)
         self.new_pb.clicked.connect(self.query_data_collection)
-        self.change_serve_pb.clicked.connect(self.change_edr_server_url)
+        self.change_server_pb.clicked.connect(self.set_edr_server_url)
+        self.change_download_dir_pb.clicked.connect(self.set_download_directory)
         self.collection_cbo.currentIndexChanged.connect(self.populate_collection_data)
         self.instance_cbo.currentIndexChanged.connect(self.populate_data_queries)
         self.query_cbo.currentIndexChanged.connect(self.populate_data_query_attributes)
+        self.toggle_parameters_cbox.stateChanged.connect(self.toggle_parameters)
+        self.toggle_intervals_cbox.stateChanged.connect(self.toggle_intervals)
 
-    def change_edr_server_url(self):
+    def set_edr_server_url(self):
+        """Set EDR server URL."""
         server_url, accept = QInputDialog.getText(self, "Set EDR Server URL", "Type EDR Server URL:")
         if accept is False:
             return
@@ -45,6 +51,35 @@ class EdrDialog(QDialog):
         self.api_client = EdrApiClient(server_url)
         self.populate_collections()
         self.populate_collection_data()
+
+    def set_download_directory(self):
+        """Set download directory."""
+        settings = QSettings()
+        last_download_dir = self.download_dir_le.text()
+        parent_download_dir = os.path.dirname(last_download_dir) if last_download_dir else ""
+        download_dir = QFileDialog.getExistingDirectory(self, "Pick download directory", parent_download_dir)
+        if not download_dir:
+            return
+        if is_dir_writable(download_dir):
+            settings.setValue("edr_plugin/download_dir", download_dir)
+            self.download_dir_le.setText(download_dir)
+        else:
+            self.plugin.communication.bar_warn("Can't write to the selected location. Please pick another folder.")
+            return
+
+    def toggle_parameters(self, checked):
+        """Check/uncheck all available parameters."""
+        if checked:
+            self.parameters_cbo.selectAllOptions()
+        else:
+            self.parameters_cbo.deselectAllOptions()
+
+    def toggle_intervals(self, checked):
+        """Check/uncheck all available intervals."""
+        if checked:
+            self.intervals_cbo.selectAllOptions()
+        else:
+            self.intervals_cbo.deselectAllOptions()
 
     @property
     def data_query_tools(self):
@@ -71,11 +106,13 @@ class EdrDialog(QDialog):
             self.crs_cbo,
             self.format_cbo,
             self.parameters_cbo,
+            self.toggle_parameters_cbox,
             self.temporal_grp,
             self.vertical_grp,
             self.from_datetime,
             self.to_datetime,
             self.intervals_cbo,
+            self.toggle_intervals_cbox,
             self.use_range_cbox,
         ]
         return widgets
@@ -204,7 +241,7 @@ class EdrDialog(QDialog):
             vertical_extent = collection_extent["vertical"]
             values = vertical_extent["values"]
             self.intervals_cbo.addItems(values)
-            self.intervals_cbo.selectAllOptions()
+            self.intervals_cbo.toggleItemCheckState(0)
         except KeyError:
             self.vertical_grp.setDisabled(True)
 
@@ -237,18 +274,6 @@ class EdrDialog(QDialog):
             vertical_extent = None
         return collection_id, instance, crs, output_format, parameters, temporal_range, vertical_extent
 
-    def pick_download_directory(self):
-        """Pick download directory."""
-        settings = QSettings()
-        download_dir = settings.value("edr_plugin/download_dir", "", type=str)
-        download_dir = QFileDialog.getExistingDirectory(self, "Pick download directory", download_dir)
-        if is_dir_writable(download_dir):
-            settings.setValue("edr_plugin/download_dir", download_dir)
-            return download_dir
-        else:
-            self.plugin.communication.bar_warn("Can't write to the selected location. Please pick another folder.")
-            return
-
     def query_data_collection(self):
         """Define data query and get the data collection."""
         data_query = self.query_cbo.currentText()
@@ -267,8 +292,9 @@ class EdrDialog(QDialog):
                 f"Missing implementation for '{data_query}' data queries. Action aborted."
             )
             return
-        download_dir = self.pick_download_directory()
+        download_dir = self.download_dir_le.text()
         if not download_dir:
+            self.plugin.communication.show_warn("There is no download folder specified. Please set it and try again.")
             return
         worker_api_client = EdrApiClient(self.server_url_le.text())
         download_worker = EdrDataDownloader(worker_api_client, data_query_definition, download_dir)
