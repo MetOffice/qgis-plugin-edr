@@ -13,6 +13,7 @@ CONTENT_TYPE_EXTENSIONS = MappingProxyType(
         "application/geopackage+sqlite3": "gpkg",
         "application/x-netcdf4": "nc",
         "application/vnd.google-earth.kml+xml": "kml",
+        "image/tiff": "tiff",
         "text/csv": "csv",
     }
 )
@@ -23,17 +24,18 @@ def download_reply_file(reply, download_dir, download_filename=None):
     if not download_filename:
         raw_content_type_header = reply.rawHeader("content-type".encode())
         content_type_header = raw_content_type_header.data().decode()
+        content_type = content_type_header.split(";")[0]
+        file_extension = CONTENT_TYPE_EXTENSIONS.get(content_type, "")
         raw_content_disposition_header = reply.rawHeader("content-disposition".encode())
-        if raw_content_disposition_header:
+        if raw_content_disposition_header and file_extension != "covjson":
             content_disposition_header = raw_content_disposition_header.data().decode()
             download_filename = reply.extractFileNameFromContentDispositionHeader(content_disposition_header)
         else:
             request_url = reply.request().url().toDisplayString()
             collection_name = re.findall("collections/(.+?)/", request_url)[0]
-            extension = CONTENT_TYPE_EXTENSIONS.get(content_type_header, "")
             download_filename = f"{collection_name}_{uuid4()}"
-            if extension:
-                download_filename += f".{extension}"
+            if file_extension:
+                download_filename += f".{file_extension}"
     download_filepath = os.path.join(download_dir, download_filename)
     with open(download_filepath, "wb") as f:
         f.write(reply.content())

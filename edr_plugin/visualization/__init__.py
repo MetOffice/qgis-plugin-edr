@@ -60,6 +60,7 @@ class EdrLayerManager:
             "nc": self.gdal_layer_loader,
             "tif": self.gdal_layer_loader,
             "tiff": self.gdal_layer_loader,
+            "geotiff": self.gdal_layer_loader,
         }
         return extension_to_loader_map
 
@@ -67,6 +68,9 @@ class EdrLayerManager:
         file_extension = filepath.rsplit(".", 1)[-1].lower()
         try:
             layer_loader = self.file_extension_layer_loaders[file_extension]
+            if layer_name is None:
+                layer_name = os.path.basename(filepath)
+            layer_loader(filepath, layer_name)
         except KeyError:
             self.plugin.communication.bar_warn(f"Can't load file as a layer - unsupported format: '{file_extension}'.")
             return False
@@ -76,7 +80,4 @@ class EdrLayerManager:
         except Exception as e:
             self.plugin.communication.bar_warn(f"Loading of '{filepath}' failed due to the following exception: {e}")
             return False
-        if layer_name is None:
-            layer_name = os.path.basename(filepath)
-        layer_loader(filepath, layer_name)
         return True
