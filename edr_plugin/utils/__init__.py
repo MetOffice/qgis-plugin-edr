@@ -23,12 +23,12 @@ def download_reply_file(reply, download_dir, download_filename=None):
     """Download and write content from the QgsNetworkReplyContent object."""
     if not download_filename:
         raw_content_type_header = reply.rawHeader("content-type".encode())
-        content_type_header = raw_content_type_header.data().decode()
+        content_type_header = raw_content_type_header.data().decode(errors="ignore")
         content_type = content_type_header.split(";")[0]
         file_extension = CONTENT_TYPE_EXTENSIONS.get(content_type, "")
         raw_content_disposition_header = reply.rawHeader("content-disposition".encode())
         if raw_content_disposition_header and file_extension != "covjson":
-            content_disposition_header = raw_content_disposition_header.data().decode()
+            content_disposition_header = raw_content_disposition_header.data().decode(errors="ignore")
             download_filename = reply.extractFileNameFromContentDispositionHeader(content_disposition_header)
         else:
             request_url = reply.request().url().toDisplayString()
