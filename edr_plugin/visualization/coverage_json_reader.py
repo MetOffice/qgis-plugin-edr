@@ -301,7 +301,10 @@ class CoverageJSONReader:
         time_step = self._get_time_step()
 
         for key, data in formatted_data.items():
-            layer_name = f"{parameter_name}_{key}"
+            if key:
+                layer_name = f"{parameter_name}_{key}"
+            else:
+                layer_name = parameter_name
 
             filename = self.save_temp_raster(
                 layer_name,
