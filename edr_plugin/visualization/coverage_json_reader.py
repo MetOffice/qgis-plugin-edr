@@ -213,6 +213,11 @@ class CoverageJSONReader:
         band.SetNoDataValue(no_data_value)
 
         np_array[np_array == None] = no_data_value
+
+        values = (np_array != no_data_value).sum()
+        if values == 0:
+            raise ValueError("No resulting data in the Query.")
+
         np_array = np.flip(np_array, 0)
 
         band.WriteArray(np_array)
