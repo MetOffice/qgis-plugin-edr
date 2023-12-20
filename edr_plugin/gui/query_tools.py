@@ -23,8 +23,15 @@ class AreaQueryBuilderTool(QDialog):
         else:
             self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
         self.extent_grp.setOutputCrs(self.output_crs)
-        self.cancel_pb.clicked.connect(self.reject)
-        self.accept_pb.clicked.connect(self.accept)
+        self.extent_grp.extentChanged.connect(self.on_extent_changed)
+        self.ok_pb.clicked.connect(self.accept)
+        self.extent_grp.setOutputExtentFromCurrent()
+
+    def on_extent_changed(self, rectangle):
+        """Action on extent changed signal."""
+        wkt_extent = rectangle.asWktPolygon()
+        self.edr_dialog.query_extent_le.setText(wkt_extent)
+        self.edr_dialog.query_extent_le.setCursorPosition(0)
 
     def get_query_definition(self):
         """Return query definition object based on user input."""

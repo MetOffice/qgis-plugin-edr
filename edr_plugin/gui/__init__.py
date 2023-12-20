@@ -1,10 +1,10 @@
 import os
 
 from qgis.core import QgsCoordinateReferenceSystem
-from qgis.gui import QgsCollapsibleGroupBox, QgsProjectionSelectionWidget
+from qgis.gui import QgsCollapsibleGroupBox
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, QSettings, Qt
-from qgis.PyQt.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QDialog, QFileDialog, QInputDialog
+from qgis.PyQt.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QDialog, QFileDialog, QInputDialog, QLineEdit
 
 from edr_plugin.api_client import EdrApiClient, EdrApiClientError
 from edr_plugin.gui.query_tools import AreaQueryBuilderTool
@@ -29,17 +29,19 @@ class EdrDialog(QDialog):
         download_dir = settings.value("edr_plugin/download_dir", "", type=str)
         self.download_dir_le.setText(download_dir)
         self.api_client = EdrApiClient(server_url)
+        self.current_data_query_tool = None
         self.populate_collections()
         self.populate_collection_data()
-        self.cancel_pb.clicked.connect(self.close)
-        self.new_pb.clicked.connect(self.query_data_collection)
         self.change_server_pb.clicked.connect(self.set_edr_server_url)
         self.change_download_dir_pb.clicked.connect(self.set_download_directory)
         self.collection_cbo.currentIndexChanged.connect(self.populate_collection_data)
         self.instance_cbo.currentIndexChanged.connect(self.populate_data_queries)
         self.query_cbo.currentIndexChanged.connect(self.populate_data_query_attributes)
+        self.query_set_pb.clicked.connect(self.set_query_extent)
         self.toggle_parameters_cbox.stateChanged.connect(self.toggle_parameters)
         self.toggle_intervals_cbox.stateChanged.connect(self.toggle_intervals)
+        self.cancel_pb.clicked.connect(self.close)
+        self.run_pb.clicked.connect(self.query_data_collection)
 
     def set_edr_server_url(self):
         """Set EDR server URL."""
@@ -104,6 +106,7 @@ class EdrDialog(QDialog):
     def query_level_widgets(self):
         """Query level widgets."""
         widgets = [
+            self.query_extent_le,
             self.crs_cbo,
             self.format_cbo,
             self.parameters_cbo,
@@ -122,13 +125,11 @@ class EdrDialog(QDialog):
     def clear_widgets(*widgets):
         """Clear widgets."""
         for widget in widgets:
-            if isinstance(widget, QgsProjectionSelectionWidget):
-                pass
-            elif isinstance(widget, QgsCollapsibleGroupBox):
+            if isinstance(widget, QgsCollapsibleGroupBox):
                 widget.setDisabled(True)
             elif isinstance(widget, QCheckBox):
                 widget.setChecked(False)
-            elif isinstance(widget, (QComboBox, QDateTimeEdit)):
+            elif isinstance(widget, (QComboBox, QDateTimeEdit, QLineEdit)):
                 widget.clear()
             else:
                 pass
@@ -194,6 +195,7 @@ class EdrDialog(QDialog):
 
     def populate_data_query_attributes(self):
         """Populate data query attributes."""
+        self.current_data_query_tool = None
         self.clear_widgets(*self.query_level_widgets)
         if self.instance_cbo.isEnabled():
             collection = self.instance_cbo.currentData()
@@ -284,24 +286,35 @@ class EdrDialog(QDialog):
             vertical_extent = None
         return collection_id, instance, crs, output_format, parameters, temporal_range, vertical_extent
 
-    def query_data_collection(self):
-        """Define data query and get the data collection."""
+    def set_query_extent(self):
+        """Set query extent."""
         data_query = self.query_cbo.currentText()
         if not data_query:
             return
         try:
             data_query_tool_cls = self.data_query_tools[data_query]
-            data_query_tool = data_query_tool_cls(self)
-            res = data_query_tool.exec_()
-            if res == QDialog.Accepted:
-                data_query_definition = data_query_tool.get_query_definition()
-            else:
-                return
         except KeyError:
             self.plugin.communication.show_warn(
                 f"Missing implementation for '{data_query}' data queries. Action aborted."
             )
             return
+        self.current_data_query_tool = data_query_tool_cls(self)
+        self.current_data_query_tool.show()
+
+    def query_data_collection(self):
+        """Define data query and get the data collection."""
+        data_query = self.query_cbo.currentText()
+        if not data_query:
+            return
+        if data_query not in self.data_query_tools:
+            self.plugin.communication.show_warn(
+                f"Missing implementation for '{data_query}' data queries. Action aborted."
+            )
+            return
+        if self.current_data_query_tool is None:
+            self.plugin.communication.show_warn("Query spatial extent is not set. Please set it and try again.")
+            return
+        data_query_definition = self.current_data_query_tool.get_query_definition()
         download_dir = self.download_dir_le.text()
         if not download_dir:
             self.plugin.communication.show_warn("There is no download folder specified. Please set it and try again.")
