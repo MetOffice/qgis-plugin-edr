@@ -81,6 +81,11 @@ class CoverageJSONReader:
         """Check if there is a `t` in axes definition."""
         return "t" in self.axes_names
 
+    @property
+    def has_composite_axe(self) -> bool:
+        """Check if there is a `composite` in axes definition."""
+        return "composite" in self.axes_names
+
     def crs(self) -> QgsCoordinateReferenceSystem:
         """Get CRS from referencing element."""
         if "system" not in self.referencing[0]:
