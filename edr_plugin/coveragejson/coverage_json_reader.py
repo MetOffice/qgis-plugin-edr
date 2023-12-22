@@ -90,7 +90,7 @@ class CoverageJSONReader:
 
         if "http:" in crs_id:
             if "CRS84" in crs_id:
-                return QgsCoordinateReferenceSystem(4326)
+                return QgsCoordinateReferenceSystem("EPSG:4326")
             raise ValueError("Getting CRS from HTTP not supported yet.")
 
         crs = QgsCoordinateReferenceSystem(crs_id)
