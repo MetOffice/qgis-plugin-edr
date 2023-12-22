@@ -2,8 +2,8 @@ import os
 
 from qgis.core import QgsMeshLayer, QgsProject, QgsRasterLayer, QgsVectorLayer
 
+from edr_plugin.coveragejson.coverage_json_reader import CoverageJSONReader
 from edr_plugin.utils import add_to_layer_group, spawn_layer_group
-from edr_plugin.visualization.coverage_json_reader import CoverageJSONReader
 
 
 class EdrLayerException(Exception):
