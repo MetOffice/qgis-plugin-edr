@@ -22,6 +22,7 @@ from edr_plugin.coveragejson.utils import (
     feature_attributes,
     prepare_fields,
     prepare_raster_shader,
+    prepare_vector_layer,
     set_layer_render_from_shader,
     set_project_time_range,
 )
@@ -290,23 +291,12 @@ class CoverageJSONReader:
         """Check if domain is vector data."""
         return self.domain_type in self.VECTOR_DATA_DOMAIN_TYPES
 
-    def _prepare_layer(self) -> QgsVectorLayer:
-        crs = self.crs()
-        if crs.isValid():
-            crs_str = self.crs().authid()
-        else:
-            crs_str = "EPSG:4326"
-
-        layer = QgsVectorLayer(f"{self.domain_type}?crs={crs_str}", "CoverageJSON", "memory")
-
-        return layer
-
     def vector_layers(self) -> typing.List[QgsVectorLayer]:
         layers: typing.List[QgsVectorLayer] = []
 
         self._validate_composite_axes()
 
-        layer = self._prepare_layer()
+        layer = prepare_vector_layer(self.domain_type, self.crs())
         layer.dataProvider().addAttributes(prepare_fields(self.ranges))
         layer.updateFields()
 

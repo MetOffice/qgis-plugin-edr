@@ -5,9 +5,9 @@ import numpy as np
 from osgeo import gdal
 from qgis.core import (
     QgsColorRampShader,
+    QgsCoordinateReferenceSystem,
     QgsDateTimeRange,
     QgsField,
-    QgsFields,
     QgsGeometry,
     QgsLineString,
     QgsPoint,
@@ -16,6 +16,7 @@ from qgis.core import (
     QgsRasterLayer,
     QgsRasterShader,
     QgsSingleBandPseudoColorRenderer,
+    QgsVectorLayer,
 )
 from qgis.PyQt.QtCore import QDateTime, QVariant
 from qgis.PyQt.QtGui import QColor
@@ -216,3 +217,19 @@ def parameter_data_type_to_qgis_type(param_type: str) -> QVariant.Type:
         return QVariant.Type.String
 
     raise ValueError(f"Unknown parameter data type: {param_type}")
+
+
+def prepare_vector_layer(
+    wkb_type: str, crs: QgsCoordinateReferenceSystem, layer_name: str = "CoverageJSON"
+) -> QgsVectorLayer:
+    if crs.isValid():
+        crs_str = crs.authid()
+    else:
+        crs_str = "EPSG:4326"
+
+    layer = QgsVectorLayer(f"{wkb_type}?crs={crs_str}", layer_name, "memory")
+
+    if not layer.isValid():
+        raise ValueError(f"Layer {layer_name} is not valid.")
+
+    return layer
