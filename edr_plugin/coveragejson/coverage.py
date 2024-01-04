@@ -158,9 +158,7 @@ class Coverage:
 
         values = np.array(info["values"])
 
-        # if values are longer then X * Y coords then we need to validate axis names for correct processing
-        if len(values) != len(self.axe_values("x")) * len(self.axe_values("y")):
-            self._validate_axis_names(info["axisNames"])
+        self._validate_axis_names(info["axisNames"])
 
         values = values.reshape(info["shape"])
 
