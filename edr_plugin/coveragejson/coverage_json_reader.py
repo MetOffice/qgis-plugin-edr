@@ -251,7 +251,7 @@ class CoverageJSONReader:
             else:
                 layer_name = parameter_name
 
-            file_to_save = self.folder_to_save_data / "{layer_name}.tif"
+            file_to_save = self.folder_to_save_data / f"{layer_name}.tif"
 
             dp = raster_template.save_empty_raster(file_to_save)
 
