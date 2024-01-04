@@ -277,15 +277,8 @@ class Coverage:
         """Check if domain is vector data."""
         return self.domain_type in self.VECTOR_DATA_DOMAIN_TYPES
 
-    def vector_layers(self) -> typing.List[QgsVectorLayer]:
-        layers: typing.List[QgsVectorLayer] = []
-
-        self._validate_composite_axes()
-
-        layer = prepare_vector_layer(self.domain_type, self.crs)
-        layer.dataProvider().addAttributes(prepare_fields(self.ranges))
-        layer.updateFields()
-
+    def coverage_features(self, layer: QgsVectorLayer) -> typing.List[QgsFeature]:
+        """Get list of features from Coverage."""
         geoms = composite_to_geometries(self.domain["axes"]["composite"])
         attributes = feature_attributes(self.ranges, len(geoms))
 
@@ -297,7 +290,23 @@ class Coverage:
 
             features.append(feature)
 
-        layer.dataProvider().addFeatures(features)
+        return features
+
+    def vector_layer(self) -> QgsVectorLayer:
+        """Create vector layer from Coverage."""
+        layer = prepare_vector_layer(self.domain_type, self.crs)
+        layer.dataProvider().addAttributes(prepare_fields(self.ranges))
+        layer.updateFields()
+        return layer
+
+    def vector_layers(self) -> typing.List[QgsVectorLayer]:
+        layers: typing.List[QgsVectorLayer] = []
+
+        self._validate_composite_axes()
+
+        layer = self.vector_layer()
+
+        layer.dataProvider().addFeatures(self.coverage_features(layer))
 
         layers.append(layer)
 
