@@ -236,6 +236,8 @@ class Coverage:
 
             RasterTemplate.write_array_to_band(dp, data.array, 1)
 
+            dp = None
+
             layer = QgsRasterLayer(file_to_save.as_posix(), layer_name, "gdal")
 
             if time_step and data.time:
