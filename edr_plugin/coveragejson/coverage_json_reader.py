@@ -6,6 +6,7 @@ from pathlib import Path
 from qgis.core import QgsCoordinateReferenceSystem, QgsMapLayer
 
 from edr_plugin.coveragejson.coverage import Coverage
+from edr_plugin.coveragejson.utils import set_project_time_range
 
 
 class CoverageJSONReader:
@@ -29,6 +30,9 @@ class CoverageJSONReader:
 
         if self.coverage_json["type"] not in ["Coverage", "CoverageCollection"]:
             raise ValueError("Not a valid CoverageJSON")
+
+        self.time_range = None
+        self.time_step = None
 
     @property
     def is_collection(self) -> bool:
@@ -115,11 +119,36 @@ class CoverageJSONReader:
 
         if self.is_collection:
             for i in range(self.coverages_count):
-                layers.extend(self.coverage(i).map_layers())
+                coverage = self.coverage(i)
+
+                time_range_coverage = coverage.time_range()
+                time_step_coverage = coverage.time_step()
+
+                if time_range_coverage:
+                    if self.time_range:
+                        self.time_range = self.time_range.extend(time_range_coverage)
+                    else:
+                        self.time_range = time_range_coverage
+
+                if self.time_step:
+                    if time_step_coverage < self.time_step:
+                        self.time_step = time_step_coverage
+                else:
+                    self.time_step = time_step_coverage
+
+                layers.extend(coverage.map_layers())
         else:
-            layers.extend(self.coverage().map_layers())
+            coverage = self.coverage()
+
+            self.time_range = coverage.time_range()
+            self.time_step = coverage.time_step()
+
+            layers.extend(coverage.map_layers())
 
         if layers:
             return layers
 
         raise ValueError("Domain type not supported yet.")
+
+    def qgsproject_setup_time_settings(self) -> None:
+        set_project_time_range(self.time_range, self.time_step)
