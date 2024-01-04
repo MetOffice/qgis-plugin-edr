@@ -148,7 +148,8 @@ def set_layer_render_from_shader(layer: QgsRasterLayer, shader: typing.Optional[
 def set_project_time_range(time_range: QgsDateTimeRange, time_step: typing.Optional[float] = 3600) -> None:
     """Sets project time range and time step. Time step is in seconds (with default being one hour)."""
     time_settings = QgsProject.instance().timeSettings()
-    time_settings.setTemporalRange(time_range)
+    if time_range:
+        time_settings.setTemporalRange(time_range)
     if time_step:
         time_settings.setTimeStep(time_step)
 
