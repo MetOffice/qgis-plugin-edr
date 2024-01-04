@@ -2,6 +2,7 @@ import typing
 
 from qgis.core import QgsMapLayer, QgsVectorLayer, QgsWkbTypes
 
+from edr_plugin.coveragejson.coverage import Coverage
 from edr_plugin.coveragejson.coverage_json_reader import CoverageJSONReader
 
 
@@ -13,23 +14,25 @@ def test_simple_grid(data_dir):
     coverage_json = CoverageJSONReader(filename)
 
     assert coverage_json.domain_type == "MultiPolygon"
-    assert coverage_json.has_t is False
-    assert coverage_json.has_z is False
-    assert coverage_json.has_composite_axe is True
+    assert coverage_json.coverages_count == 1
 
-    assert coverage_json.parameter_names == ["Building_Type", "Building_Levels"]
+    coverage = coverage_json.coverage()
+    assert isinstance(coverage, Coverage)
 
-    for param in coverage_json.parameter_names:
-        assert coverage_json.parameter(param)
-        assert isinstance(coverage_json.parameter(param), typing.Dict)
+    assert coverage.has_t is False
+    assert coverage.has_z is False
+    assert coverage.has_composite_axe is True
 
-        assert coverage_json.has_t_in_data(param) is False
-        assert coverage_json.has_z_in_data(param) is False
+    assert coverage.parameter_names == ["Building_Type", "Building_Levels"]
 
-        assert coverage_json.parameter_ranges(param)
-        assert isinstance(coverage_json.parameter_ranges(param), typing.Dict)
+    for param in coverage.parameter_names:
+        assert coverage.has_t_in_data(param) is False
+        assert coverage.has_z_in_data(param) is False
 
-    layers = coverage_json.vector_layers()
+        assert coverage.parameter_ranges(param)
+        assert isinstance(coverage.parameter_ranges(param), typing.Dict)
+
+    layers = coverage.vector_layers()
 
     assert isinstance(layers, typing.List)
     assert len(layers) == 1
