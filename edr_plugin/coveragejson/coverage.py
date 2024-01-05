@@ -235,8 +235,8 @@ class Coverage:
 
     def parameter_info(self, parameter_name: str) -> typing.Dict:
         """Extract parameter values as dictionary."""
-        if "parameters" not in self.coverage_json:
-            return self.coverage_json["ranges"][parameter_name]
+        if "parameters" in self.coverage_json:
+            return self.coverage_json["parameters"][parameter_name]
         return {}
 
     def time_step(self) -> typing.Optional[float]:
