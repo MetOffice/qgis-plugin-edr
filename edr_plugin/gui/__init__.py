@@ -141,6 +141,8 @@ class EdrDialog(QDialog):
             for collection in self.api_client.get_collections():
                 collection_id = collection["id"]
                 collection_name = collection.get("title", collection_id)
+                if not collection_name:
+                    collection_name = collection_id
                 self.collection_cbo.addItem(collection_name, collection)
         except EdrApiClientError as e:
             self.plugin.communication.show_error(f"Fetching collections failed due to the following error:\n{e}")
