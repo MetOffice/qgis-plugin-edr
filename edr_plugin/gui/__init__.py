@@ -39,7 +39,9 @@ class EdrDialog(QDialog):
         self.query_cbo.currentIndexChanged.connect(self.populate_data_query_attributes)
         self.query_set_pb.clicked.connect(self.set_query_extent)
         self.toggle_parameters_cbox.stateChanged.connect(self.toggle_parameters)
-        self.toggle_intervals_cbox.stateChanged.connect(self.toggle_intervals)
+        self.toggle_vertical_intervals_cbox.stateChanged.connect(self.toggle_vertical_intervals)
+        self.custom_dimension_cbo.currentIndexChanged.connect(self.populate_custom_dimension_values)
+        self.toggle_custom_intervals_cbox.stateChanged.connect(self.toggle_custom_intervals)
         self.cancel_pb.clicked.connect(self.close)
         self.run_pb.clicked.connect(self.query_data_collection)
 
@@ -77,12 +79,19 @@ class EdrDialog(QDialog):
         else:
             self.parameters_cbo.deselectAllOptions()
 
-    def toggle_intervals(self, checked):
-        """Check/uncheck all available intervals."""
+    def toggle_vertical_intervals(self, checked):
+        """Check/uncheck all vertical intervals."""
         if checked:
-            self.intervals_cbo.selectAllOptions()
+            self.vertical_intervals_cbo.selectAllOptions()
         else:
-            self.intervals_cbo.deselectAllOptions()
+            self.vertical_intervals_cbo.deselectAllOptions()
+
+    def toggle_custom_intervals(self, checked):
+        """Check/uncheck all custom dimension intervals."""
+        if checked:
+            self.custom_intervals_cbo.selectAllOptions()
+        else:
+            self.custom_intervals_cbo.deselectAllOptions()
 
     @property
     def data_query_tools(self):
@@ -113,11 +122,16 @@ class EdrDialog(QDialog):
             self.toggle_parameters_cbox,
             self.temporal_grp,
             self.vertical_grp,
+            self.custom_grp,
             self.from_datetime,
             self.to_datetime,
-            self.intervals_cbo,
-            self.toggle_intervals_cbox,
-            self.use_range_cbox,
+            self.vertical_intervals_cbo,
+            self.toggle_vertical_intervals_cbox,
+            self.use_vertical_range_cbox,
+            self.custom_dimension_cbo,
+            self.custom_intervals_cbo,
+            self.use_vertical_range_cbox,
+            self.toggle_vertical_intervals_cbox,
         ]
         return widgets
 
@@ -195,6 +209,32 @@ class EdrDialog(QDialog):
             self.query_cbo.addItem(query_name, data_query)
         self.populate_data_query_attributes()
 
+    def populate_custom_dimension_values(self):
+        """Populate custom dimension values."""
+        self.custom_intervals_cbo.clear()
+        current_dimension = self.custom_dimension_cbo.currentData()
+        if current_dimension:
+            raw_custom_values = current_dimension["values"]
+            if len(raw_custom_values) == 1:
+                value = raw_custom_values[0]
+                if isinstance(value, str):
+                    if value.startswith("R"):
+                        try:
+                            num_of_intervals, min_value, interval_step = [int(v) for v in value[1:].split("/")]
+                            custom_values = [str(v) for v in range(min_value, num_of_intervals + 1, interval_step)]
+                        except ValueError:
+                            custom_values = [value]
+                    elif "," in value:
+                        custom_values = [v for v in value.split(",")]
+                    else:
+                        custom_values = [value]
+                else:
+                    custom_values = [str(value)]
+            else:
+                custom_values = raw_custom_values
+            self.custom_intervals_cbo.addItems(custom_values)
+            self.custom_intervals_cbo.toggleItemCheckState(0)
+
     def populate_data_query_attributes(self):
         """Populate data query attributes."""
         self.current_data_query_tool = None
@@ -242,8 +282,8 @@ class EdrDialog(QDialog):
         try:
             self.temporal_grp.setEnabled(True)
             temporal_extent = collection_extent["temporal"]
-            interval = temporal_extent["interval"]
-            from_datetime_str, to_datetime_str = interval[0]
+            temporal_interval = temporal_extent["interval"]
+            from_datetime_str, to_datetime_str = temporal_interval[0]
             from_datetime = QDateTime.fromString(from_datetime_str, Qt.ISODate)
             to_datetime = QDateTime.fromString(to_datetime_str, Qt.ISODate)
             self.from_datetime.setDateTime(from_datetime)
@@ -253,11 +293,21 @@ class EdrDialog(QDialog):
         try:
             self.vertical_grp.setEnabled(True)
             vertical_extent = collection_extent["vertical"]
-            values = vertical_extent["values"]
-            self.intervals_cbo.addItems(values)
-            self.intervals_cbo.toggleItemCheckState(0)
+            vertical_values = vertical_extent["values"]
+            self.vertical_intervals_cbo.addItems(vertical_values)
+            self.vertical_intervals_cbo.toggleItemCheckState(0)
         except KeyError:
             self.vertical_grp.setDisabled(True)
+        try:
+            self.custom_grp.setEnabled(True)
+            custom_dimensions = collection_extent["custom"]
+            for custom_dimension in custom_dimensions:
+                custom_dimension_name = custom_dimension["id"]
+                self.custom_dimension_cbo.addItem(custom_dimension_name, custom_dimension)
+            self.custom_dimension_cbo.setCurrentIndex(0)
+            self.populate_custom_dimension_values()
+        except KeyError:
+            self.custom_grp.setDisabled(True)
 
     def collect_query_parameters(self):
         """Collect query parameters from the widgets."""
@@ -281,12 +331,19 @@ class EdrDialog(QDialog):
         else:
             temporal_range = None
         if self.vertical_grp.isEnabled():
-            intervals = self.intervals_cbo.checkedItems()
-            is_min_max_range = self.use_range_cbox.isChecked()
-            vertical_extent = (intervals, is_min_max_range)
+            vertical_intervals = self.vertical_intervals_cbo.checkedItems()
+            vertical_is_min_max_range = self.use_vertical_range_cbox.isChecked()
+            vertical_extent = (vertical_intervals, vertical_is_min_max_range)
         else:
             vertical_extent = None
-        return collection_id, instance, crs, output_format, parameters, temporal_range, vertical_extent
+        if self.custom_grp.isEnabled():
+            custom_dimension_name = self.custom_dimension_cbo.currentText()
+            custom_intervals = self.custom_intervals_cbo.checkedItems()
+            custom_is_min_max_range = self.use_custom_range_cbox.isChecked()
+            custom_extent = (custom_dimension_name, custom_intervals, custom_is_min_max_range)
+        else:
+            custom_extent = None
+        return collection_id, instance, crs, output_format, parameters, temporal_range, vertical_extent, custom_extent
 
     def set_query_extent(self):
         """Set query extent."""

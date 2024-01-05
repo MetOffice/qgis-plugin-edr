@@ -15,6 +15,7 @@ class EDRDataQueryDefinition:
         parameters: List,
         temporal_range: Tuple[str, str],
         vertical_extent: Tuple[List, bool],
+        custom_dimension: Tuple[str, List, bool],
     ):
         self.collection_id = collection_id
         self.instance_id = instance_id
@@ -23,6 +24,7 @@ class EDRDataQueryDefinition:
         self.parameters = parameters
         self.temporal_range = temporal_range
         self.vertical_extent = vertical_extent
+        self.custom_dimension = custom_dimension
 
     def as_request_parameters(self) -> Tuple[Tuple, Dict]:
         endpoint_parameters = (self.collection_id, self.instance_id, self.NAME)
@@ -35,12 +37,19 @@ class EDRDataQueryDefinition:
         if self.temporal_range:
             query_parameters["datetime"] = "/".join(self.temporal_range)
         if self.vertical_extent:
-            intervals, is_min_max_range = self.vertical_extent
-            if is_min_max_range:
-                z = f"{intervals[-1]}/{intervals[0]}"
+            vertical_intervals, vertical_is_min_max_range = self.vertical_extent
+            if vertical_is_min_max_range:
+                z = f"{vertical_intervals[-1]}/{vertical_intervals[0]}"
             else:
-                z = ",".join(intervals)
+                z = ",".join(vertical_intervals)
             query_parameters["z"] = z
+        if self.custom_dimension:
+            custom_dimension_name, custom_intervals, custom_is_min_max_range = self.custom_dimension
+            if custom_is_min_max_range:
+                custom_dimension_value = f"{custom_intervals[0]}/{custom_intervals[-1]}"
+            else:
+                custom_dimension_value = ",".join(custom_intervals)
+            query_parameters[custom_dimension_name] = custom_dimension_value
         return endpoint_parameters, query_parameters
 
 
