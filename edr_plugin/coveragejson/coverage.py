@@ -235,12 +235,18 @@ class Coverage:
 
     def parameter_info(self, parameter_name: str) -> typing.Dict:
         """Extract parameter values as dictionary."""
-        return self.coverage_json["parameters"][parameter_name]
+        if "parameters" not in self.coverage_json:
+            return self.coverage_json["ranges"][parameter_name]
+        return {}
 
     def time_step(self) -> typing.Optional[float]:
         """Extract time step if it exists."""
         if self.has_t:
             t = self.axe_values("t")
+
+            if len(t) < 2:
+                return None
+
             t0 = QDateTime.fromString(t[0], Qt.ISODate)
             t1 = QDateTime.fromString(t[1], Qt.ISODate)
 
