@@ -64,6 +64,17 @@ class Coverage:
         """Get axes names."""
         return [x for x in self.axes.keys()]
 
+    def range_axes_with_sizes(self, parameter_name: str) -> typing.Dict[str, int]:
+        """Get axes names for given parameter."""
+        axis_names = self.parameter_ranges(parameter_name)["axisNames"]
+        axis_shape = self.parameter_ranges(parameter_name)["shape"]
+
+        relevant_axes = {}
+        for i, _ in enumerate(axis_names):
+            if axis_shape[i] > 1:
+                relevant_axes[axis_names[i]] = axis_shape[i]
+        return relevant_axes
+
     @staticmethod
     def get_axe_values(axe_dict: typing.Dict) -> typing.List[float]:
         """Extract axe values from axes element."""
@@ -149,6 +160,25 @@ class Coverage:
         """Check if there is `t` axis specific parameter."""
         return "t" in self.parameter_ranges(parameter_name)["axisNames"]
 
+    def _access_indexes(
+        self, indices_to_use: typing.Dict[str, int], axes_with_sizes: typing.Dict[str, int]
+    ) -> typing.List[int]:
+        """Generate list of indexes for given axes sizes."""
+        indexes = [0] * len(axes_with_sizes)
+        axes_order = list(axes_with_sizes.keys())
+
+        if abs(axes_order.index("x") - axes_order.index("y")) != 1:
+            raise ValueError("Unsupported axes order: `x` and `y` need to be next to each other.")
+
+        for axe, index in indices_to_use.items():
+            if axe in axes_order:
+                indexes[axes_order.index(axe)] = index
+        xy_index = min(axes_order.index("x"), axes_order.index("y"))
+        indexes.insert(xy_index, ...)
+        indexes.pop(axes_order.index("x") + 1)
+        indexes.pop(axes_order.index("y") + 1)
+        return indexes
+
     def _format_values_into_rasters(self, parameter_name: str) -> typing.Dict[str, ArrayWithTZ]:
         """Format CoverageJSON values into dictionary of raster data (data name and raster information)."""
         info = self.parameter_ranges(parameter_name)
@@ -158,24 +188,35 @@ class Coverage:
 
         values = np.array(info["values"])
 
-        self._validate_axis_names(info["axisNames"])
+        axes_sizes = self.range_axes_with_sizes(parameter_name)
 
-        values = values.reshape(info["shape"])
+        self._validate_axis_names(list(axes_sizes.keys()))
+
+        values = values.reshape(list(axes_sizes.values()))
 
         data_dict = {}
 
         if self.has_t_in_data(parameter_name) and self.has_z_in_data(parameter_name):
             for t_i, t in enumerate(self.axe_values("t")):
                 for z_i, z in enumerate(self.axe_values("z")):
-                    data_dict[f"{t}_{z}"] = ArrayWithTZ(values[t_i, z_i, ...], QDateTime.fromString(t, Qt.ISODate), z)
+                    indices_to_use = {"t": t_i, "z": z_i}
+                    array_indexes = self._access_indexes(indices_to_use, axes_sizes)
+
+                    data_dict[f"{t}_{z}"] = ArrayWithTZ(values[array_indexes], QDateTime.fromString(t, Qt.ISODate), z)
 
         elif self.has_t_in_data(parameter_name):
             for t_i, t in enumerate(self.axe_values("t")):
-                data_dict[f"{t}"] = ArrayWithTZ(values[t_i, ...], time=QDateTime.fromString(t, Qt.ISODate))
+                indices_to_use = {"t": t_i}
+                array_indexes = self._access_indexes(indices_to_use, axes_sizes)
+
+                data_dict[f"{t}"] = ArrayWithTZ(values[array_indexes], time=QDateTime.fromString(t, Qt.ISODate))
 
         elif self.has_z_in_data(parameter_name):
             for z_i, z in enumerate(self.axe_values("z")):
-                data_dict[f"{z}"] = ArrayWithTZ(values[z_i, ...], z=z)
+                indices_to_use = {"z": z_i}
+                array_indexes = self._access_indexes(indices_to_use, axes_sizes)
+
+                data_dict[f"{z}"] = ArrayWithTZ(values[array_indexes], z=z)
 
         else:
             data_dict[""] = ArrayWithTZ(values)
