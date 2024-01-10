@@ -9,7 +9,7 @@ from edr_plugin.coveragejson.coverage_json_reader import CoverageJSONReader
 from edr_plugin.coveragejson.utils import ArrayWithTZ
 
 
-def test_simple_grid(data_dir, qgis_new_project):
+def test_simple_grid(data_dir):
     filename = data_dir / "grid_single_variable.covjson"
 
     assert filename.exists()
@@ -63,7 +63,7 @@ def test_simple_grid(data_dir, qgis_new_project):
     assert isinstance(layers[0], QgsMapLayer)
 
 
-def test_time_2variables_grid(data_dir, qgis_new_project):
+def test_time_2variables_grid(data_dir):
     filename = data_dir / "grid_time_2_variables.covjson"
 
     assert filename.exists()

@@ -4,9 +4,11 @@ from pathlib import Path
 import numpy as np
 from osgeo import gdal
 from qgis.core import (
+    QgsCategorizedSymbolRenderer,
     QgsColorRampShader,
     QgsCoordinateReferenceSystem,
     QgsDateTimeRange,
+    QgsFeatureRenderer,
     QgsField,
     QgsGeometry,
     QgsLineString,
@@ -15,7 +17,9 @@ from qgis.core import (
     QgsProject,
     QgsRasterLayer,
     QgsRasterShader,
+    QgsRendererCategory,
     QgsSingleBandPseudoColorRenderer,
+    QgsSymbol,
     QgsVectorLayer,
 )
 from qgis.PyQt.QtCore import QDateTime, QVariant
@@ -198,13 +202,21 @@ def json_to_polygon(json_geom: typing.List) -> QgsGeometry:
     return QgsGeometry(polygon)
 
 
-def prepare_fields(ranges: typing.Dict) -> typing.List[QgsField]:
+def prepare_fields(
+    ranges: typing.Dict, parameter_units: typing.Optional[typing.Dict[str, str]] = None
+) -> typing.List[QgsField]:
     fields = []
 
     for parameter in ranges.keys():
         param_type = ranges[parameter]["dataType"]
 
-        fields.append(QgsField(parameter, parameter_data_type_to_qgis_type(param_type)))
+        parameter_name = parameter
+
+        if parameter_units:
+            if parameter_name in parameter_units:
+                parameter_name = f"{parameter_name} ({parameter_units[parameter_name]})"
+
+        fields.append(QgsField(parameter_name, parameter_data_type_to_qgis_type(param_type)))
 
     return fields
 
@@ -234,3 +246,59 @@ def prepare_vector_layer(
         raise ValueError(f"Layer {layer_name} is not valid.")
 
     return layer
+
+
+def find_field(field_name_start: str, layer: QgsVectorLayer) -> str:
+    """Find field name in layer based on start of field name."""
+    fields_names = layer.fields().names()
+
+    for name in fields_names:
+        if name.startswith(field_name_start):
+            return name
+
+    return ""
+
+
+def prepare_vector_render(
+    layer: QgsVectorLayer, parameters: typing.Dict, add_category_for_no_value: bool = True
+) -> QgsFeatureRenderer:
+    """Create render for given vector layer based on given parameters. Optionally add category for no value.
+    If `parameters` is missing required values return original layer renderer."""
+
+    renderer = layer.renderer()
+
+    if len(parameters) < 1:
+        return renderer
+
+    variable = parameters[list(parameters.keys())[0]]
+
+    variable_name = find_field(list(parameters.keys())[0], layer)
+
+    if "categories" not in variable["observedProperty"]:
+        return layer.renderer()
+    else:
+        categories = variable["observedProperty"]["categories"]
+        category_encoding = variable["categoryEncoding"]
+
+        renderer = QgsCategorizedSymbolRenderer(variable_name)
+
+        for category in categories:
+            value = category["id"]
+            if value in category_encoding:
+                value = category_encoding[value]
+
+            symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+            symbol.setColor(QColor(category["preferredColor"]))
+
+            label = category["label"][list(category["label"].keys())[0]]
+
+            category = QgsRendererCategory(value, symbol, label)
+            renderer.addCategory(category)
+
+        if add_category_for_no_value:
+            symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+            symbol.setColor(QColor("#ff00ff"))
+            category = QgsRendererCategory(None, symbol, "No data")
+            renderer.addCategory(category)
+
+    return renderer
