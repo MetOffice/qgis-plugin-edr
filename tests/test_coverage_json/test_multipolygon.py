@@ -1,12 +1,18 @@
 import typing
 
-from qgis.core import QgsMapLayer, QgsVectorLayer, QgsWkbTypes
+from qgis.core import (
+    QgsCategorizedSymbolRenderer,
+    QgsMapLayer,
+    QgsVectorLayer,
+    QgsWkbTypes,
+)
 
 from edr_plugin.coveragejson.coverage import Coverage
 from edr_plugin.coveragejson.coverage_json_reader import CoverageJSONReader
+from edr_plugin.coveragejson.utils import prepare_vector_render
 
 
-def test_simple_grid(data_dir):
+def test_simple_multipolygon(data_dir):
     filename = data_dir / "vector_multipolygon.covjson"
 
     assert filename.exists()
@@ -47,3 +53,29 @@ def test_simple_grid(data_dir):
     assert isinstance(layers, typing.List)
     assert len(layers) == 1
     assert isinstance(layers[0], QgsMapLayer)
+
+
+def test_create_renderer(data_dir):
+    filename = data_dir / "vector_multipolygon.covjson"
+
+    assert filename.exists()
+
+    coverage_json = CoverageJSONReader(filename)
+
+    coverage = coverage_json.coverage()
+    assert isinstance(coverage, Coverage)
+
+    layer = coverage.vector_layers()[0]
+    assert layer.isValid()
+
+    # only existing categories
+    renderer = prepare_vector_render(layer, coverage.parameters, False)
+
+    assert isinstance(renderer, QgsCategorizedSymbolRenderer)
+    assert len(renderer.categories()) == 13
+
+    # +1 category for no value
+    renderer = prepare_vector_render(layer, coverage.parameters)
+
+    assert isinstance(renderer, QgsCategorizedSymbolRenderer)
+    assert len(renderer.categories()) == 14

@@ -21,6 +21,7 @@ from edr_plugin.coveragejson.utils import (
     prepare_fields,
     prepare_raster_shader,
     prepare_vector_layer,
+    prepare_vector_render,
     set_layer_render_from_shader,
     set_project_time_range,
 )
@@ -352,6 +353,8 @@ class Coverage:
         layer = self.vector_layer()
 
         layer.dataProvider().addFeatures(self.coverage_features(layer))
+
+        layer.setRenderer(prepare_vector_render(layer, self.parameters))
 
         layers.append(layer)
 

@@ -4,9 +4,11 @@ from pathlib import Path
 import numpy as np
 from osgeo import gdal
 from qgis.core import (
+    QgsCategorizedSymbolRenderer,
     QgsColorRampShader,
     QgsCoordinateReferenceSystem,
     QgsDateTimeRange,
+    QgsFeatureRenderer,
     QgsField,
     QgsGeometry,
     QgsLineString,
@@ -15,7 +17,9 @@ from qgis.core import (
     QgsProject,
     QgsRasterLayer,
     QgsRasterShader,
+    QgsRendererCategory,
     QgsSingleBandPseudoColorRenderer,
+    QgsSymbol,
     QgsVectorLayer,
 )
 from qgis.PyQt.QtCore import QDateTime, QVariant
@@ -234,3 +238,46 @@ def prepare_vector_layer(
         raise ValueError(f"Layer {layer_name} is not valid.")
 
     return layer
+
+
+def prepare_vector_render(
+    layer: QgsVectorLayer, parameters: typing.Dict, add_category_for_no_value: bool = True
+) -> QgsFeatureRenderer:
+    """Create render for given vector layer based on given parameters. Optionally add category for no value.
+    If `parameters` is missing required values return original layer renderer."""
+
+    renderer = layer.renderer()
+
+    if len(parameters) < 1:
+        return renderer
+
+    variable = parameters[list(parameters.keys())[0]]
+
+    if "categories" not in variable["observedProperty"]:
+        return layer.renderer()
+    else:
+        categories = variable["observedProperty"]["categories"]
+        category_encoding = variable["categoryEncoding"]
+
+        renderer = QgsCategorizedSymbolRenderer(list(parameters.keys())[0])
+
+        for category in categories:
+            value = category["id"]
+            if value in category_encoding:
+                value = category_encoding[value]
+
+            symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+            symbol.setColor(QColor(category["preferredColor"]))
+
+            label = category["label"][list(category["label"].keys())[0]]
+
+            category = QgsRendererCategory(value, symbol, label)
+            renderer.addCategory(category)
+
+        if add_category_for_no_value:
+            symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+            symbol.setColor(QColor("#ff00ff"))
+            category = QgsRendererCategory(None, symbol, "No data")
+            renderer.addCategory(category)
+
+    return renderer
