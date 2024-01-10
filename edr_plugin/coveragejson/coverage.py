@@ -272,15 +272,15 @@ class Coverage:
 
         unit = self.unit_label(parameter_name)
 
-        layer_name = parameter_name
+        layer_name_start = parameter_name
         if unit:
-            layer_name = f"{layer_name}-[{unit}]"
+            layer_name_start = f"{layer_name_start}-[{unit}]"
 
         for key, data in formatted_data.items():
             if key:
-                layer_name = f"{layer_name}_{key}"
+                layer_name = f"{layer_name_start}_{key}"
             else:
-                layer_name = layer_name
+                layer_name = layer_name_start
 
             file_to_save = self.folder_to_save_data / f"{layer_name}.tif"
 
