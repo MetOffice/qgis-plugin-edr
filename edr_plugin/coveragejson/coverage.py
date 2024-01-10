@@ -163,7 +163,7 @@ class Coverage:
 
     def _access_indexes(
         self, indices_to_use: typing.Dict[str, int], axes_with_sizes: typing.Dict[str, int]
-    ) -> typing.List[int]:
+    ) -> typing.Tuple[int]:
         """Generate list of indexes for given axes sizes."""
         indexes = [0] * len(axes_with_sizes)
         axes_order = list(axes_with_sizes.keys())
@@ -178,7 +178,7 @@ class Coverage:
         indexes.insert(xy_index, ...)
         indexes.pop(axes_order.index("x") + 1)
         indexes.pop(axes_order.index("y") + 1)
-        return indexes
+        return tuple(indexes)
 
     def _format_values_into_rasters(self, parameter_name: str) -> typing.Dict[str, ArrayWithTZ]:
         """Format CoverageJSON values into dictionary of raster data (data name and raster information)."""
