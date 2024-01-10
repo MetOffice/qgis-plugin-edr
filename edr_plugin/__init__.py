@@ -14,7 +14,7 @@ def classFactory(iface):
 
 
 class EDRPlugin:
-    PLUGIN_NAME = "Environmental Data Retrival"
+    PLUGIN_NAME = "Environmental Data Retrieval"
     PLUGIN_ENTRY_NAME = "EDR"
     MAX_SIMULTANEOUS_DOWNLOADS = 1
 

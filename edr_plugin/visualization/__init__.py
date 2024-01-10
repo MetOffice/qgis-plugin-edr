@@ -58,7 +58,7 @@ class EdrLayerManager:
             "grib2": self.mdal_layer_loader,
             "json": self.ogr_layer_loader,
             "kml": self.ogr_layer_loader,
-            "nc": self.gdal_layer_loader,
+            "nc": self.mdal_layer_loader,
             "tif": self.gdal_layer_loader,
             "tiff": self.gdal_layer_loader,
             "geotiff": self.gdal_layer_loader,
