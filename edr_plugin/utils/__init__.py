@@ -37,6 +37,11 @@ def download_reply_file(reply, download_dir, download_filename=None):
             if file_extension:
                 download_filename += f".{file_extension}"
     download_filepath = os.path.join(download_dir, download_filename)
+    file_copy_number = 1
+    no_extension_download_filepath, download_file_extension = os.path.splitext(download_filepath)
+    while os.path.exists(download_filepath):
+        download_filepath = f"{no_extension_download_filepath} ({file_copy_number}){download_file_extension}"
+        file_copy_number += 1
     with open(download_filepath, "wb") as f:
         f.write(reply.content())
     return download_filepath
