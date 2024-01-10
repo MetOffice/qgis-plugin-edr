@@ -202,13 +202,21 @@ def json_to_polygon(json_geom: typing.List) -> QgsGeometry:
     return QgsGeometry(polygon)
 
 
-def prepare_fields(ranges: typing.Dict) -> typing.List[QgsField]:
+def prepare_fields(
+    ranges: typing.Dict, parameter_units: typing.Optional[typing.Dict[str, str]] = None
+) -> typing.List[QgsField]:
     fields = []
 
     for parameter in ranges.keys():
         param_type = ranges[parameter]["dataType"]
 
-        fields.append(QgsField(parameter, parameter_data_type_to_qgis_type(param_type)))
+        parameter_name = parameter
+
+        if parameter_units:
+            if parameter_name in parameter_units:
+                parameter_name = f"{parameter_name} ({parameter_units[parameter_name]})"
+
+        fields.append(QgsField(parameter_name, parameter_data_type_to_qgis_type(param_type)))
 
     return fields
 
@@ -240,6 +248,17 @@ def prepare_vector_layer(
     return layer
 
 
+def find_field(field_name_start: str, layer: QgsVectorLayer) -> str:
+    """Find field name in layer based on start of field name."""
+    fields_names = layer.fields().names()
+
+    for name in fields_names:
+        if name.startswith(field_name_start):
+            return name
+
+    return ""
+
+
 def prepare_vector_render(
     layer: QgsVectorLayer, parameters: typing.Dict, add_category_for_no_value: bool = True
 ) -> QgsFeatureRenderer:
@@ -253,13 +272,15 @@ def prepare_vector_render(
 
     variable = parameters[list(parameters.keys())[0]]
 
+    variable_name = find_field(list(parameters.keys())[0], layer)
+
     if "categories" not in variable["observedProperty"]:
         return layer.renderer()
     else:
         categories = variable["observedProperty"]["categories"]
         category_encoding = variable["categoryEncoding"]
 
-        renderer = QgsCategorizedSymbolRenderer(list(parameters.keys())[0])
+        renderer = QgsCategorizedSymbolRenderer(variable_name)
 
         for category in categories:
             value = category["id"]

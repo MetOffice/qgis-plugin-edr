@@ -270,11 +270,17 @@ class Coverage:
             self.crs.toWkt(),
         )
 
+        unit = self.unit_label(parameter_name)
+
+        layer_name = parameter_name
+        if unit:
+            layer_name = f"{layer_name}-[{unit}]"
+
         for key, data in formatted_data.items():
             if key:
-                layer_name = f"{parameter_name}_{key}"
+                layer_name = f"{layer_name}_{key}"
             else:
-                layer_name = parameter_name
+                layer_name = layer_name
 
             file_to_save = self.folder_to_save_data / f"{layer_name}.tif"
 
@@ -341,7 +347,7 @@ class Coverage:
     def vector_layer(self) -> QgsVectorLayer:
         """Create vector layer from Coverage."""
         layer = prepare_vector_layer(self.domain_type, self.crs)
-        layer.dataProvider().addAttributes(prepare_fields(self.ranges))
+        layer.dataProvider().addAttributes(prepare_fields(self.ranges, self.parameters_units))
         layer.updateFields()
         return layer
 
@@ -374,3 +380,28 @@ class Coverage:
             return layers
 
         raise ValueError("Domain type not supported yet.")
+
+    def unit_label(self, parameter_name: str) -> typing.Optional[str]:
+        """Unit label for given parameter."""
+        parameters = self.parameters
+        if parameters:
+            for parameter_name in parameters.keys():
+                if "unit" in parameters[parameter_name] and "label" in parameters[parameter_name]["unit"]:
+                    return parameters[parameter_name]["unit"]["label"][
+                        list(parameters[parameter_name]["unit"]["label"].keys())[0]
+                    ]
+                else:
+                    return None
+        return None
+
+    @property
+    def parameters_units(self) -> typing.Dict[str, str]:
+        """Get parameter units if exist."""
+        labels = {}
+
+        for parameter in self.parameter_names:
+            unit = self.unit_label(parameter)
+            if unit:
+                labels[parameter] = unit
+
+        return labels
