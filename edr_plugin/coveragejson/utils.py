@@ -158,17 +158,24 @@ def set_project_time_range(time_range: QgsDateTimeRange, time_step: typing.Optio
         time_settings.setTimeStep(time_step)
 
 
-def feature_attributes(ranges: typing.Dict, number_of_features: int) -> typing.List[typing.List[typing.Any]]:
+def feature_attributes(
+    ranges: typing.Dict, number_of_features: int, simplify_into_single_value: bool = False
+) -> typing.List[typing.List[typing.Any]]:
     """Prepare fields from given parameter ranges."""
 
     features_attributes: typing.List[typing.List[typing.Any]] = [[] for _ in range(number_of_features)]
 
     for key in ranges.keys():
-        if ranges[key]["shape"][0] != number_of_features:
-            raise ValueError(f"Number of features does not match number of values for element `{key}`.")
+        if not simplify_into_single_value:
+            if ranges[key]["shape"][0] != number_of_features:
+                raise ValueError(f"Number of features does not match number of values for element `{key}`.")
 
         for i, value in enumerate(ranges[key]["values"]):
-            features_attributes[i].append(value)
+            if simplify_into_single_value:
+                features_attributes[i].append(value)
+                break
+            else:
+                features_attributes[i].append(value)
 
     return features_attributes
 
