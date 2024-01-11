@@ -19,15 +19,16 @@ CONTENT_TYPE_EXTENSIONS = MappingProxyType(
 )
 
 
-def download_reply_file(reply, download_dir, download_filename=None):
+def download_reply_file(reply, download_dir, data_query_definition, download_filename=None):
     """Download and write content from the QgsNetworkReplyContent object."""
     if not download_filename:
+        json_ext, covjson_ext = "json", "covjson"
         raw_content_type_header = reply.rawHeader("content-type".encode())
         content_type_header = raw_content_type_header.data().decode(errors="ignore")
         content_type = content_type_header.split(";")[0]
         file_extension = CONTENT_TYPE_EXTENSIONS.get(content_type, "")
         raw_content_disposition_header = reply.rawHeader("content-disposition".encode())
-        if raw_content_disposition_header and file_extension != "covjson":
+        if raw_content_disposition_header and file_extension not in {json_ext, covjson_ext}:
             content_disposition_header = raw_content_disposition_header.data().decode(errors="ignore")
             download_filename = reply.extractFileNameFromContentDispositionHeader(content_disposition_header)
         else:
@@ -35,6 +36,8 @@ def download_reply_file(reply, download_dir, download_filename=None):
             collection_name = re.findall("collections/(.+?)/", request_url)[0]
             download_filename = f"{collection_name}_{uuid4()}"
             if file_extension:
+                if "coveragejson" in data_query_definition.output_format.lower():
+                    file_extension = covjson_ext
                 download_filename += f".{file_extension}"
     download_filepath = os.path.join(download_dir, download_filename)
     file_copy_number = 1

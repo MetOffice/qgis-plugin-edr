@@ -31,7 +31,7 @@ class EdrDataDownloader(QRunnable):
             endpoint_parameters, payload = self.data_query_definition.as_request_parameters()
             reply = self.api_client.get_edr_data(*endpoint_parameters, payload)
             self.report_progress(f"Downloading '{self.data_query_definition.collection_id}' collection data..")
-            self.download_filepath = download_reply_file(reply, self.download_dir)
+            self.download_filepath = download_reply_file(reply, self.download_dir, self.data_query_definition)
             self.report_success(f"Downloading '{self.download_filepath}' file finished.")
         except EdrApiClientError as err:
             self.report_error(str(err))
