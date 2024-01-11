@@ -83,9 +83,12 @@ class CoverageJSONReader:
         return crs
 
     @property
-    def domain_type(self) -> str:
+    def domain_type(self) -> typing.Optional[str]:
         """Get domain type."""
         if self.is_collection:
+            if "domainType" not in self.coverage_json:
+                # domain not specified on collection level, have to exist in each coverage
+                return None
             return self.coverage_json["domainType"]
         else:
             return self.domain["domainType"]
