@@ -30,7 +30,7 @@ class ArrayWithTZ:
     """Simple class to hold raster data with time and z information."""
 
     def __init__(
-        self, array: np.ndarray, time: typing.Optional[QDateTime] = None, z: typing.Optional[float] = None
+        self, array: np.ndarray, time: typing.Optional[QDateTime] = None, z: typing.Optional[str] = None
     ) -> None:
         if time:
             if time.isValid():
