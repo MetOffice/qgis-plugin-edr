@@ -18,6 +18,7 @@ from edr_plugin.coveragejson.utils import (
     RasterTemplate,
     composite_to_geometries,
     feature_attributes,
+    make_file_stem_safe,
     prepare_fields,
     prepare_raster_shader,
     prepare_vector_layer,
@@ -282,7 +283,7 @@ class Coverage:
             else:
                 layer_name = layer_name_start
 
-            file_to_save = self.folder_to_save_data / f"{layer_name}.tif"
+            file_to_save = self.folder_to_save_data / f"{make_file_stem_safe(layer_name)}.tif"
 
             dp = raster_template.save_empty_raster(file_to_save)
 
