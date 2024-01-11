@@ -50,6 +50,8 @@ class Coverage:
         else:
             self.domain_type = domain_type
 
+        self.parent_parameters = parameters_from_parent
+
     @property
     def domain(self) -> typing.Dict:
         """Get domain element."""
@@ -97,6 +99,8 @@ class Coverage:
     @property
     def parameters(self) -> typing.Dict:
         """Get parameters element."""
+        if self.parent_parameters:
+            return self.parent_parameters
         if "parameters" not in self.coverage_json:
             return self.coverage_json["ranges"]
         else:

@@ -95,8 +95,19 @@ class CoverageJSONReader:
         """Get list of coverages in CoverageCollection."""
         if self.is_collection:
             coverages = []
-            for covarage in self.coverage_json["coverages"]:
-                coverages.append(Coverage(covarage, self.crs(), self.domain_type, self.folder_to_save_data))
+            for coverage in self.coverage_json["coverages"]:
+                parent_parameters = None
+                if "parameters" in self.coverage_json:
+                    parent_parameters = self.coverage_json["parameters"]
+                coverages.append(
+                    Coverage(
+                        coverage,
+                        self.crs(),
+                        self.domain_type,
+                        parameters_from_parent=parent_parameters,
+                        folder_to_save_data=self.folder_to_save_data,
+                    )
+                )
             return coverages
         else:
             return [Coverage(self.coverage_json, self.crs(), folder_to_save_data=self.folder_to_save_data)]
