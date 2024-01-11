@@ -63,6 +63,21 @@ def test_raster_shader_3(data_dir):
     assert shader is None
 
 
+def test_raster_shader_4(data_dir):
+    filename = data_dir / "grid_custom_domain.covjson"
+
+    assert filename.exists()
+
+    coverage_json = CoverageJSONReader(filename)
+    coverage = coverage_json.coverage()
+
+    parameter_name = "u"
+
+    shader = prepare_raster_shader(coverage.parameter_info(parameter_name), coverage.parameter_ranges(parameter_name))
+
+    assert shader is None
+
+
 def test_vector_renderer_1(data_dir):
     filename = data_dir / "vector_multipolygon.covjson"
 
