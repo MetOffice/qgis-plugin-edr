@@ -142,27 +142,6 @@ class Coverage:
         if coordinates != ["x", "y"]:
             raise ValueError(f"Unsupported composite coordinates `{coordinates}`.")
 
-    @staticmethod
-    def _validate_axis_names(existing_axis: typing.List[str]) -> None:
-        """Check that axis names are in standard order. This is needed for further processing."""
-        axis_according_to_standard = ["y", "x"]
-        if "z" in existing_axis:
-            axis_according_to_standard.insert(0, "z")
-
-        if "t" in existing_axis:
-            axis_according_to_standard.insert(0, "t")
-
-        if existing_axis != axis_according_to_standard:
-            raise ValueError(f"Unsupported axes found: {existing_axis}")
-
-    def has_z_in_data(self, parameter_name: str) -> bool:
-        """Check if there is `z` axis specific parameter."""
-        return "z" in self.parameter_ranges(parameter_name)["axisNames"]
-
-    def has_t_in_data(self, parameter_name: str) -> bool:
-        """Check if there is `t` axis specific parameter."""
-        return "t" in self.parameter_ranges(parameter_name)["axisNames"]
-
     def _format_values_into_rasters(self, parameter_name: str) -> typing.Dict[str, ArrayWithTZ]:
         """Format CoverageJSON values into dictionary of raster data (data name and raster information)."""
         info = self.parameter_ranges(parameter_name)

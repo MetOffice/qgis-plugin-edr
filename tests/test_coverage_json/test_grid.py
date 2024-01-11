@@ -29,9 +29,6 @@ def test_simple_grid(data_dir):
 
     assert coverage.parameter_names == [parameter_name]
 
-    assert coverage.has_t_in_data(parameter_name) is False
-    assert coverage.has_z_in_data(parameter_name) is False
-
     assert coverage.parameter_ranges(parameter_name)
     assert isinstance(coverage.parameter_ranges(parameter_name), typing.Dict)
 
@@ -91,9 +88,6 @@ def test_time_2variables_grid(data_dir):
 
     parameter_name = "air_temperature"
 
-    assert coverage.has_t_in_data(parameter_name) is True
-    assert coverage.has_z_in_data(parameter_name) is False
-
     assert coverage.parameter_ranges(parameter_name)
     assert isinstance(coverage.parameter_ranges(parameter_name), typing.Dict)
 
@@ -151,9 +145,6 @@ def test_two_dimensions_data(data_dir):
     assert coverage.parameter_names == ["soil_temperature"]
 
     parameter_name = "soil_temperature"
-
-    assert coverage.has_t_in_data(parameter_name) is True
-    assert coverage.has_z_in_data(parameter_name) is True
 
     assert coverage.parameter_ranges(parameter_name)
     assert isinstance(coverage.parameter_ranges(parameter_name), typing.Dict)
