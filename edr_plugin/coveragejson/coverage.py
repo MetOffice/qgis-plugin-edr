@@ -15,6 +15,7 @@ from qgis.PyQt.QtCore import QDateTime, Qt
 
 from edr_plugin.coveragejson.utils import (
     ArrayWithTZ,
+    DimensionAccessor,
     RasterTemplate,
     composite_to_geometries,
     feature_attributes,
@@ -162,25 +163,6 @@ class Coverage:
         """Check if there is `t` axis specific parameter."""
         return "t" in self.parameter_ranges(parameter_name)["axisNames"]
 
-    def _access_indexes(
-        self, indices_to_use: typing.Dict[str, int], axes_with_sizes: typing.Dict[str, int]
-    ) -> typing.Tuple[int]:
-        """Generate list of indexes for given axes sizes."""
-        indexes = [0] * len(axes_with_sizes)
-        axes_order = list(axes_with_sizes.keys())
-
-        if abs(axes_order.index("x") - axes_order.index("y")) != 1:
-            raise ValueError("Unsupported axes order: `x` and `y` need to be next to each other.")
-
-        for axe, index in indices_to_use.items():
-            if axe in axes_order:
-                indexes[axes_order.index(axe)] = index
-        xy_index = min(axes_order.index("x"), axes_order.index("y"))
-        indexes.insert(xy_index, ...)
-        indexes.pop(axes_order.index("x") + 1)
-        indexes.pop(axes_order.index("y") + 1)
-        return tuple(indexes)
-
     def _format_values_into_rasters(self, parameter_name: str) -> typing.Dict[str, ArrayWithTZ]:
         """Format CoverageJSON values into dictionary of raster data (data name and raster information)."""
         info = self.parameter_ranges(parameter_name)
@@ -190,38 +172,18 @@ class Coverage:
 
         values = np.array(info["values"])
 
-        axes_sizes = self.range_axes_with_sizes(parameter_name)
-
-        self._validate_axis_names(list(axes_sizes.keys()))
-
-        values = values.reshape(list(axes_sizes.values()))
+        values = values.reshape(info["shape"])
 
         data_dict = {}
 
-        if self.has_t_in_data(parameter_name) and self.has_z_in_data(parameter_name):
-            for t_i, t in enumerate(self.axe_values("t")):
-                for z_i, z in enumerate(self.axe_values("z")):
-                    indices_to_use = {"t": t_i, "z": z_i}
-                    array_indexes = self._access_indexes(indices_to_use, axes_sizes)
+        dim_accessor = DimensionAccessor(self.parameter_ranges(parameter_name), self.axes)
 
-                    data_dict[f"{t}_{z}"] = ArrayWithTZ(values[array_indexes], QDateTime.fromString(t, Qt.ISODate), z)
-
-        elif self.has_t_in_data(parameter_name):
-            for t_i, t in enumerate(self.axe_values("t")):
-                indices_to_use = {"t": t_i}
-                array_indexes = self._access_indexes(indices_to_use, axes_sizes)
-
-                data_dict[f"{t}"] = ArrayWithTZ(values[array_indexes], time=QDateTime.fromString(t, Qt.ISODate))
-
-        elif self.has_z_in_data(parameter_name):
-            for z_i, z in enumerate(self.axe_values("z")):
-                indices_to_use = {"z": z_i}
-                array_indexes = self._access_indexes(indices_to_use, axes_sizes)
-
-                data_dict[f"{z}"] = ArrayWithTZ(values[array_indexes], z=z)
-
-        else:
-            data_dict[""] = ArrayWithTZ(values)
+        for dimension_values in dim_accessor.iter_product:
+            data_dict[dim_accessor.dimensions_to_string_description(dimension_values)] = ArrayWithTZ(
+                values[dimension_values],
+                QDateTime.fromString(dim_accessor.t(dimension_values), Qt.ISODate),
+                dim_accessor.z(dimension_values),
+            )
 
         return data_dict
 
