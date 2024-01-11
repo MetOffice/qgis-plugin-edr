@@ -264,8 +264,12 @@ class Coverage:
 
     def raster_layers(self, parameter_name: str) -> typing.List[QgsRasterLayer]:
         """Crete list of raster layers for given parameter. The size of the list can be 1 or more."""
-        formatted_data = self._format_values_into_rasters(parameter_name)
         layers = []
+
+        if parameter_name not in self.ranges:
+            return layers
+
+        formatted_data = self._format_values_into_rasters(parameter_name)
 
         time_step = self.time_step()
 
