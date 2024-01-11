@@ -302,3 +302,8 @@ def prepare_vector_render(
             renderer.addCategory(category)
 
     return renderer
+
+
+def make_file_stem_safe(file_stem: str) -> str:
+    """Make file stem safe for saving."""
+    return file_stem.replace(" ", "_").replace(":", "_").replace("/", "-").replace("\\", "-")
