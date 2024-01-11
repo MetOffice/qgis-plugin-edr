@@ -245,6 +245,22 @@ def parameter_data_type_to_qgis_type(param_type: str) -> QVariant.Type:
     raise ValueError(f"Unknown parameter data type: {param_type}")
 
 
+def covjson_geom_to_wkb_type(covjson_geom_type: str) -> str:
+    """Convert CoverageJSON geometry type to WKB type for QGIS memory layer."""
+    covjson_geom_type = covjson_geom_type.lower()
+
+    types = {
+        "multipolygon": "MultiPolygon",
+        "polygon": "Polygon",
+        "trajectory": "LineString",
+    }
+
+    if covjson_geom_type not in types:
+        raise ValueError(f"Unsupported geometry type: {covjson_geom_type}")
+
+    return types[covjson_geom_type]
+
+
 def prepare_vector_layer(
     wkb_type: str, crs: QgsCoordinateReferenceSystem, layer_name: str = "CoverageJSON"
 ) -> QgsVectorLayer:
@@ -253,7 +269,7 @@ def prepare_vector_layer(
     else:
         crs_str = "EPSG:4326"
 
-    layer = QgsVectorLayer(f"{wkb_type}?crs={crs_str}", layer_name, "memory")
+    layer = QgsVectorLayer(f"{covjson_geom_to_wkb_type(wkb_type)}?crs={crs_str}", layer_name, "memory")
 
     if not layer.isValid():
         raise ValueError(f"Layer {layer_name} is not valid.")
