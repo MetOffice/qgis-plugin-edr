@@ -138,7 +138,7 @@ class Coverage:
     def _validate_composite_axes(self) -> None:
         """Check if data is composite."""
         data_type = self.axes["composite"]["dataType"]
-        if data_type not in ["polygon"]:
+        if data_type not in ["polygon", "tuple"]:
             raise ValueError(f"Unsupported composite data type `{data_type}`.")
         coordinates = self.axes["composite"]["coordinates"]
         if coordinates != ["x", "y"]:
