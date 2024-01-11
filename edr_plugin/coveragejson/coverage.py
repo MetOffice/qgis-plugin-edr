@@ -30,13 +30,16 @@ from edr_plugin.coveragejson.utils import (
 class Coverage:
     """Class representing coverage from CoverageJSON."""
 
-    VECTOR_DATA_DOMAIN_TYPES = ["MultiPolygon"]
+    VECTOR_DATA_DOMAIN_TYPES = ["MultiPolygon", "Trajectory"]
+    TYPES_FOR_MERGE = ["Trajectory"]
+    TYPES_FOR_ATTRIBUTE_SIMPLIFICATION = ["Trajectory"]
 
     def __init__(
         self,
         coverage_json: typing.Dict,
         crs: QgsCoordinateReferenceSystem,
         domain_type: typing.Optional[str] = None,
+        parameters_from_parent: typing.Optional[typing.Dict] = None,
         folder_to_save_data: Path = Path("/tmp"),
     ):
         self.coverage_json = coverage_json
@@ -333,10 +336,14 @@ class Coverage:
         """Check if domain is vector data."""
         return self.domain_type in self.VECTOR_DATA_DOMAIN_TYPES
 
+    @property
+    def simplify_attributes_to_single_value(self) -> bool:
+        return self.domain_type in self.TYPES_FOR_ATTRIBUTE_SIMPLIFICATION
+
     def coverage_features(self, layer: QgsVectorLayer) -> typing.List[QgsFeature]:
         """Get list of features from Coverage."""
-        geoms = composite_to_geometries(self.domain["axes"]["composite"])
-        attributes = feature_attributes(self.ranges, len(geoms))
+        geoms = composite_to_geometries(self.domain["axes"]["composite"], self.domain_type)
+        attributes = feature_attributes(self.ranges, len(geoms), self.simplify_attributes_to_single_value)
 
         features = []
         for geom, attrs in zip(geoms, attributes):
@@ -347,6 +354,11 @@ class Coverage:
             features.append(feature)
 
         return features
+
+    @property
+    def could_be_merged(self) -> bool:
+        """Check if the type of coverage would be candidate for merging coverages together."""
+        return self.domain_type in self.TYPES_FOR_MERGE
 
     def vector_layer(self) -> QgsVectorLayer:
         """Create vector layer from Coverage."""
