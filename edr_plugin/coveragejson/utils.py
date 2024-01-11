@@ -238,32 +238,52 @@ def set_project_time_range(time_range: QgsDateTimeRange, time_step: typing.Optio
         time_settings.setTimeStep(time_step)
 
 
-def feature_attributes(ranges: typing.Dict, number_of_features: int) -> typing.List[typing.List[typing.Any]]:
+def feature_attributes(
+    ranges: typing.Dict, number_of_features: int, simplify_into_single_value: bool = False
+) -> typing.List[typing.List[typing.Any]]:
     """Prepare fields from given parameter ranges."""
 
     features_attributes: typing.List[typing.List[typing.Any]] = [[] for _ in range(number_of_features)]
 
     for key in ranges.keys():
-        if ranges[key]["shape"][0] != number_of_features:
-            raise ValueError(f"Number of features does not match number of values for element `{key}`.")
+        if not simplify_into_single_value:
+            if ranges[key]["shape"][0] != number_of_features:
+                raise ValueError(f"Number of features does not match number of values for element `{key}`.")
 
         for i, value in enumerate(ranges[key]["values"]):
-            features_attributes[i].append(value)
+            if simplify_into_single_value:
+                features_attributes[i].append(value)
+                break
+            else:
+                features_attributes[i].append(value)
 
     return features_attributes
 
 
-def composite_to_geometries(composite_geom: typing.Dict) -> typing.List[QgsGeometry]:
-    geom_type = composite_geom["dataType"]
+def composite_to_geometries(composite_geom: typing.Dict, domain_type: str) -> typing.List[QgsGeometry]:
+    domain_type = domain_type.lower()
+
     json_geoms = composite_geom["values"]
 
     geometries: typing.List[QgsGeometry] = []
 
-    for json_geom in json_geoms:
-        if geom_type == "polygon":
+    if domain_type in ["polygon", "multipolygon"]:
+        for json_geom in json_geoms:
             geometries.append(json_to_polygon(json_geom))
 
+    if domain_type == "trajectory":
+        geometries.append(json_to_linestring(json_geoms))
+
     return geometries
+
+
+def json_to_linestring(json_geom: typing.List) -> QgsGeometry:
+    linestring = QgsLineString()
+
+    for point in json_geom:
+        linestring.addVertex(QgsPoint(point[0], point[1]))
+
+    return QgsGeometry(linestring)
 
 
 def json_to_polygon(json_geom: typing.List) -> QgsGeometry:
@@ -312,6 +332,22 @@ def parameter_data_type_to_qgis_type(param_type: str) -> QVariant.Type:
     raise ValueError(f"Unknown parameter data type: {param_type}")
 
 
+def covjson_geom_to_wkb_type(covjson_geom_type: str) -> str:
+    """Convert CoverageJSON geometry type to WKB type for QGIS memory layer."""
+    covjson_geom_type = covjson_geom_type.lower()
+
+    types = {
+        "multipolygon": "MultiPolygon",
+        "polygon": "Polygon",
+        "trajectory": "LineString",
+    }
+
+    if covjson_geom_type not in types:
+        raise ValueError(f"Unsupported geometry type: {covjson_geom_type}")
+
+    return types[covjson_geom_type]
+
+
 def prepare_vector_layer(
     wkb_type: str, crs: QgsCoordinateReferenceSystem, layer_name: str = "CoverageJSON"
 ) -> QgsVectorLayer:
@@ -320,7 +356,7 @@ def prepare_vector_layer(
     else:
         crs_str = "EPSG:4326"
 
-    layer = QgsVectorLayer(f"{wkb_type}?crs={crs_str}", layer_name, "memory")
+    layer = QgsVectorLayer(f"{covjson_geom_to_wkb_type(wkb_type)}?crs={crs_str}", layer_name, "memory")
 
     if not layer.isValid():
         raise ValueError(f"Layer {layer_name} is not valid.")

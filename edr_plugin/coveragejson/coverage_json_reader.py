@@ -3,7 +3,7 @@ import tempfile
 import typing
 from pathlib import Path
 
-from qgis.core import QgsCoordinateReferenceSystem, QgsMapLayer
+from qgis.core import QgsCoordinateReferenceSystem, QgsMapLayer, QgsVectorLayer
 
 from edr_plugin.coveragejson.coverage import Coverage
 from edr_plugin.coveragejson.utils import set_project_time_range
@@ -83,9 +83,12 @@ class CoverageJSONReader:
         return crs
 
     @property
-    def domain_type(self) -> str:
+    def domain_type(self) -> typing.Optional[str]:
         """Get domain type."""
         if self.is_collection:
+            if "domainType" not in self.coverage_json:
+                # domain not specified on collection level, have to exist in each coverage
+                return None
             return self.coverage_json["domainType"]
         else:
             return self.domain["domainType"]
@@ -95,8 +98,19 @@ class CoverageJSONReader:
         """Get list of coverages in CoverageCollection."""
         if self.is_collection:
             coverages = []
-            for covarage in self.coverage_json["coverages"]:
-                coverages.append(Coverage(covarage, self.crs(), self.domain_type, self.folder_to_save_data))
+            for coverage in self.coverage_json["coverages"]:
+                parent_parameters = None
+                if "parameters" in self.coverage_json:
+                    parent_parameters = self.coverage_json["parameters"]
+                coverages.append(
+                    Coverage(
+                        coverage,
+                        self.crs(),
+                        self.domain_type,
+                        parameters_from_parent=parent_parameters,
+                        folder_to_save_data=self.folder_to_save_data,
+                    )
+                )
             return coverages
         else:
             return [Coverage(self.coverage_json, self.crs(), folder_to_save_data=self.folder_to_save_data)]
@@ -117,6 +131,8 @@ class CoverageJSONReader:
         """Get list of map layers for all parameters in the CoverageJSON file."""
         layers = []
 
+        layers_for_merge: typing.List[QgsVectorLayer] = []
+
         if self.is_collection:
             for i in range(self.coverages_count):
                 coverage = self.coverage(i)
@@ -136,7 +152,18 @@ class CoverageJSONReader:
                 else:
                     self.time_step = time_step_coverage
 
-                layers.extend(coverage.map_layers())
+                if not self.coverages[0].could_be_merged:
+                    layers.extend(coverage.map_layers())
+                else:
+                    layers_for_merge.extend(coverage.map_layers())
+
+            if layers_for_merge:
+                main_layer = layers_for_merge[0]
+                main_layer_dp = main_layer.dataProvider()
+                for i in range(1, len(layers_for_merge)):
+                    for feature in layers_for_merge[i].getFeatures():
+                        main_layer_dp.addFeature(feature)
+                layers.append(main_layer)
         else:
             coverage = self.coverage()
 

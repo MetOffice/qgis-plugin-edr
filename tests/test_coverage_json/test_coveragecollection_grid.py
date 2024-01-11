@@ -33,9 +33,11 @@ def test_grid(data_dir):
     for i in range(4):
         coverage = coverages[i]
         assert isinstance(coverage, Coverage)
-        assert len(coverage.parameter_names) == 1
+        assert len(coverage.parameter_names) == 2
 
-        param_name = coverage.parameter_names[0]
+        param_name = list(coverage.ranges.keys())[0]
 
         assert len(coverage.raster_layers(param_name)) == 1
         assert all(isinstance(layer, QgsRasterLayer) for layer in coverage.raster_layers(param_name))
+
+        assert len(coverage.map_layers()) == 1

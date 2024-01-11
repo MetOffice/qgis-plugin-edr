@@ -32,13 +32,16 @@ from edr_plugin.coveragejson.utils import (
 class Coverage:
     """Class representing coverage from CoverageJSON."""
 
-    VECTOR_DATA_DOMAIN_TYPES = ["MultiPolygon"]
+    VECTOR_DATA_DOMAIN_TYPES = ["MultiPolygon", "Trajectory"]
+    TYPES_FOR_MERGE = ["Trajectory"]
+    TYPES_FOR_ATTRIBUTE_SIMPLIFICATION = ["Trajectory"]
 
     def __init__(
         self,
         coverage_json: typing.Dict,
         crs: QgsCoordinateReferenceSystem,
         domain_type: typing.Optional[str] = None,
+        parameters_from_parent: typing.Optional[typing.Dict] = None,
         folder_to_save_data: Path = Path("/tmp"),
     ):
         self.coverage_json = coverage_json
@@ -51,6 +54,8 @@ class Coverage:
             self.domain_type = self.domain["domainType"]
         else:
             self.domain_type = domain_type
+
+        self.parent_parameters = parameters_from_parent
 
     @property
     def domain(self) -> typing.Dict:
@@ -99,10 +104,11 @@ class Coverage:
     @property
     def parameters(self) -> typing.Dict:
         """Get parameters element."""
-        if "parameters" not in self.coverage_json:
-            return self.coverage_json["ranges"]
-        else:
+        if "parameters" in self.coverage_json:
             return self.coverage_json["parameters"]
+        elif self.parent_parameters:
+            return self.parent_parameters
+        return {}
 
     @property
     def has_z(self) -> bool:
@@ -136,7 +142,7 @@ class Coverage:
     def _validate_composite_axes(self) -> None:
         """Check if data is composite."""
         data_type = self.axes["composite"]["dataType"]
-        if data_type not in ["polygon"]:
+        if data_type not in ["polygon", "tuple"]:
             raise ValueError(f"Unsupported composite data type `{data_type}`.")
         coordinates = self.axes["composite"]["coordinates"]
         if coordinates != ["x", "y"]:
@@ -200,8 +206,12 @@ class Coverage:
 
     def raster_layers(self, parameter_name: str) -> typing.List[QgsRasterLayer]:
         """Crete list of raster layers for given parameter. The size of the list can be 1 or more."""
-        formatted_data = self._format_values_into_rasters(parameter_name)
         layers = []
+
+        if parameter_name not in self.ranges:
+            return layers
+
+        formatted_data = self._format_values_into_rasters(parameter_name)
 
         time_step = self.time_step()
 
@@ -271,10 +281,14 @@ class Coverage:
         """Check if domain is vector data."""
         return self.domain_type in self.VECTOR_DATA_DOMAIN_TYPES
 
+    @property
+    def simplify_attributes_to_single_value(self) -> bool:
+        return self.domain_type in self.TYPES_FOR_ATTRIBUTE_SIMPLIFICATION
+
     def coverage_features(self, layer: QgsVectorLayer) -> typing.List[QgsFeature]:
         """Get list of features from Coverage."""
-        geoms = composite_to_geometries(self.domain["axes"]["composite"])
-        attributes = feature_attributes(self.ranges, len(geoms))
+        geoms = composite_to_geometries(self.domain["axes"]["composite"], self.domain_type)
+        attributes = feature_attributes(self.ranges, len(geoms), self.simplify_attributes_to_single_value)
 
         features = []
         for geom, attrs in zip(geoms, attributes):
@@ -285,6 +299,11 @@ class Coverage:
             features.append(feature)
 
         return features
+
+    @property
+    def could_be_merged(self) -> bool:
+        """Check if the type of coverage would be candidate for merging coverages together."""
+        return self.domain_type in self.TYPES_FOR_MERGE
 
     def vector_layer(self) -> QgsVectorLayer:
         """Create vector layer from Coverage."""
