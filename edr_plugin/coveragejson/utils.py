@@ -340,6 +340,7 @@ def covjson_geom_to_wkb_type(covjson_geom_type: str) -> str:
         "multipolygon": "MultiPolygon",
         "polygon": "Polygon",
         "trajectory": "LineString",
+        "pointseries": "Point",
     }
 
     if covjson_geom_type not in types:
