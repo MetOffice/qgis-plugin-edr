@@ -8,7 +8,7 @@ name=Environmental Data Retrival
 qgisMinimumVersion=3.28
 qgisMaximumVersion=3.99
 description=Environmental Data Retrival QGIS plugin
-version=0.3.0
+version=0.4.0
 author=Lutra Consulting
 email=info@lutraconsulting.co.uk
 
@@ -23,6 +23,7 @@ repository=https://github.com/lutraconsulting/qgis-plugin-edr
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=<p>
+ <p>0.4.0 Improved handling of the CoverageJSON format, bugfixes.
  <p>0.3.0 Added custom dimensions, improved handling of the CoverageJSON format
  <p>0.2.2 Added ignoring of the content UTF-8 decode errors
  <p>0.2.1 Changed way of defining area query spatial extent
