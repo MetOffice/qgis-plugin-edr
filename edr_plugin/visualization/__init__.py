@@ -1,9 +1,19 @@
 import os
 
-from qgis.core import QgsMeshLayer, QgsProject, QgsRasterLayer, QgsVectorLayer
+from qgis.core import (
+    QgsMeshLayer,
+    QgsProject,
+    QgsRasterLayer,
+    QgsVectorLayer,
+)
+from qgis.utils import iface
 
 from edr_plugin.coveragejson.coverage_json_reader import CoverageJSONReader
-from edr_plugin.utils import add_to_layer_group, spawn_layer_group
+from edr_plugin.utils import (
+    add_to_layer_group,
+    single_band_gray_renderer,
+    spawn_layer_group,
+)
 
 
 class EdrLayerException(Exception):
@@ -32,6 +42,7 @@ class EdrLayerManager:
 
     def gdal_layer_loader(self, filepath, layer_name):
         layer = QgsRasterLayer(filepath, layer_name, "gdal")
+        single_band_gray_renderer(layer)
         self.add_layers(layer)
 
     def mdal_layer_loader(self, filepath, layer_name):

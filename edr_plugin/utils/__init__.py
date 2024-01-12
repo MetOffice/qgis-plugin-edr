@@ -3,7 +3,14 @@ import re
 from types import MappingProxyType
 from uuid import uuid4
 
-from qgis.core import QgsLayerTreeGroup, QgsLayerTreeLayer
+from qgis.core import (
+    QgsContrastEnhancement,
+    QgsLayerTreeGroup,
+    QgsLayerTreeLayer,
+    QgsRasterBandStats,
+    QgsRasterLayer,
+    QgsSingleBandGrayRenderer,
+)
 
 CONTENT_TYPE_EXTENSIONS = MappingProxyType(
     {
@@ -105,3 +112,19 @@ def add_to_layer_group(project, group, layer, top_insert=False, expanded=False, 
     group.insertChildNode(0 if top_insert else -1, QgsLayerTreeLayer(layer))
     layer_node = root.findLayer(layer.id())
     layer_node.setExpanded(expanded)
+
+
+def single_band_gray_renderer(layer: QgsRasterLayer) -> None:
+    stats = layer.dataProvider().bandStatistics(1, QgsRasterBandStats.All, layer.extent(), 0)
+
+    rnd = QgsSingleBandGrayRenderer(layer.dataProvider(), 1)
+    ce = QgsContrastEnhancement(layer.dataProvider().dataType(1))
+    ce.setContrastEnhancementAlgorithm(QgsContrastEnhancement.StretchToMinimumMaximum)
+
+    ce.setMinimumValue(stats.minimumValue)
+    ce.setMaximumValue(stats.maximumValue)
+
+    rnd.setContrastEnhancement(ce)
+
+    layer.setRenderer(rnd)
+    layer.triggerRepaint()
