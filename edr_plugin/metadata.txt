@@ -23,7 +23,7 @@ repository=https://github.com/lutraconsulting/qgis-plugin-edr
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=<p>
- <p>0.4.0 Improved handling of the CoverageJSON format, bugfixes.
+ <p>0.4.0 Added handling of the CoverageJSON vector datasets + bugfixes
  <p>0.3.0 Added custom dimensions, improved handling of the CoverageJSON format
  <p>0.2.2 Added ignoring of the content UTF-8 decode errors
  <p>0.2.1 Changed way of defining area query spatial extent
