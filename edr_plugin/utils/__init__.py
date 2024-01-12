@@ -32,7 +32,7 @@ def download_reply_file(reply, download_dir, data_query_definition, download_fil
             content_disposition_header = raw_content_disposition_header.data().decode(errors="ignore")
             download_filename = reply.extractFileNameFromContentDispositionHeader(content_disposition_header)
             no_extension_download_filename, raw_extension = os.path.splitext(download_filename)
-            file_extension = raw_extension
+            file_extension = raw_extension.lower()
         else:
             raw_extension = None
             request_url = reply.request().url().toDisplayString()
