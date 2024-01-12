@@ -306,10 +306,10 @@ class Coverage:
         i = 0
         for geom, attrs in zip(geoms, attributes):
             feature = QgsFeature(layer.fields())
+            if self.has_t:
+                attrs.append(QDateTime.fromString(t_values[i], Qt.ISODate))
             feature.setAttributes(attrs)
             feature.setGeometry(geom)
-            if self.has_t:
-                feature.setAttribute(self.FIELD_NAME_TIME, QDateTime.fromString(t_values[i], Qt.ISODate))
             features.append(feature)
             i += 1
             if i > len(geoms) - 1:
