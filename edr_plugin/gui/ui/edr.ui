@@ -792,6 +792,36 @@
    <header>qgsdatetimeedit.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>server_url_le</tabstop>
+  <tabstop>change_server_pb</tabstop>
+  <tabstop>collection_cbo</tabstop>
+  <tabstop>instance_cbo</tabstop>
+  <tabstop>query_cbo</tabstop>
+  <tabstop>query_extent_le</tabstop>
+  <tabstop>query_set_pb</tabstop>
+  <tabstop>crs_cbo</tabstop>
+  <tabstop>format_cbo</tabstop>
+  <tabstop>parameters_cbo</tabstop>
+  <tabstop>toggle_parameters_cbox</tabstop>
+  <tabstop>temporal_grp</tabstop>
+  <tabstop>from_datetime</tabstop>
+  <tabstop>to_datetime</tabstop>
+  <tabstop>vertical_grp</tabstop>
+  <tabstop>vertical_intervals_cbo</tabstop>
+  <tabstop>use_vertical_range_cbox</tabstop>
+  <tabstop>toggle_vertical_intervals_cbox</tabstop>
+  <tabstop>custom_grp</tabstop>
+  <tabstop>custom_dimension_cbo</tabstop>
+  <tabstop>custom_intervals_cbo</tabstop>
+  <tabstop>use_custom_range_cbox</tabstop>
+  <tabstop>toggle_custom_intervals_cbox</tabstop>
+  <tabstop>download_dir_le</tabstop>
+  <tabstop>change_download_dir_pb</tabstop>
+  <tabstop>load_pb</tabstop>
+  <tabstop>run_pb</tabstop>
+  <tabstop>cancel_pb</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
