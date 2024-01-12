@@ -260,21 +260,29 @@ def feature_attributes(
     return features_attributes
 
 
-def composite_to_geometries(composite_geom: typing.Dict, domain_type: str) -> typing.List[QgsGeometry]:
+def axes_to_geometries(axes_geom: typing.Dict, domain_type: str) -> typing.List[QgsGeometry]:
     domain_type = domain_type.lower()
-
-    json_geoms = composite_geom["values"]
 
     geometries: typing.List[QgsGeometry] = []
 
     if domain_type in ["polygon", "multipolygon"]:
+        json_geoms = axes_geom["composite"]["values"]
         for json_geom in json_geoms:
             geometries.append(json_to_polygon(json_geom))
 
     if domain_type == "trajectory":
+        json_geoms = axes_geom["composite"]["values"]
         geometries.append(json_to_linestring(json_geoms))
 
+    if domain_type == "pointseries":
+        for i in range(len(axes_geom["x"]["values"])):
+            geometries.append(QgsGeometry(QgsPoint(axes_geom["x"]["values"][i], axes_geom["y"]["values"][i])))
+
     return geometries
+
+
+def json_to_point(json_geom: typing.List) -> QgsGeometry:
+    return QgsGeometry(QgsPoint(json_geom[0], json_geom[1]))
 
 
 def json_to_linestring(json_geom: typing.List) -> QgsGeometry:
