@@ -52,21 +52,22 @@ class EdrLayerManager:
     @property
     def file_extension_layer_loaders(self):
         extension_to_loader_map = {
-            "covjson": self.covjson_layer_loader,
-            "geojson": self.ogr_layer_loader,
-            "gpkg": self.ogr_layer_loader,
-            "grib2": self.mdal_layer_loader,
-            "json": self.ogr_layer_loader,
-            "kml": self.ogr_layer_loader,
-            "nc": self.mdal_layer_loader,
-            "tif": self.gdal_layer_loader,
-            "tiff": self.gdal_layer_loader,
-            "geotiff": self.gdal_layer_loader,
+            ".covjson": self.covjson_layer_loader,
+            ".geojson": self.ogr_layer_loader,
+            ".gpkg": self.ogr_layer_loader,
+            ".grib2": self.mdal_layer_loader,
+            ".json": self.ogr_layer_loader,
+            ".kml": self.ogr_layer_loader,
+            ".nc": self.mdal_layer_loader,
+            ".tif": self.gdal_layer_loader,
+            ".tiff": self.gdal_layer_loader,
+            ".geotiff": self.gdal_layer_loader,
         }
         return extension_to_loader_map
 
     def add_layer_from_file(self, filepath, layer_name=None):
-        file_extension = filepath.rsplit(".", 1)[-1].lower()
+        no_extension_filepath, file_extension = os.path.splitext(filepath)
+        file_extension = file_extension.lower()
         try:
             layer_loader = self.file_extension_layer_loaders[file_extension]
             if layer_name is None:

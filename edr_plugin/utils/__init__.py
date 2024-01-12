@@ -7,14 +7,14 @@ from qgis.core import QgsLayerTreeGroup, QgsLayerTreeLayer
 
 CONTENT_TYPE_EXTENSIONS = MappingProxyType(
     {
-        "application/json": "json",
-        "application/prs.coverage+json": "covjson",
-        "application/geo+json": "geojson",
-        "application/geopackage+sqlite3": "gpkg",
-        "application/x-netcdf4": "nc",
-        "application/vnd.google-earth.kml+xml": "kml",
-        "image/tiff": "tiff",
-        "text/csv": "csv",
+        "application/json": ".json",
+        "application/prs.coverage+json": ".covjson",
+        "application/geo+json": ".geojson",
+        "application/geopackage+sqlite3": ".gpkg",
+        "application/x-netcdf4": ".nc",
+        "application/vnd.google-earth.kml+xml": ".kml",
+        "image/tiff": ".tiff",
+        "text/csv": ".csv",
     }
 )
 
@@ -22,23 +22,33 @@ CONTENT_TYPE_EXTENSIONS = MappingProxyType(
 def download_reply_file(reply, download_dir, data_query_definition, download_filename=None):
     """Download and write content from the QgsNetworkReplyContent object."""
     if not download_filename:
-        json_ext, covjson_ext = "json", "covjson"
+        json_ext, geojson_ext, covjson_ext = ".json", ".geojson", ".covjson"
         raw_content_type_header = reply.rawHeader("content-type".encode())
         content_type_header = raw_content_type_header.data().decode(errors="ignore")
         content_type = content_type_header.split(";")[0]
-        file_extension = CONTENT_TYPE_EXTENSIONS.get(content_type, "")
+        content_type_extension = CONTENT_TYPE_EXTENSIONS.get(content_type, "")
         raw_content_disposition_header = reply.rawHeader("content-disposition".encode())
-        if raw_content_disposition_header and file_extension not in {json_ext, covjson_ext}:
+        if raw_content_disposition_header:
             content_disposition_header = raw_content_disposition_header.data().decode(errors="ignore")
             download_filename = reply.extractFileNameFromContentDispositionHeader(content_disposition_header)
+            no_extension_download_filename, raw_extension = os.path.splitext(download_filename)
+            file_extension = raw_extension
         else:
+            raw_extension = None
             request_url = reply.request().url().toDisplayString()
             collection_name = re.findall("collections/(.+?)/", request_url)[0]
             download_filename = f"{collection_name}_{uuid4()}"
-            if file_extension:
-                if "coveragejson" in data_query_definition.output_format.lower():
+            file_extension = content_type_extension
+        if file_extension and raw_extension is None:
+            if file_extension == json_ext:
+                exact_json_format = data_query_definition.output_format.lower()
+                if "coveragejson" in exact_json_format:
                     file_extension = covjson_ext
-                download_filename += f".{file_extension}"
+                elif "geojson" in exact_json_format:
+                    file_extension = geojson_ext
+                else:
+                    pass
+            download_filename += file_extension
     download_filepath = os.path.join(download_dir, download_filename)
     file_copy_number = 1
     no_extension_download_filepath, download_file_extension = os.path.splitext(download_filepath)
