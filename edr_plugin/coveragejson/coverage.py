@@ -7,17 +7,18 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsDateTimeRange,
     QgsFeature,
+    QgsField,
     QgsMapLayer,
     QgsRasterLayer,
     QgsVectorLayer,
 )
-from qgis.PyQt.QtCore import QDateTime, Qt
+from qgis.PyQt.QtCore import QDateTime, Qt, QVariant
 
 from edr_plugin.coveragejson.utils import (
     ArrayWithTZ,
     DimensionAccessor,
     RasterTemplate,
-    composite_to_geometries,
+    axes_to_geometries,
     feature_attributes,
     make_file_stem_safe,
     prepare_fields,
@@ -32,9 +33,12 @@ from edr_plugin.coveragejson.utils import (
 class Coverage:
     """Class representing coverage from CoverageJSON."""
 
-    VECTOR_DATA_DOMAIN_TYPES = ["MultiPolygon", "Trajectory"]
-    TYPES_FOR_MERGE = ["Trajectory"]
+    VECTOR_DATA_DOMAIN_TYPES = ["MultiPolygon", "Trajectory", "PointSeries"]
+    TYPES_FOR_MERGE = ["Trajectory", "PointSeries"]
     TYPES_FOR_ATTRIBUTE_SIMPLIFICATION = ["Trajectory"]
+    TYPES_DIRECT_COORDINATES = ["PointSeries"]
+
+    FIELD_NAME_TIME = "time"
 
     def __init__(
         self,
@@ -290,16 +294,26 @@ class Coverage:
 
     def coverage_features(self, layer: QgsVectorLayer) -> typing.List[QgsFeature]:
         """Get list of features from Coverage."""
-        geoms = composite_to_geometries(self.domain["axes"]["composite"], self.domain_type)
+        geoms = axes_to_geometries(self.domain["axes"], self.domain_type)
+
+        if self.has_t:
+            t_values = self.axe_values("t")
+            geoms = geoms * len(t_values)
+
         attributes = feature_attributes(self.ranges, len(geoms), self.simplify_attributes_to_single_value)
 
         features = []
+        i = 0
         for geom, attrs in zip(geoms, attributes):
             feature = QgsFeature(layer.fields())
             feature.setAttributes(attrs)
             feature.setGeometry(geom)
-
+            if self.has_t:
+                feature.setAttribute(self.FIELD_NAME_TIME, QDateTime.fromString(t_values[i], Qt.ISODate))
             features.append(feature)
+            i += 1
+            if i > len(geoms) - 1:
+                i = 0
 
         return features
 
@@ -312,6 +326,8 @@ class Coverage:
         """Create vector layer from Coverage."""
         layer = prepare_vector_layer(self.domain_type, self.crs)
         layer.dataProvider().addAttributes(prepare_fields(self.ranges, self.parameters_units))
+        if self.has_t:
+            layer.dataProvider().addAttributes([QgsField(self.FIELD_NAME_TIME, QVariant.Type.DateTime)])
         layer.updateFields()
         return layer
 
