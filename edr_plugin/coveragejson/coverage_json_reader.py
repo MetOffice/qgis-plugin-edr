@@ -142,7 +142,7 @@ class CoverageJSONReader:
 
                 if time_range_coverage:
                     if self.time_range:
-                        self.time_range = self.time_range.extend(time_range_coverage)
+                        self.time_range.extend(time_range_coverage)
                     else:
                         self.time_range = time_range_coverage
 
