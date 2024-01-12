@@ -74,7 +74,7 @@ class CoverageJSONReader:
                     crs = QgsCoordinateReferenceSystem(ref["system"]["wkt"])
                 else:
                     if "http:" in crs_id:
-                        if "CRS84" in crs_id:
+                        if "CRS84" in crs_id or "4326" in crs_id:
                             return QgsCoordinateReferenceSystem("EPSG:4326")
                         raise ValueError("Getting CRS from HTTP not supported yet.")
 
@@ -142,7 +142,7 @@ class CoverageJSONReader:
 
                 if time_range_coverage:
                     if self.time_range:
-                        self.time_range = self.time_range.extend(time_range_coverage)
+                        self.time_range.extend(time_range_coverage)
                     else:
                         self.time_range = time_range_coverage
 

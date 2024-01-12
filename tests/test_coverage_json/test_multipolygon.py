@@ -27,9 +27,6 @@ def test_simple_multipolygon(data_dir):
     assert coverage.parameter_names == ["Building_Type", "Building_Levels"]
 
     for param in coverage.parameter_names:
-        assert coverage.has_t_in_data(param) is False
-        assert coverage.has_z_in_data(param) is False
-
         assert coverage.parameter_ranges(param)
         assert isinstance(coverage.parameter_ranges(param), typing.Dict)
 

@@ -1,3 +1,4 @@
+import itertools
 import typing
 from pathlib import Path
 
@@ -26,11 +27,90 @@ from qgis.PyQt.QtCore import QDateTime, QVariant
 from qgis.PyQt.QtGui import QColor
 
 
+class DimensionAccessor:
+    """Class for handling dimensions for complex Grid Coverages."""
+
+    def __init__(self, parameter_ranges: typing.Dict, axes: typing.Dict) -> None:
+        """Build based on parameter ranges (values and axes) and global axes definition."""
+        self.axes = axes
+        self.parameter_axes_names = parameter_ranges["axisNames"]
+
+        self.axes_values: typing.Dict[str, typing.Any] = {}
+        self.axes_indices: typing.Dict[str, list[int]] = {}
+        for axe in self.parameter_axes_names:
+            if "x" == axe:
+                self.axes_values["space"] = [...]
+                self.axes_indices["space"] = [...]
+            elif "y" == axe:
+                continue
+            else:
+                self.axes_values[axe] = self._axe_values(axe)
+                self.axes_indices[axe] = list(range(0, len(self._axe_values(axe))))
+
+        self._iter_product = itertools.product(*self.axes_indices.values())
+
+    @property
+    def iter_product(self) -> itertools.product:
+        """Iter tuples of dimension indices with x and y dimensions listed as ellipsis."""
+        return self._iter_product
+
+    @staticmethod
+    def _axe_values_as_list(axe_dict: typing.Dict) -> typing.List[float]:
+        """Extract axe values from axes element."""
+        if "values" in axe_dict:
+            return axe_dict["values"]
+        elif "start" in axe_dict and "stop" in axe_dict and "num" in axe_dict:
+            return np.linspace(axe_dict["start"], axe_dict["stop"], axe_dict["num"]).tolist()
+
+        raise ValueError("Unsupported axe definition.")
+
+    def _axe_values(self, axe: str) -> typing.List[float]:
+        """Extract axe values for given axe."""
+
+        if axe not in self.axes_names:
+            raise ValueError(f"Missing `f{axe}` axis of data.")
+
+        return self._axe_values_as_list(self.axes[axe])
+
+    @property
+    def axes_names(self) -> typing.List[str]:
+        """Get axes names."""
+        return [x for x in self.axes.keys()]
+
+    def t(self, dimension_values: itertools.product) -> typing.Optional[str]:
+        """Return time for given dimension values."""
+        return self.dimension_value("t", dimension_values)
+
+    def z(self, dimension_values: itertools.product) -> typing.Optional[str]:
+        """Return z for given dimension values."""
+        z = self.dimension_value("z", dimension_values)
+        return z
+
+    def dimension_value(self, dimension: str, dimension_values: itertools.product) -> typing.Optional[str]:
+        """Return specified dimension from dimension values."""
+        axes = list(self.axes_values.keys())
+        if dimension in axes:
+            value_index = list(dimension_values)[axes.index(dimension)]
+            return self.axes_values[dimension][value_index]
+        return None
+
+    def dimensions_to_string_description(self, dimension_values: itertools.product) -> str:
+        """For dimension values return name for the dimension.
+        This consists of axes names and values. Axes x and y are skipped and not used in the name."""
+        names = []
+        for axe in self.axes_values.keys():
+            if "space" == axe:
+                continue
+            names.append(f"{axe}_{self.dimension_value(axe, dimension_values)}")
+
+        return "_".join(names)
+
+
 class ArrayWithTZ:
     """Simple class to hold raster data with time and z information."""
 
     def __init__(
-        self, array: np.ndarray, time: typing.Optional[QDateTime] = None, z: typing.Optional[float] = None
+        self, array: np.ndarray, time: typing.Optional[QDateTime] = None, z: typing.Optional[str] = None
     ) -> None:
         if time:
             if time.isValid():
@@ -180,21 +260,29 @@ def feature_attributes(
     return features_attributes
 
 
-def composite_to_geometries(composite_geom: typing.Dict, domain_type: str) -> typing.List[QgsGeometry]:
+def axes_to_geometries(axes_geom: typing.Dict, domain_type: str) -> typing.List[QgsGeometry]:
     domain_type = domain_type.lower()
-
-    json_geoms = composite_geom["values"]
 
     geometries: typing.List[QgsGeometry] = []
 
     if domain_type in ["polygon", "multipolygon"]:
+        json_geoms = axes_geom["composite"]["values"]
         for json_geom in json_geoms:
             geometries.append(json_to_polygon(json_geom))
 
     if domain_type == "trajectory":
+        json_geoms = axes_geom["composite"]["values"]
         geometries.append(json_to_linestring(json_geoms))
 
+    if domain_type == "pointseries":
+        for i in range(len(axes_geom["x"]["values"])):
+            geometries.append(QgsGeometry(QgsPoint(axes_geom["x"]["values"][i], axes_geom["y"]["values"][i])))
+
     return geometries
+
+
+def json_to_point(json_geom: typing.List) -> QgsGeometry:
+    return QgsGeometry(QgsPoint(json_geom[0], json_geom[1]))
 
 
 def json_to_linestring(json_geom: typing.List) -> QgsGeometry:
@@ -260,6 +348,7 @@ def covjson_geom_to_wkb_type(covjson_geom_type: str) -> str:
         "multipolygon": "MultiPolygon",
         "polygon": "Polygon",
         "trajectory": "LineString",
+        "pointseries": "Point",
     }
 
     if covjson_geom_type not in types:
@@ -338,3 +427,8 @@ def prepare_vector_render(
             renderer.addCategory(category)
 
     return renderer
+
+
+def make_file_stem_safe(file_stem: str) -> str:
+    """Make file stem safe for saving."""
+    return file_stem.replace(" ", "_").replace(":", "_").replace("/", "-").replace("\\", "-")

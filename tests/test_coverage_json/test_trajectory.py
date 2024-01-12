@@ -1,6 +1,12 @@
 import typing
 
-from qgis.core import Qgis, QgsCategorizedSymbolRenderer, QgsMapLayer, QgsVectorLayer, QgsWkbTypes
+from qgis.core import (
+    Qgis,
+    QgsCategorizedSymbolRenderer,
+    QgsMapLayer,
+    QgsVectorLayer,
+    QgsWkbTypes,
+)
 
 from edr_plugin.coveragejson.coverage import Coverage
 from edr_plugin.coveragejson.coverage_json_reader import CoverageJSONReader
@@ -28,9 +34,6 @@ def test_trajectory(data_dir):
     assert coverage.parameter_names == ["Road_Type"]
 
     for param in coverage.parameter_names:
-        assert coverage.has_t_in_data(param) is False
-        assert coverage.has_z_in_data(param) is False
-
         assert coverage.parameter_ranges(param)
         assert isinstance(coverage.parameter_ranges(param), typing.Dict)
 

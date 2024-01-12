@@ -7,17 +7,20 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsDateTimeRange,
     QgsFeature,
+    QgsField,
     QgsMapLayer,
     QgsRasterLayer,
     QgsVectorLayer,
 )
-from qgis.PyQt.QtCore import QDateTime, Qt
+from qgis.PyQt.QtCore import QDateTime, Qt, QVariant
 
 from edr_plugin.coveragejson.utils import (
     ArrayWithTZ,
+    DimensionAccessor,
     RasterTemplate,
-    composite_to_geometries,
+    axes_to_geometries,
     feature_attributes,
+    make_file_stem_safe,
     prepare_fields,
     prepare_raster_shader,
     prepare_vector_layer,
@@ -30,9 +33,12 @@ from edr_plugin.coveragejson.utils import (
 class Coverage:
     """Class representing coverage from CoverageJSON."""
 
-    VECTOR_DATA_DOMAIN_TYPES = ["MultiPolygon", "Trajectory"]
-    TYPES_FOR_MERGE = ["Trajectory"]
+    VECTOR_DATA_DOMAIN_TYPES = ["MultiPolygon", "Trajectory", "PointSeries"]
+    TYPES_FOR_MERGE = ["Trajectory", "PointSeries"]
     TYPES_FOR_ATTRIBUTE_SIMPLIFICATION = ["Trajectory"]
+    TYPES_DIRECT_COORDINATES = ["PointSeries"]
+
+    FIELD_NAME_TIME = "time"
 
     def __init__(
         self,
@@ -139,52 +145,15 @@ class Coverage:
 
     def _validate_composite_axes(self) -> None:
         """Check if data is composite."""
+        # points have directly axes without specification
+        if "composite" not in self.axes and self.domain_type in self.TYPES_DIRECT_COORDINATES:
+            return
         data_type = self.axes["composite"]["dataType"]
         if data_type not in ["polygon", "tuple"]:
             raise ValueError(f"Unsupported composite data type `{data_type}`.")
         coordinates = self.axes["composite"]["coordinates"]
         if coordinates != ["x", "y"]:
             raise ValueError(f"Unsupported composite coordinates `{coordinates}`.")
-
-    @staticmethod
-    def _validate_axis_names(existing_axis: typing.List[str]) -> None:
-        """Check that axis names are in standard order. This is needed for further processing."""
-        axis_according_to_standard = ["y", "x"]
-        if "z" in existing_axis:
-            axis_according_to_standard.insert(0, "z")
-
-        if "t" in existing_axis:
-            axis_according_to_standard.insert(0, "t")
-
-        if existing_axis != axis_according_to_standard:
-            raise ValueError(f"Unsupported axes found: {existing_axis}")
-
-    def has_z_in_data(self, parameter_name: str) -> bool:
-        """Check if there is `z` axis specific parameter."""
-        return "z" in self.parameter_ranges(parameter_name)["axisNames"]
-
-    def has_t_in_data(self, parameter_name: str) -> bool:
-        """Check if there is `t` axis specific parameter."""
-        return "t" in self.parameter_ranges(parameter_name)["axisNames"]
-
-    def _access_indexes(
-        self, indices_to_use: typing.Dict[str, int], axes_with_sizes: typing.Dict[str, int]
-    ) -> typing.Tuple[int]:
-        """Generate list of indexes for given axes sizes."""
-        indexes = [0] * len(axes_with_sizes)
-        axes_order = list(axes_with_sizes.keys())
-
-        if abs(axes_order.index("x") - axes_order.index("y")) != 1:
-            raise ValueError("Unsupported axes order: `x` and `y` need to be next to each other.")
-
-        for axe, index in indices_to_use.items():
-            if axe in axes_order:
-                indexes[axes_order.index(axe)] = index
-        xy_index = min(axes_order.index("x"), axes_order.index("y"))
-        indexes.insert(xy_index, ...)
-        indexes.pop(axes_order.index("x") + 1)
-        indexes.pop(axes_order.index("y") + 1)
-        return tuple(indexes)
 
     def _format_values_into_rasters(self, parameter_name: str) -> typing.Dict[str, ArrayWithTZ]:
         """Format CoverageJSON values into dictionary of raster data (data name and raster information)."""
@@ -195,38 +164,18 @@ class Coverage:
 
         values = np.array(info["values"])
 
-        axes_sizes = self.range_axes_with_sizes(parameter_name)
-
-        self._validate_axis_names(list(axes_sizes.keys()))
-
-        values = values.reshape(list(axes_sizes.values()))
+        values = values.reshape(info["shape"])
 
         data_dict = {}
 
-        if self.has_t_in_data(parameter_name) and self.has_z_in_data(parameter_name):
-            for t_i, t in enumerate(self.axe_values("t")):
-                for z_i, z in enumerate(self.axe_values("z")):
-                    indices_to_use = {"t": t_i, "z": z_i}
-                    array_indexes = self._access_indexes(indices_to_use, axes_sizes)
+        dim_accessor = DimensionAccessor(self.parameter_ranges(parameter_name), self.axes)
 
-                    data_dict[f"{t}_{z}"] = ArrayWithTZ(values[array_indexes], QDateTime.fromString(t, Qt.ISODate), z)
-
-        elif self.has_t_in_data(parameter_name):
-            for t_i, t in enumerate(self.axe_values("t")):
-                indices_to_use = {"t": t_i}
-                array_indexes = self._access_indexes(indices_to_use, axes_sizes)
-
-                data_dict[f"{t}"] = ArrayWithTZ(values[array_indexes], time=QDateTime.fromString(t, Qt.ISODate))
-
-        elif self.has_z_in_data(parameter_name):
-            for z_i, z in enumerate(self.axe_values("z")):
-                indices_to_use = {"z": z_i}
-                array_indexes = self._access_indexes(indices_to_use, axes_sizes)
-
-                data_dict[f"{z}"] = ArrayWithTZ(values[array_indexes], z=z)
-
-        else:
-            data_dict[""] = ArrayWithTZ(values)
+        for dimension_values in dim_accessor.iter_product:
+            data_dict[dim_accessor.dimensions_to_string_description(dimension_values)] = ArrayWithTZ(
+                values[dimension_values],
+                QDateTime.fromString(dim_accessor.t(dimension_values), Qt.ISODate),
+                dim_accessor.z(dimension_values),
+            )
 
         return data_dict
 
@@ -292,7 +241,7 @@ class Coverage:
             else:
                 layer_name = layer_name_start
 
-            file_to_save = self.folder_to_save_data / f"{layer_name}.tif"
+            file_to_save = self.folder_to_save_data / f"{make_file_stem_safe(layer_name)}.tif"
 
             dp = raster_template.save_empty_raster(file_to_save)
 
@@ -345,16 +294,26 @@ class Coverage:
 
     def coverage_features(self, layer: QgsVectorLayer) -> typing.List[QgsFeature]:
         """Get list of features from Coverage."""
-        geoms = composite_to_geometries(self.domain["axes"]["composite"], self.domain_type)
+        geoms = axes_to_geometries(self.domain["axes"], self.domain_type)
+
+        if self.has_t:
+            t_values = self.axe_values("t")
+            geoms = geoms * len(t_values)
+
         attributes = feature_attributes(self.ranges, len(geoms), self.simplify_attributes_to_single_value)
 
         features = []
+        i = 0
         for geom, attrs in zip(geoms, attributes):
             feature = QgsFeature(layer.fields())
+            if self.has_t:
+                attrs.append(QDateTime.fromString(t_values[i], Qt.ISODate))
             feature.setAttributes(attrs)
             feature.setGeometry(geom)
-
             features.append(feature)
+            i += 1
+            if i > len(geoms) - 1:
+                i = 0
 
         return features
 
@@ -367,6 +326,8 @@ class Coverage:
         """Create vector layer from Coverage."""
         layer = prepare_vector_layer(self.domain_type, self.crs)
         layer.dataProvider().addAttributes(prepare_fields(self.ranges, self.parameters_units))
+        if self.has_t:
+            layer.dataProvider().addAttributes([QgsField(self.FIELD_NAME_TIME, QVariant.Type.DateTime)])
         layer.updateFields()
         return layer
 
