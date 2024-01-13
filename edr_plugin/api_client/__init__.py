@@ -14,12 +14,11 @@ class EdrApiClientError(Exception):
 class EdrApiClient:
     """EDR API client class."""
 
-    def __init__(self, root, authorization=None):
+    def __init__(self, root, authentication_config_id=None):
         self.root = root
-        self.authorization = authorization
+        self.authentication_config_id = authentication_config_id
 
-    @staticmethod
-    def get_request(url, **params):
+    def get_request(self, url, **params):
         request_url = QUrl(url)
         request_query = QUrlQuery()
         for k, v in params.items():
@@ -27,6 +26,8 @@ class EdrApiClient:
         request_url.setQuery(request_query)
         network_request = QNetworkRequest(request_url)
         blocking_network_request = QgsBlockingNetworkRequest()
+        if self.authentication_config_id:
+            blocking_network_request.setAuthCfg(self.authentication_config_id)
         blocking_network_request.get(network_request)
         error_message = blocking_network_request.errorMessage()
         if error_message:

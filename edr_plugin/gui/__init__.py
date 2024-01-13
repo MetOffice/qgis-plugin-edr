@@ -26,13 +26,16 @@ class EdrDialog(QDialog):
         settings = QSettings()
         server_url = settings.value("edr_plugin/server_url", self.DEFAULT_ROOT, type=str)
         self.server_url_le.setText(server_url)
+        edr_authcfg = settings.value("edr_plugin/edr_authcfg", "", type=str)
+        self.server_auth_config.setConfigId(edr_authcfg)
         download_dir = settings.value("edr_plugin/download_dir", "", type=str)
         self.download_dir_le.setText(download_dir)
-        self.api_client = EdrApiClient(server_url)
+        self.api_client = EdrApiClient(server_url, authentication_config_id=edr_authcfg)
         self.current_data_query_tool = None
         self.populate_collections()
         self.populate_collection_data()
         self.change_server_pb.clicked.connect(self.set_edr_server_url)
+        self.server_auth_config.selectedConfigIdChanged.connect(self.on_edr_credentials_changed)
         self.change_download_dir_pb.clicked.connect(self.set_download_directory)
         self.collection_cbo.currentIndexChanged.connect(self.populate_collection_data)
         self.instance_cbo.currentIndexChanged.connect(self.populate_data_queries)
@@ -53,7 +56,16 @@ class EdrDialog(QDialog):
         server_url = server_url.strip("/")
         QSettings().setValue("edr_plugin/server_url", server_url)
         self.server_url_le.setText(server_url)
-        self.api_client = EdrApiClient(server_url)
+        authcfg = self.server_auth_config.configId()
+        self.api_client = EdrApiClient(server_url, authentication_config_id=authcfg)
+        self.populate_collections()
+        self.populate_collection_data()
+
+    def on_edr_credentials_changed(self, edr_authcfg):
+        """Update EDR server credential settings."""
+        server_url = self.server_url_le.text()
+        QSettings().setValue("edr_plugin/edr_authcfg", edr_authcfg)
+        self.api_client = EdrApiClient(server_url, authentication_config_id=edr_authcfg)
         self.populate_collections()
         self.populate_collection_data()
 
@@ -378,7 +390,8 @@ class EdrDialog(QDialog):
         if not download_dir:
             self.plugin.communication.show_warn("There is no download folder specified. Please set it and try again.")
             return
-        worker_api_client = EdrApiClient(self.server_url_le.text())
+        edr_authcfg = self.server_auth_config.configId()
+        worker_api_client = EdrApiClient(self.server_url_le.text(), authentication_config_id=edr_authcfg)
         download_worker = EdrDataDownloader(worker_api_client, data_query_definition, download_dir)
         download_worker.signals.download_progress.connect(self.on_progress_signal)
         download_worker.signals.download_success.connect(self.on_success_signal)
