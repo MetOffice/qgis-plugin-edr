@@ -1,19 +1,10 @@
 import os
 
-from qgis.core import (
-    QgsMeshLayer,
-    QgsProject,
-    QgsRasterLayer,
-    QgsVectorLayer,
-)
+from qgis.core import QgsMeshLayer, QgsProject, QgsRasterLayer, QgsVectorLayer
 from qgis.utils import iface
 
 from edr_plugin.coveragejson.coverage_json_reader import CoverageJSONReader
-from edr_plugin.utils import (
-    add_to_layer_group,
-    single_band_gray_renderer,
-    spawn_layer_group,
-)
+from edr_plugin.utils import add_to_layer_group, single_band_gray_renderer, spawn_layer_group
 
 
 class EdrLayerException(Exception):

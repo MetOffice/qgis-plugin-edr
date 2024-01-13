@@ -5,8 +5,10 @@ from uuid import uuid4
 
 from qgis.core import (
     QgsContrastEnhancement,
+    QgsCoordinateTransform,
     QgsLayerTreeGroup,
     QgsLayerTreeLayer,
+    QgsProject,
     QgsRasterBandStats,
     QgsRasterLayer,
     QgsSingleBandGrayRenderer,
@@ -115,6 +117,7 @@ def add_to_layer_group(project, group, layer, top_insert=False, expanded=False, 
 
 
 def single_band_gray_renderer(layer: QgsRasterLayer) -> None:
+    """Set raster layer to gray scale."""
     stats = layer.dataProvider().bandStatistics(1, QgsRasterBandStats.All, layer.extent(), 0)
 
     rnd = QgsSingleBandGrayRenderer(layer.dataProvider(), 1)
@@ -128,3 +131,15 @@ def single_band_gray_renderer(layer: QgsRasterLayer) -> None:
 
     layer.setRenderer(rnd)
     layer.triggerRepaint()
+
+
+def reproject_geometry(geometry, src_crs, dst_crs, transformation=None):
+    """Reproject geometry from source CRS to destination CRS."""
+    if src_crs == dst_crs:
+        return geometry
+    if transformation is None:
+        project = QgsProject.instance()
+        transform_context = project.transformContext()
+        transformation = QgsCoordinateTransform(src_crs, dst_crs, transform_context)
+    geometry.transform(transformation)
+    return geometry

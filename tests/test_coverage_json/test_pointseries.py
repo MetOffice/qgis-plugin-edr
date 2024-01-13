@@ -1,12 +1,6 @@
 import typing
 
-from qgis.core import (
-    Qgis,
-    QgsCategorizedSymbolRenderer,
-    QgsMapLayer,
-    QgsVectorLayer,
-    QgsWkbTypes,
-)
+from qgis.core import Qgis, QgsCategorizedSymbolRenderer, QgsMapLayer, QgsVectorLayer, QgsWkbTypes
 
 from edr_plugin.coveragejson.coverage import Coverage
 from edr_plugin.coveragejson.coverage_json_reader import CoverageJSONReader

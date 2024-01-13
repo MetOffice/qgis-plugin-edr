@@ -7,7 +7,7 @@ from qgis.PyQt.QtCore import QDateTime, QSettings, Qt
 from qgis.PyQt.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QDialog, QFileDialog, QInputDialog, QLineEdit
 
 from edr_plugin.api_client import EdrApiClient, EdrApiClientError
-from edr_plugin.gui.query_tools import AreaQueryBuilderTool
+from edr_plugin.gui.query_tools import AreaQueryBuilderTool, PositionQueryBuilderTool, RadiusQueryBuilderTool
 from edr_plugin.models.enumerators import EdrDataQuery
 from edr_plugin.threading import EdrDataDownloader
 from edr_plugin.utils import is_dir_writable
@@ -108,7 +108,11 @@ class EdrDialog(QDialog):
     @property
     def data_query_tools(self):
         """Return query builder tool associated with type of the query."""
-        query_tools_map = {EdrDataQuery.AREA.value: AreaQueryBuilderTool}
+        query_tools_map = {
+            EdrDataQuery.AREA.value: AreaQueryBuilderTool,
+            EdrDataQuery.POSITION.value: PositionQueryBuilderTool,
+            EdrDataQuery.RADIUS.value: RadiusQueryBuilderTool,
+        }
         return query_tools_map
 
     @property
@@ -370,7 +374,6 @@ class EdrDialog(QDialog):
             )
             return
         self.current_data_query_tool = data_query_tool_cls(self)
-        self.current_data_query_tool.show()
 
     def query_data_collection(self):
         """Define data query and get the data collection."""

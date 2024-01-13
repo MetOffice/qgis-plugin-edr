@@ -64,3 +64,33 @@ class AreaQueryDefinition(EDRDataQueryDefinition):
         endpoint_parameters, query_parameters = super().as_request_parameters()
         query_parameters["coords"] = self.wkt_polygon
         return endpoint_parameters, query_parameters
+
+
+class PositionQueryDefinition(EDRDataQueryDefinition):
+    NAME = EdrDataQuery.POSITION.value
+
+    def __init__(self, *parameters, wkt_point):
+        super().__init__(*parameters)
+        self.wkt_point = wkt_point
+
+    def as_request_parameters(self) -> Tuple[Tuple, Dict]:
+        endpoint_parameters, query_parameters = super().as_request_parameters()
+        query_parameters["coords"] = self.wkt_point
+        return endpoint_parameters, query_parameters
+
+
+class RadiusQueryDefinition(EDRDataQueryDefinition):
+    NAME = EdrDataQuery.RADIUS.value
+
+    def __init__(self, *parameters, wkt_point, radius, units):
+        super().__init__(*parameters)
+        self.wkt_point = wkt_point
+        self.radius = radius
+        self.units = units
+
+    def as_request_parameters(self) -> Tuple[Tuple, Dict]:
+        endpoint_parameters, query_parameters = super().as_request_parameters()
+        query_parameters["coords"] = self.wkt_point
+        query_parameters["within"] = self.radius
+        query_parameters["within-units"] = self.units
+        return endpoint_parameters, query_parameters
