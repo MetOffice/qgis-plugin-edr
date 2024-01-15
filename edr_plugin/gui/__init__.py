@@ -7,7 +7,13 @@ from qgis.PyQt.QtCore import QDateTime, QSettings, Qt
 from qgis.PyQt.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QDialog, QFileDialog, QInputDialog, QLineEdit
 
 from edr_plugin.api_client import EdrApiClient, EdrApiClientError
-from edr_plugin.gui.query_tools import AreaQueryBuilderTool, PositionQueryBuilderTool, RadiusQueryBuilderTool
+from edr_plugin.gui.query_tools import (
+    AreaQueryBuilderTool,
+    ItemsQueryBuilderTool,
+    LocationsQueryBuilderTool,
+    PositionQueryBuilderTool,
+    RadiusQueryBuilderTool,
+)
 from edr_plugin.models.enumerators import EdrDataQuery
 from edr_plugin.threading import EdrDataDownloader
 from edr_plugin.utils import is_dir_writable
@@ -112,6 +118,8 @@ class EdrDialog(QDialog):
             EdrDataQuery.AREA.value: AreaQueryBuilderTool,
             EdrDataQuery.POSITION.value: PositionQueryBuilderTool,
             EdrDataQuery.RADIUS.value: RadiusQueryBuilderTool,
+            EdrDataQuery.ITEMS.value: ItemsQueryBuilderTool,
+            EdrDataQuery.LOCATIONS.value: LocationsQueryBuilderTool,
         }
         return query_tools_map
 
@@ -329,10 +337,12 @@ class EdrDialog(QDialog):
         """Collect query parameters from the widgets."""
         collection = self.collection_cbo.currentData()
         collection_id = collection["id"]
-        instance = self.instance_cbo.currentText() if self.instance_cbo.isEnabled() else None
-        crs = self.crs_cbo.currentText()
-        output_format = self.format_cbo.currentText()
-        parameters = self.parameters_cbo.checkedItemsData()
+        sub_endpoints, query_parameters = {}, {}
+        if self.instance_cbo.isEnabled():
+            sub_endpoints["instance_id"] = self.instance_cbo.currentText()
+        query_parameters["output_crs"] = self.crs_cbo.currentText()
+        query_parameters["output_format"] = self.format_cbo.currentText()
+        query_parameters["parameters"] = self.parameters_cbo.checkedItemsData()
         if self.temporal_grp.isEnabled():
             from_datetime = self.from_datetime.dateTime().toString(Qt.ISODate)
             to_datetime = self.to_datetime.dateTime().toString(Qt.ISODate)
@@ -344,22 +354,19 @@ class EdrDialog(QDialog):
                     to_datetime,
                 )
             )
-        else:
-            temporal_range = None
+            query_parameters["temporal_range"] = temporal_range
         if self.vertical_grp.isEnabled():
             vertical_intervals = self.vertical_intervals_cbo.checkedItems()
             vertical_is_min_max_range = self.use_vertical_range_cbox.isChecked()
             vertical_extent = (vertical_intervals, vertical_is_min_max_range)
-        else:
-            vertical_extent = None
+            query_parameters["vertical_extent"] = vertical_extent
         if self.custom_grp.isEnabled():
             custom_dimension_name = self.custom_dimension_cbo.currentText()
             custom_intervals = self.custom_intervals_cbo.checkedItems()
             custom_is_min_max_range = self.use_custom_range_cbox.isChecked()
-            custom_extent = (custom_dimension_name, custom_intervals, custom_is_min_max_range)
-        else:
-            custom_extent = None
-        return collection_id, instance, crs, output_format, parameters, temporal_range, vertical_extent, custom_extent
+            custom_dimension = (custom_dimension_name, custom_intervals, custom_is_min_max_range)
+            query_parameters["custom_dimension"] = custom_dimension
+        return collection_id, sub_endpoints, query_parameters
 
     def set_query_extent(self):
         """Set query extent."""

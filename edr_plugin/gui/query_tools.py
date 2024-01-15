@@ -1,11 +1,19 @@
 import os
 
+from PyQt5.QtCore import QSettings
 from qgis.core import QgsCoordinateReferenceSystem, QgsGeometry, QgsProject
 from qgis.gui import QgsMapToolEmitPoint
 from qgis.PyQt import uic
 from qgis.PyQt.QtWidgets import QDialog
 
-from edr_plugin.queries import AreaQueryDefinition, PositionQueryDefinition, RadiusQueryDefinition
+from edr_plugin.api_client import EdrApiClientError
+from edr_plugin.queries import (
+    AreaQueryDefinition,
+    ItemsQueryDefinition,
+    LocationsQueryDefinition,
+    PositionQueryDefinition,
+    RadiusQueryDefinition,
+)
 from edr_plugin.utils import reproject_geometry
 
 
@@ -18,15 +26,9 @@ class AreaQueryBuilderTool(QDialog):
         self.ui = uic.loadUi(ui_filepath, self)
         self.edr_dialog = edr_dialog
         self.map_canvas = self.edr_dialog.plugin.iface.mapCanvas()
-        self.extent_grp.setMapCanvas(self.map_canvas)
-        crs_name, crs_wkt = self.edr_dialog.crs_cbo.currentText(), self.edr_dialog.crs_cbo.currentData()
-        if crs_wkt:
-            self.output_crs = QgsCoordinateReferenceSystem.fromWkt(crs_wkt)
-        else:
-            self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
-        self.extent_grp.setOutputCrs(self.output_crs)
+        self.output_crs = None
         self.ok_pb.clicked.connect(self.accept)
-        self.extent_grp.setOutputExtentFromCurrent()
+        self.setup_data_query_tool()
         self.edr_dialog.hide()
         self.show()
 
@@ -42,12 +44,23 @@ class AreaQueryBuilderTool(QDialog):
         self.edr_dialog.show()
         super().accept()
 
+    def setup_data_query_tool(self):
+        """Initial data query tool setup."""
+        self.extent_grp.setMapCanvas(self.map_canvas)
+        crs_name, crs_wkt = self.edr_dialog.crs_cbo.currentText(), self.edr_dialog.crs_cbo.currentData()
+        if crs_wkt:
+            self.output_crs = QgsCoordinateReferenceSystem.fromWkt(crs_wkt)
+        else:
+            self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
+        self.extent_grp.setOutputCrs(self.output_crs)
+        self.extent_grp.setOutputExtentFromCurrent()
+
     def get_query_definition(self):
         """Return query definition object based on user input."""
         current_extent = self.extent_grp.outputExtent()
         wkt_extent_polygon = current_extent.asWktPolygon()
-        query_parameters = self.edr_dialog.collect_query_parameters()
-        query_definition = AreaQueryDefinition(*query_parameters, wkt_polygon=wkt_extent_polygon)
+        collection_id, sub_endpoints, query_parameters = self.edr_dialog.collect_query_parameters()
+        query_definition = AreaQueryDefinition(collection_id, wkt_extent_polygon, **sub_endpoints, **query_parameters)
         return query_definition
 
 
@@ -58,14 +71,19 @@ class PositionQueryBuilderTool(QgsMapToolEmitPoint):
         self.map_canvas = edr_dialog.plugin.iface.mapCanvas()
         super().__init__(canvas=self.map_canvas)
         self.edr_dialog = edr_dialog
+        self.output_crs = None
+        self.last_position_geometry = None
+        self.setup_data_query_tool()
+        self.edr_dialog.hide()
+
+    def setup_data_query_tool(self):
+        """Initial data query tool setup."""
         crs_name, crs_wkt = self.edr_dialog.crs_cbo.currentText(), self.edr_dialog.crs_cbo.currentData()
         if crs_wkt:
             self.output_crs = QgsCoordinateReferenceSystem.fromWkt(crs_wkt)
         else:
             self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
-        self.last_position_geometry = None
         self.map_canvas.setMapTool(self)
-        self.edr_dialog.hide()
 
     def canvasPressEvent(self, e):
         """On canvas press event."""
@@ -82,8 +100,10 @@ class PositionQueryBuilderTool(QgsMapToolEmitPoint):
     def get_query_definition(self):
         """Return query definition object based on user input."""
         wkt_position_point = self.last_position_geometry.asWkt()
-        query_parameters = self.edr_dialog.collect_query_parameters()
-        query_definition = PositionQueryDefinition(*query_parameters, wkt_point=wkt_position_point)
+        collection_id, sub_endpoints, query_parameters = self.edr_dialog.collect_query_parameters()
+        query_definition = PositionQueryDefinition(
+            collection_id, wkt_position_point, **sub_endpoints, **query_parameters
+        )
         return query_definition
 
 
@@ -96,22 +116,20 @@ class RadiusQueryBuilderTool(QDialog):
         self.ui = uic.loadUi(ui_filepath, self)
         self.edr_dialog = edr_dialog
         self.map_canvas = self.edr_dialog.plugin.iface.mapCanvas()
-        crs_name, crs_wkt = self.edr_dialog.crs_cbo.currentText(), self.edr_dialog.crs_cbo.currentData()
-        if crs_wkt:
-            self.output_crs = QgsCoordinateReferenceSystem.fromWkt(crs_wkt)
-        else:
-            self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
-        radius_query_data = self.edr_dialog.query_cbo.currentData()
-        self.radius_units_cbo.addItems(radius_query_data["link"]["variables"]["within_units"])
+        self.output_crs = None
         self.ok_pb.clicked.connect(self.accept)
         self.radius_center_tool = QgsMapToolEmitPoint(self.map_canvas)
         self.radius_center_tool.canvasClicked.connect(self.on_canvas_clicked)
         self.radius_center_point_pb.clicked.connect(self.on_radius_center_point_button_clicked)
         self.last_radius_center_geometry = None
+        self.setup_data_query_tool()
         self.edr_dialog.hide()
         self.show()
 
     def accept(self):
+        settings = QSettings()
+        settings.setValue("edr_plugin/last_radius", str(self.radius_spinbox.value()))
+        settings.setValue("edr_plugin/last_radius_units", self.radius_units_cbo.currentText())
         self.edr_dialog.query_extent_le.setText(self.last_radius_center_geometry.asWkt())
         self.edr_dialog.query_extent_le.setCursorPosition(0)
         self.edr_dialog.show()
@@ -121,7 +139,24 @@ class RadiusQueryBuilderTool(QDialog):
         self.edr_dialog.show()
         super().accept()
 
+    def setup_data_query_tool(self):
+        """Initial data query tool setup."""
+        crs_name, crs_wkt = self.edr_dialog.crs_cbo.currentText(), self.edr_dialog.crs_cbo.currentData()
+        if crs_wkt:
+            self.output_crs = QgsCoordinateReferenceSystem.fromWkt(crs_wkt)
+        else:
+            self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
+        radius_query_data = self.edr_dialog.query_cbo.currentData()
+        within_units = radius_query_data["link"]["variables"]["within_units"]
+        self.radius_units_cbo.addItems(within_units)
+        settings = QSettings()
+        last_radius = settings.value("edr_plugin/last_radius", 10.0, type=float)
+        last_radius_units = settings.value("edr_plugin/last_radius_units", "")
+        self.radius_spinbox.setValue(last_radius)
+        self.radius_units_cbo.setCurrentText(last_radius_units)
+
     def on_radius_center_point_button_clicked(self):
+        """On radius center point button clicked."""
         self.map_canvas.setMapTool(self.radius_center_tool)
         self.hide()
 
@@ -138,12 +173,111 @@ class RadiusQueryBuilderTool(QDialog):
 
     def get_query_definition(self):
         """Return query definition object based on user input."""
+        collection_id, sub_endpoints, query_parameters = self.edr_dialog.collect_query_parameters()
         wkt_radius_center = self.last_radius_center_geometry.asWkt()
-        query_parameters = self.edr_dialog.collect_query_parameters()
         radius_value = self.radius_spinbox.value()
         radius = f"{radius_value:.3f}"
         units = self.radius_units_cbo.currentText()
         query_definition = RadiusQueryDefinition(
-            *query_parameters, wkt_point=wkt_radius_center, radius=radius, units=units
+            collection_id,
+            wkt_radius_center,
+            radius,
+            units,
+            **sub_endpoints,
+            **query_parameters,
         )
+        return query_definition
+
+
+class ItemsQueryBuilderTool(QDialog):
+    """Dialog for defining items data query."""
+
+    def __init__(self, edr_dialog):
+        QDialog.__init__(self, parent=edr_dialog)
+        ui_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "query_items.ui")
+        self.ui = uic.loadUi(ui_filepath, self)
+        self.edr_dialog = edr_dialog
+        self.ok_pb.clicked.connect(self.accept)
+        self.setup_data_query_tool()
+        self.edr_dialog.hide()
+        self.show()
+
+    def accept(self):
+        selected_item = self.items_cbo.currentText()
+        QSettings().setValue("edr_plugin/last_item", selected_item)
+        self.edr_dialog.query_extent_le.setText(selected_item)
+        self.edr_dialog.query_extent_le.setCursorPosition(0)
+        self.edr_dialog.show()
+        super().accept()
+
+    def reject(self):
+        self.edr_dialog.show()
+        super().accept()
+
+    def setup_data_query_tool(self):
+        """Initial data query tool setup."""
+        collection = self.edr_dialog.collection_cbo.currentData()
+        collection_id = collection["id"]
+        instance_id = self.edr_dialog.instance_cbo.currentText() if self.edr_dialog.instance_cbo.isEnabled() else None
+        try:
+            collection_items = self.edr_dialog.api_client.get_collection_items(collection_id, instance_id)
+        except EdrApiClientError:
+            collection_items = []
+        for collection_item in collection_items:
+            self.items_cbo.addItem(collection_item["id"], collection_item)
+        last_item = QSettings().value("edr_plugin/last_item", "")
+        self.items_cbo.setCurrentText(last_item)
+
+    def get_query_definition(self):
+        """Return query definition object based on user input."""
+        collection_id, sub_endpoints, query_parameters = self.edr_dialog.collect_query_parameters()
+        item_id = self.items_cbo.currentText()
+        query_definition = ItemsQueryDefinition(collection_id, item_id, **sub_endpoints, **query_parameters)
+        return query_definition
+
+
+class LocationsQueryBuilderTool(QDialog):
+    """Dialog for defining locations data query."""
+
+    def __init__(self, edr_dialog):
+        QDialog.__init__(self, parent=edr_dialog)
+        ui_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "query_locations.ui")
+        self.ui = uic.loadUi(ui_filepath, self)
+        self.edr_dialog = edr_dialog
+        self.ok_pb.clicked.connect(self.accept)
+        self.setup_data_query_tool()
+        self.edr_dialog.hide()
+        self.show()
+
+    def accept(self):
+        selected_location = self.locations_cbo.currentText()
+        QSettings().setValue("edr_plugin/last_location", selected_location)
+        self.edr_dialog.query_extent_le.setText(selected_location)
+        self.edr_dialog.query_extent_le.setCursorPosition(0)
+        self.edr_dialog.show()
+        super().accept()
+
+    def reject(self):
+        self.edr_dialog.show()
+        super().accept()
+
+    def setup_data_query_tool(self):
+        """Initial data query tool setup."""
+        collection = self.edr_dialog.collection_cbo.currentData()
+        collection_id = collection["id"]
+        instance_id = self.edr_dialog.instance_cbo.currentText() if self.edr_dialog.instance_cbo.isEnabled() else None
+        try:
+            collection_locations = self.edr_dialog.api_client.get_collection_locations(collection_id, instance_id)
+        except EdrApiClientError:
+            collection_locations = []
+        for collection_location in collection_locations:
+            self.locations_cbo.addItem(collection_location["id"], collection_location)
+        last_location = QSettings().value("edr_plugin/last_location", "")
+        self.locations_cbo.setCurrentText(last_location)
+
+    def get_query_definition(self):
+        """Return query definition object based on user input."""
+        collection_id, sub_endpoints, query_parameters = self.edr_dialog.collect_query_parameters()
+        location_id = self.locations_cbo.currentText()
+        query_definition = LocationsQueryDefinition(collection_id, location_id, **sub_endpoints, **query_parameters)
         return query_definition
