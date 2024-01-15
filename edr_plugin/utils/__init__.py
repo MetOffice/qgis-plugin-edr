@@ -1,12 +1,13 @@
 import os
-import re
 from types import MappingProxyType
 from uuid import uuid4
 
 from qgis.core import (
     QgsContrastEnhancement,
+    QgsCoordinateTransform,
     QgsLayerTreeGroup,
     QgsLayerTreeLayer,
+    QgsProject,
     QgsRasterBandStats,
     QgsRasterLayer,
     QgsSingleBandGrayRenderer,
@@ -32,7 +33,7 @@ def download_reply_file(reply, download_dir, data_query_definition, download_fil
         json_ext, geojson_ext, covjson_ext = ".json", ".geojson", ".covjson"
         raw_content_type_header = reply.rawHeader("content-type".encode())
         content_type_header = raw_content_type_header.data().decode(errors="ignore")
-        content_type = content_type_header.split(";")[0]
+        content_type = content_type_header.split(";", 1)[0]
         content_type_extension = CONTENT_TYPE_EXTENSIONS.get(content_type, "")
         raw_content_disposition_header = reply.rawHeader("content-disposition".encode())
         if raw_content_disposition_header:
@@ -42,9 +43,7 @@ def download_reply_file(reply, download_dir, data_query_definition, download_fil
             file_extension = raw_extension.lower()
         else:
             raw_extension = None
-            request_url = reply.request().url().toDisplayString()
-            collection_name = re.findall("collections/(.+?)/", request_url)[0]
-            download_filename = f"{collection_name}_{uuid4()}"
+            download_filename = f"{data_query_definition.collection_id}_{uuid4()}"
             file_extension = content_type_extension
         if file_extension and raw_extension is None:
             if file_extension == json_ext:
@@ -64,23 +63,6 @@ def download_reply_file(reply, download_dir, data_query_definition, download_fil
         file_copy_number += 1
     with open(download_filepath, "wb") as f:
         f.write(reply.content())
-    return download_filepath
-
-
-def download_response_file(response, download_dir, download_filename=None, chunk_size=1024**2):
-    """Download and write content from the response object."""
-    if not download_filename:
-        try:
-            content_disposition = response.headers["content-disposition"]
-            download_filename = re.findall("filename=(.+)", content_disposition)[0].strip('"')
-        except KeyError:
-            collection_name = re.findall("collections/(.+?)/", response.url)[0]
-            download_filename = f"{collection_name}_{uuid4()}.json"
-    download_filepath = os.path.join(download_dir, download_filename)
-    with open(download_filepath, "wb") as f:
-        for chunk in response.iter_content(chunk_size=chunk_size):
-            if chunk:
-                f.write(chunk)
     return download_filepath
 
 
@@ -115,6 +97,7 @@ def add_to_layer_group(project, group, layer, top_insert=False, expanded=False, 
 
 
 def single_band_gray_renderer(layer: QgsRasterLayer) -> None:
+    """Set raster layer to gray scale."""
     stats = layer.dataProvider().bandStatistics(1, QgsRasterBandStats.All, layer.extent(), 0)
 
     rnd = QgsSingleBandGrayRenderer(layer.dataProvider(), 1)
@@ -128,3 +111,15 @@ def single_band_gray_renderer(layer: QgsRasterLayer) -> None:
 
     layer.setRenderer(rnd)
     layer.triggerRepaint()
+
+
+def reproject_geometry(geometry, src_crs, dst_crs, transformation=None):
+    """Reproject geometry from source CRS to destination CRS."""
+    if src_crs == dst_crs:
+        return geometry
+    if transformation is None:
+        project = QgsProject.instance()
+        transform_context = project.transformContext()
+        transformation = QgsCoordinateTransform(src_crs, dst_crs, transform_context)
+    geometry.transform(transformation)
+    return geometry

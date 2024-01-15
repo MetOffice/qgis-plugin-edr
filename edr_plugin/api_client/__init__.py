@@ -63,8 +63,20 @@ class EdrApiClient:
         url = f"{self.root}/collections/{collection_id}"
         return url
 
-    def collection_items_path(self, collection_id):
-        url = f"{self.root}/collections/{collection_id}/items"
+    def collection_items_path(self, collection_id, instance_id=None):
+        if instance_id is None:
+            url = self.collection_path(collection_id)
+        else:
+            url = self.collection_instance_path(collection_id, instance_id)
+        url += "/items"
+        return url
+
+    def collection_locations_path(self, collection_id, instance_id=None):
+        if instance_id is None:
+            url = self.collection_path(collection_id)
+        else:
+            url = self.collection_instance_path(collection_id, instance_id)
+        url += "/locations"
         return url
 
     def collection_query_path(self, collection_id, query_type):
@@ -97,10 +109,31 @@ class EdrApiClient:
         collection_instances = response_json.get("instances", [])
         return collection_instances
 
-    def get_edr_data(self, collection_id, instance_id, data_query_name, payload):
+    def get_collection_items(self, collection_id, instance_id=None):
+        response = self.get_request_reply(self.collection_items_path(collection_id, instance_id))
+        raw_content = response.content().data().decode(errors="ignore")
+        response_json = json.loads(raw_content)
+        collection_items = response_json.get("features", [])
+        return collection_items
+
+    def get_collection_locations(self, collection_id, instance_id=None):
+        response = self.get_request_reply(self.collection_locations_path(collection_id, instance_id))
+        raw_content = response.content().data().decode(errors="ignore")
+        response_json = json.loads(raw_content)
+        collection_locations = response_json.get("features", [])
+        return collection_locations
+
+    def get_edr_data(
+        self, collection_id, query_parameters, instance_id=None, item_id=None, location_id=None, data_query_name=None
+    ):
         data_endpoint = f"{self.root}/collections/{collection_id}"
-        if instance_id:
+        if instance_id is not None:
             data_endpoint += f"/instances/{instance_id}"
-        data_endpoint += f"/{data_query_name}"
-        response = self.get_request_reply(data_endpoint, **payload)
+        if item_id is not None:
+            data_endpoint += f"/items/{item_id}"
+        elif location_id is not None:
+            data_endpoint += f"/locations/{location_id}"
+        else:
+            data_endpoint += f"/{data_query_name}"
+        response = self.get_request_reply(data_endpoint, **query_parameters)
         return response
