@@ -1,0 +1,63 @@
+{
+  "type": "Coverage",
+  "domain": {
+    "type": "Domain",
+    "domainType": "Point",
+    "axes": {
+      "x": {
+        "values": [
+          -0.12535621926632082
+        ]
+      },
+      "y": {
+        "values": [
+          51.50459000860477
+        ]
+      }
+    },
+    "referencing": [
+      {
+        "coordinates": [
+          "x",
+          "y"
+        ],
+        "system": {
+          "type": "GeographicCRS",
+          "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+        }
+      }
+    ]
+  },
+  "parameters": {
+    "Pop_Density": {
+      "type": "Parameter",
+      "description": {
+        "en": "Population per sq km"
+      },
+      "unit": {
+        "label": {
+          "en": "Number per square kilometre"
+        },
+        "symbol": {
+          "value": "km2",
+          "type": "https://qudt.org/vocab/unit/NUM-PER-KiloM2"
+        }
+      },
+      "observedProperty": {
+        "id": "https://en.wikipedia.org/wiki/Population_density",
+        "label": {
+          "en": "Pop_Density"
+        }
+      }
+    }
+  },
+  "ranges": {
+    "Pop_Density": {
+      "type": "NdArray",
+      "dataType": "integer",
+      "values": [
+        1022.8037350177765
+      ]
+    }
+  }
+}

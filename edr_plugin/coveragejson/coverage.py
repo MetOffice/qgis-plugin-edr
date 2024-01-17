@@ -33,10 +33,10 @@ from edr_plugin.coveragejson.utils import (
 class Coverage:
     """Class representing coverage from CoverageJSON."""
 
-    VECTOR_DATA_DOMAIN_TYPES = ["MultiPolygon", "Trajectory", "PointSeries"]
-    TYPES_FOR_MERGE = ["Trajectory", "PointSeries"]
+    VECTOR_DATA_DOMAIN_TYPES = ["MultiPolygon", "Trajectory", "PointSeries", "Point"]
+    TYPES_FOR_MERGE = ["Trajectory", "PointSeries", "Point"]
     TYPES_FOR_ATTRIBUTE_SIMPLIFICATION = ["Trajectory"]
-    TYPES_DIRECT_COORDINATES = ["PointSeries"]
+    TYPES_DIRECT_COORDINATES = ["PointSeries", "Point"]
 
     FIELD_NAME_TIME = "time"
 

@@ -247,8 +247,12 @@ def feature_attributes(
 
     for key in ranges.keys():
         if not simplify_into_single_value:
-            if ranges[key]["shape"][0] != number_of_features:
-                raise ValueError(f"Number of features does not match number of values for element `{key}`.")
+            if "shape" in ranges[key]:
+                if ranges[key]["shape"][0] != number_of_features:
+                    raise ValueError(f"Number of features does not match number of values for element `{key}`.")
+            else:
+                if len(ranges[key]["values"]) != number_of_features:
+                    raise ValueError(f"Number of features does not match number of values for element `{key}`.")
 
         for i, value in enumerate(ranges[key]["values"]):
             if simplify_into_single_value:
@@ -274,7 +278,7 @@ def axes_to_geometries(axes_geom: typing.Dict, domain_type: str) -> typing.List[
         json_geoms = axes_geom["composite"]["values"]
         geometries.append(json_to_linestring(json_geoms))
 
-    if domain_type == "pointseries":
+    if domain_type in ["pointseries", "point"]:
         for i in range(len(axes_geom["x"]["values"])):
             geometries.append(QgsGeometry(QgsPoint(axes_geom["x"]["values"][i], axes_geom["y"]["values"][i])))
 
@@ -349,6 +353,7 @@ def covjson_geom_to_wkb_type(covjson_geom_type: str) -> str:
         "polygon": "Polygon",
         "trajectory": "LineString",
         "pointseries": "Point",
+        "point": "Point",
     }
 
     if covjson_geom_type not in types:
