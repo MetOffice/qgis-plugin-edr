@@ -1,4 +1,5 @@
 import typing
+import uuid
 from pathlib import Path
 
 import numpy as np
@@ -33,10 +34,10 @@ from edr_plugin.coveragejson.utils import (
 class Coverage:
     """Class representing coverage from CoverageJSON."""
 
-    VECTOR_DATA_DOMAIN_TYPES = ["MultiPolygon", "Trajectory", "PointSeries"]
-    TYPES_FOR_MERGE = ["Trajectory", "PointSeries"]
+    VECTOR_DATA_DOMAIN_TYPES = ["MultiPolygon", "Trajectory", "PointSeries", "Point"]
+    TYPES_FOR_MERGE = ["Trajectory", "PointSeries", "Point"]
     TYPES_FOR_ATTRIBUTE_SIMPLIFICATION = ["Trajectory"]
-    TYPES_DIRECT_COORDINATES = ["PointSeries"]
+    TYPES_DIRECT_COORDINATES = ["PointSeries", "Point"]
 
     FIELD_NAME_TIME = "time"
 
@@ -213,6 +214,9 @@ class Coverage:
 
     def raster_layers(self, parameter_name: str) -> typing.List[QgsRasterLayer]:
         """Crete list of raster layers for given parameter. The size of the list can be 1 or more."""
+        folder_for_rasters = self.folder_to_save_data / str(uuid.uuid4()).split("-")[0]
+        folder_for_rasters.mkdir(parents=True, exist_ok=True)
+
         layers = []
 
         if parameter_name not in self.ranges:
@@ -241,7 +245,7 @@ class Coverage:
             else:
                 layer_name = layer_name_start
 
-            file_to_save = self.folder_to_save_data / f"{make_file_stem_safe(layer_name)}.tif"
+            file_to_save = folder_for_rasters / f"{make_file_stem_safe(layer_name)}.tif"
 
             dp = raster_template.save_empty_raster(file_to_save)
 
