@@ -1,5 +1,6 @@
 import typing
 
+import pytest
 from qgis.core import Qgis, QgsCategorizedSymbolRenderer, QgsMapLayer, QgsVectorLayer, QgsWkbTypes
 
 from edr_plugin.coveragejson.coverage import Coverage
@@ -14,6 +15,7 @@ def test_point_series(data_dir):
 
     coverage_json = CoverageJSONReader(filename)
 
+    assert coverage_json.file_size_mg == pytest.approx(0.763, 0.01)
     assert coverage_json.domain_type == "PointSeries"
     assert coverage_json.coverages_count == 10
 
