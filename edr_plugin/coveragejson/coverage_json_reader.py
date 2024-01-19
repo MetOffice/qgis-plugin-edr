@@ -131,11 +131,14 @@ class CoverageJSONReader:
         """Get list of map layers for all parameters in the CoverageJSON file."""
         layers = []
 
-        layers_for_merge: typing.List[QgsVectorLayer] = []
+        main_layer: QgsVectorLayer = None
 
         if self.is_collection:
             for i in range(self.coverages_count):
                 coverage = self.coverage(i)
+
+                if i % 100 == 0:
+                    print(i)
 
                 time_range_coverage = coverage.time_range()
                 time_step_coverage = coverage.time_step()
@@ -155,14 +158,13 @@ class CoverageJSONReader:
                 if not self.coverages[0].could_be_merged:
                     layers.extend(coverage.map_layers())
                 else:
-                    layers_for_merge.extend(coverage.map_layers())
+                    if main_layer is None:
+                        main_layer = coverage.vector_layer()
 
-            if layers_for_merge:
-                main_layer = layers_for_merge[0]
-                main_layer_dp = main_layer.dataProvider()
-                for i in range(1, len(layers_for_merge)):
-                    for feature in layers_for_merge[i].getFeatures():
-                        main_layer_dp.addFeature(feature)
+                    features = coverage.coverage_features(main_layer)
+                    main_layer.dataProvider().addFeatures(features)
+
+            if main_layer:
                 layers.append(main_layer)
         else:
             coverage = self.coverage()
