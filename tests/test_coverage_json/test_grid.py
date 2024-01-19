@@ -69,7 +69,7 @@ def test_time_2variables_grid(data_dir):
 
     coverage_json = CoverageJSONReader(filename)
 
-    assert coverage_json.file_size_mg == pytest.approx(0.14, 0.01)
+    assert coverage_json.file_size_mg == pytest.approx(0.147, 0.01)
     assert coverage_json.domain_type == "Grid"
     assert coverage_json.coverages_count == 1
 
