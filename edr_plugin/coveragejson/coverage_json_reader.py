@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 import typing
 from pathlib import Path
@@ -16,6 +17,7 @@ class CoverageJSONReader:
         self, filename: typing.Union[str, Path], folder_to_save_data: typing.Optional[typing.Union[str, Path]] = None
     ) -> None:
         self.filename = Path(filename)
+        self.file_size_mg = os.stat(self.filename).st_size / (1024 * 1024)
 
         if folder_to_save_data:
             self.folder_to_save_data = Path(folder_to_save_data)

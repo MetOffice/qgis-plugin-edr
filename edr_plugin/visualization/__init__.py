@@ -4,7 +4,11 @@ from qgis.core import QgsMeshLayer, QgsProject, QgsRasterLayer, QgsVectorLayer
 from qgis.utils import iface
 
 from edr_plugin.coveragejson.coverage_json_reader import CoverageJSONReader
-from edr_plugin.utils import add_to_layer_group, single_band_gray_renderer, spawn_layer_group
+from edr_plugin.utils import (
+    add_to_layer_group,
+    single_band_gray_renderer,
+    spawn_layer_group,
+)
 
 
 class EdrLayerException(Exception):
@@ -43,6 +47,11 @@ class EdrLayerManager:
     def covjson_layer_loader(self, filepath, layer_name):
         try:
             covjson_reader = CoverageJSONReader(filepath)
+            if covjson_reader.coverages_count > 1000 and covjson_reader.file_size_mg > 10:
+                msg = f"The CoverageJSON file is either large in size or contains a lot of coverages. It may take a long time to load. The file is located at `{filepath}`.\nDo you want to continue?"
+                load = self.plugin.communication.ask(self.plugin.iface.mainWindow(), "Load large CoverageJSON", msg)
+                if not load:
+                    return
         except ValueError as e:
             error_msg = f"Can't load CoverageJSON: '{e}'."
             raise EdrLayerException(error_msg)
