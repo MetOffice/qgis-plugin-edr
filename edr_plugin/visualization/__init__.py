@@ -42,16 +42,22 @@ class EdrLayerManager:
 
     def covjson_layer_loader(self, filepath, layer_name):
         try:
+            self.plugin.communication.progress_bar(f"Parsing '{filepath}' CoverageJSON ...", clear_msg_bar=True)
             covjson_reader = CoverageJSONReader(filepath)
             if covjson_reader.coverages_count > 1000 and covjson_reader.file_size_mg > 10:
                 msg = f"The CoverageJSON file is either large in size or contains a lot of coverages. It may take a long time to load. The file is located at `{filepath}`.\nDo you want to continue?"
                 load = self.plugin.communication.ask(self.plugin.iface.mainWindow(), "Load large CoverageJSON", msg)
                 if not load:
+                    self.plugin.communication.clear_message_bar()
+                    self.plugin.communication.bar_info("File not loaded.")
                     return
         except ValueError as e:
+            self.plugin.communication.clear_message_bar()
             error_msg = f"Can't load CoverageJSON: '{e}'."
             raise EdrLayerException(error_msg)
         layers = covjson_reader.map_layers()
+        self.plugin.communication.clear_message_bar()
+        self.plugin.communication.bar_info("CoverageJSON parsed successfully.")
         layers_group = spawn_layer_group(self.project, layer_name)
         self.add_layers(*layers, group=layers_group)
         covjson_reader.qgsproject_setup_time_settings()
