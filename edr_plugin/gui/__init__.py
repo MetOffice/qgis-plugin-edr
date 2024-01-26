@@ -1,9 +1,12 @@
+import json
 import os
+from datetime import datetime
+from functools import partial
 
-from qgis.core import QgsCoordinateReferenceSystem
+from qgis.core import QgsCoordinateReferenceSystem, QgsSettings
 from qgis.gui import QgsCollapsibleGroupBox
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QDateTime, QSettings, Qt
+from qgis.PyQt.QtCore import QDateTime, Qt
 from qgis.PyQt.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QDialog, QFileDialog, QInputDialog, QLineEdit
 
 from edr_plugin.api_client import EdrApiClient, EdrApiClientError
@@ -15,6 +18,13 @@ from edr_plugin.gui.query_tools import (
     RadiusQueryBuilderTool,
 )
 from edr_plugin.models.enumerators import EdrDataQuery
+from edr_plugin.queries import (
+    AreaQueryDefinition,
+    ItemsQueryDefinition,
+    LocationsQueryDefinition,
+    PositionQueryDefinition,
+    RadiusQueryDefinition,
+)
 from edr_plugin.threading import EdrDataDownloader
 from edr_plugin.utils import is_dir_writable
 
@@ -22,25 +32,26 @@ from edr_plugin.utils import is_dir_writable
 class EdrDialog(QDialog):
     """Main EDR plugin dialog."""
 
-    DEFAULT_ROOT = "https://labs.metoffice.gov.uk/edr"
-
     def __init__(self, plugin, parent=None):
         QDialog.__init__(self, parent)
         ui_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "edr.ui")
         self.ui = uic.loadUi(ui_filepath, self)
         self.plugin = plugin
-        settings = QSettings()
-        server_url = settings.value("edr_plugin/server_url", self.DEFAULT_ROOT, type=str)
-        self.server_url_le.setText(server_url)
-        edr_authcfg = settings.value("edr_plugin/edr_authcfg", "", type=str)
+        self.settings = QgsSettings()
+        server_urls = self.read_server_urls()
+        self.server_url_cbo.addItems(server_urls)
+        last_used_server_url = self.settings.value("edr_plugin/last_server_url")
+        if last_used_server_url:
+            self.server_url_cbo.setCurrentText(last_used_server_url)
+        edr_authcfg = self.settings.value("edr_plugin/edr_authcfg", "", type=str)
         self.server_auth_config.setConfigId(edr_authcfg)
-        download_dir = settings.value("edr_plugin/download_dir", "", type=str)
+        download_dir = self.settings.value("edr_plugin/download_dir", "", type=str)
         self.download_dir_le.setText(download_dir)
-        self.api_client = EdrApiClient(server_url, authentication_config_id=edr_authcfg)
+        self.api_client = EdrApiClient(self.server_url_cbo.currentText(), authentication_config_id=edr_authcfg)
         self.current_data_query_tool = None
-        self.populate_collections()
-        self.populate_collection_data()
-        self.change_server_pb.clicked.connect(self.set_edr_server_url)
+        self.server_url_cbo.currentTextChanged.connect(self.set_edr_server_url)
+        self.add_server_pb.clicked.connect(self.add_edr_server_url)
+        self.remove_server_pb.clicked.connect(self.remove_edr_server_url)
         self.server_auth_config.selectedConfigIdChanged.connect(self.on_edr_credentials_changed)
         self.change_download_dir_pb.clicked.connect(self.set_download_directory)
         self.collection_cbo.currentIndexChanged.connect(self.populate_collection_data)
@@ -52,39 +63,66 @@ class EdrDialog(QDialog):
         self.custom_dimension_cbo.currentIndexChanged.connect(self.populate_custom_dimension_values)
         self.toggle_custom_intervals_cbox.stateChanged.connect(self.toggle_custom_intervals)
         self.cancel_pb.clicked.connect(self.close)
+        self.run_and_save_pb.clicked.connect(partial(self.query_data_collection, True))
         self.run_pb.clicked.connect(self.query_data_collection)
+        if server_urls:
+            self.populate_collections()
+            self.populate_collection_data()
+
+    def read_server_urls(self):
+        """Read server urls from QGIS settings."""
+        server_urls = self.settings.value("edr_plugin/server_urls", [])
+        return server_urls
+
+    def save_server_urls(self):
+        """Save server urls into QGIS settings."""
+        server_urls = [self.server_url_cbo.itemText(i) for i in range(self.server_url_cbo.count())]
+        self.settings.setValue("edr_plugin/server_urls", server_urls)
 
     def set_edr_server_url(self):
         """Set EDR server URL."""
-        server_url, accept = QInputDialog.getText(self, "Set EDR Server URL", "Type EDR Server URL:")
-        if accept is False:
-            return
-        server_url = server_url.strip("/")
-        QSettings().setValue("edr_plugin/server_url", server_url)
-        self.server_url_le.setText(server_url)
+        current_server_url = self.server_url_cbo.currentText()
         authcfg = self.server_auth_config.configId()
-        self.api_client = EdrApiClient(server_url, authentication_config_id=authcfg)
+        self.api_client = EdrApiClient(current_server_url, authentication_config_id=authcfg)
+        self.settings.setValue("edr_plugin/last_server_url", current_server_url)
         self.populate_collections()
         self.populate_collection_data()
 
+    def add_edr_server_url(self):
+        """Add EDR server URL."""
+        server_url, accept = QInputDialog.getText(self, "Add EDR Server URL", "Type EDR Server URL:")
+        if accept is False:
+            return
+        server_url = server_url.strip("/")
+        if self.server_url_cbo.findText(server_url) > -1:
+            return
+        self.server_url_cbo.addItem(server_url)
+        self.server_url_cbo.setCurrentText(server_url)
+        self.set_edr_server_url()
+        self.save_server_urls()
+
+    def remove_edr_server_url(self):
+        """Remove EDR server URL."""
+        self.server_url_cbo.removeItem(self.server_url_cbo.currentIndex())
+        self.save_server_urls()
+
     def on_edr_credentials_changed(self, edr_authcfg):
         """Update EDR server credential settings."""
-        server_url = self.server_url_le.text()
-        QSettings().setValue("edr_plugin/edr_authcfg", edr_authcfg)
+        server_url = self.server_url_cbo.currentText()
+        self.settings.setValue("edr_plugin/edr_authcfg", edr_authcfg)
         self.api_client = EdrApiClient(server_url, authentication_config_id=edr_authcfg)
         self.populate_collections()
         self.populate_collection_data()
 
     def set_download_directory(self):
         """Set download directory."""
-        settings = QSettings()
         last_download_dir = self.download_dir_le.text()
         parent_download_dir = os.path.dirname(last_download_dir) if last_download_dir else ""
         download_dir = QFileDialog.getExistingDirectory(self, "Pick download directory", parent_download_dir)
         if not download_dir:
             return
         if is_dir_writable(download_dir):
-            settings.setValue("edr_plugin/download_dir", download_dir)
+            self.settings.setValue("edr_plugin/download_dir", download_dir)
             self.download_dir_le.setText(download_dir)
         else:
             self.plugin.communication.bar_warn("Can't write to the selected location. Please pick another folder.")
@@ -110,6 +148,18 @@ class EdrDialog(QDialog):
             self.custom_intervals_cbo.selectAllOptions()
         else:
             self.custom_intervals_cbo.deselectAllOptions()
+
+    @property
+    def data_query_definitions(self):
+        """Return query definition class associated with type of the query."""
+        query_definitions_map = {
+            EdrDataQuery.AREA.value: AreaQueryDefinition,
+            EdrDataQuery.POSITION.value: PositionQueryDefinition,
+            EdrDataQuery.RADIUS.value: RadiusQueryDefinition,
+            EdrDataQuery.ITEMS.value: ItemsQueryDefinition,
+            EdrDataQuery.LOCATIONS.value: LocationsQueryDefinition,
+        }
+        return query_definitions_map
 
     @property
     def data_query_tools(self):
@@ -382,7 +432,7 @@ class EdrDialog(QDialog):
             return
         self.current_data_query_tool = data_query_tool_cls(self)
 
-    def query_data_collection(self):
+    def query_data_collection(self, save_query=False):
         """Define data query and get the data collection."""
         data_query = self.query_cbo.currentText()
         if not data_query:
@@ -400,14 +450,70 @@ class EdrDialog(QDialog):
         if not download_dir:
             self.plugin.communication.show_warn("There is no download folder specified. Please set it and try again.")
             return
+        server_url = self.server_url_cbo.currentText()
         edr_authcfg = self.server_auth_config.configId()
-        worker_api_client = EdrApiClient(self.server_url_le.text(), authentication_config_id=edr_authcfg)
+        worker_api_client = EdrApiClient(server_url, authentication_config_id=edr_authcfg)
+        download_worker = EdrDataDownloader(worker_api_client, data_query_definition, download_dir)
+        download_worker.signals.download_progress.connect(self.on_progress_signal)
+        download_worker.signals.download_success.connect(self.on_success_signal)
+        download_worker.signals.download_failure.connect(self.on_failure_signal)
+        if save_query:
+            saved_queries = json.loads(self.settings.value("edr_plugin/saved_queries", "{}"))
+            data_query_request_parameters = data_query_definition.as_request_parameters()
+            timestamp = datetime.now().isoformat().split(".")[0]
+            saved_query_id = f"{data_query_definition.collection_id} [{timestamp}]"
+            if server_url not in saved_queries:
+                saved_queries[server_url] = {}
+            saved_query_value = {
+                "query": data_query_request_parameters,
+                "authcfg": edr_authcfg,
+                "download_dir": download_dir,
+            }
+            try:
+                saved_queries[server_url][saved_query_id] = saved_query_value
+            except KeyError:
+                saved_queries[server_url] = {saved_query_id: saved_query_value}
+            self.settings.setValue("edr_plugin/saved_queries", json.dumps(saved_queries))
+            self.plugin.saved_queries_provider.root_item.refresh_server_items()
+        self.plugin.downloader_pool.start(download_worker)
+        self.close()
+
+    def read_saved_query(self, server_url, saved_query_id):
+        """Read saved query data definition with server URL and authorization config ID."""
+        saved_queries = json.loads(self.settings.value("edr_plugin/saved_queries", "{}"))
+        saved_query_value = saved_queries[server_url][saved_query_id]
+        data_query_request_parameters = saved_query_value["query"]
+        collection_id, sub_endpoint_queries, query_parameters = data_query_request_parameters
+        data_query_definition_cls = self.data_query_definitions[sub_endpoint_queries["data_query_name"]]
+        data_query_definition = data_query_definition_cls.from_request_parameters(
+            collection_id, sub_endpoint_queries, query_parameters
+        )
+        edr_authcfg = saved_query_value["authcfg"]
+        download_dir = saved_query_value["download_dir"]
+        return data_query_definition, edr_authcfg, download_dir
+
+    def repeat_saved_query_data_collection(self, server_url, saved_query_id):
+        """Repeat data collection query."""
+        data_query_definition, edr_authcfg, download_dir = self.read_saved_query(server_url, saved_query_id)
+        worker_api_client = EdrApiClient(server_url, authentication_config_id=edr_authcfg)
+        try:
+            collection = worker_api_client.get_collection(data_query_definition.collection_id)
+        except EdrApiClientError as e:
+            self.plugin.communication.show_error(f"Fetching collection failed due to the following error:\n{e}")
+            return
+        try:
+            instances = worker_api_client.get_collection_instances(data_query_definition.collection_id)
+        except EdrApiClientError:
+            instances = []
+        repeat_dialog = RepeatQueryDialog(data_query_definition, collection, instances, parent=self)
+        if repeat_dialog.instance_grp.isEnabled() or repeat_dialog.temporal_grp.isEnabled():
+            repeat_dialog.exec_()
+        worker_api_client = EdrApiClient(server_url, authentication_config_id=edr_authcfg)
         download_worker = EdrDataDownloader(worker_api_client, data_query_definition, download_dir)
         download_worker.signals.download_progress.connect(self.on_progress_signal)
         download_worker.signals.download_success.connect(self.on_success_signal)
         download_worker.signals.download_failure.connect(self.on_failure_signal)
         self.plugin.downloader_pool.start(download_worker)
-        self.close()
 
     def on_progress_signal(self, message, current_progress, total_progress, download_filepath):
         """Feedback on getting data progress signal."""
@@ -423,3 +529,69 @@ class EdrDialog(QDialog):
         """Feedback on getting data failure signal."""
         self.plugin.communication.clear_message_bar()
         self.plugin.communication.bar_error(error_message)
+
+
+class RepeatQueryDialog(QDialog):
+    """Repeat saved query dialog."""
+
+    def __init__(self, data_query_definition, collection, instances=None, parent=None):
+        QDialog.__init__(self, parent)
+        ui_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "repeat_query.ui")
+        self.ui = uic.loadUi(ui_filepath, self)
+        self.data_query_definition = data_query_definition
+        self.collection = collection
+        self.instances = instances or []
+        self.populate_instances()
+        self.populate_time_range()
+        self.instance_cbo.currentIndexChanged.connect(self.populate_time_range)
+        self.accept_pb.clicked.connect(self.accept)
+        self.skip_pb.clicked.connect(self.reject)
+
+    def populate_instances(self):
+        """Populate instances if available."""
+        if self.instances:
+            for instance in self.instances:
+                self.instance_cbo.addItem(instance["id"], instance)
+        else:
+            self.instance_grp.setDisabled(True)
+
+    def populate_time_range(self):
+        """Populate temporal extent if available."""
+        collection = self.instance_cbo.currentData() if self.instances else self.collection
+        collection_extent = collection["extent"]
+        try:
+            self.temporal_grp.setEnabled(True)
+            temporal_extent = collection_extent["temporal"]
+            temporal_interval = temporal_extent["interval"]
+            from_datetime_str, to_datetime_str = temporal_interval[0]
+            from_datetime = QDateTime.fromString(from_datetime_str, Qt.ISODate)
+            to_datetime = QDateTime.fromString(to_datetime_str, Qt.ISODate)
+            self.from_datetime.setDateTime(from_datetime)
+            self.to_datetime.setDateTime(to_datetime)
+        except KeyError:
+            self.temporal_grp.setDisabled(True)
+
+    def collect_variables(self):
+        """Collect variables from the dialog."""
+        instance_id = self.instance_cbo.currentText() if self.instance_grp.isEnabled() else None
+        if self.temporal_grp.isEnabled():
+            from_datetime = self.from_datetime.dateTime().toString(Qt.ISODate)
+            to_datetime = self.to_datetime.dateTime().toString(Qt.ISODate)
+            temporal_range = (
+                (from_datetime,)
+                if not to_datetime
+                else (
+                    from_datetime,
+                    to_datetime,
+                )
+            )
+        else:
+            temporal_range = None
+        return instance_id, temporal_range
+
+    def accept(self):
+        """Modify data query definition if changes accepted."""
+        instance_id, temporal_range = self.collect_variables()
+        self.data_query_definition.instance_id = instance_id
+        self.data_query_definition.temporal_range = temporal_range
+        super().accept()

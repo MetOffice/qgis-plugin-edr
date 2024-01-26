@@ -253,6 +253,21 @@
      <property name="bottomMargin">
       <number>10</number>
      </property>
+     <item row="0" column="0" colspan="4">
+      <widget class="QComboBox" name="query_cbo">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+      </widget>
+     </item>
      <item row="1" column="0" colspan="3">
       <widget class="QLineEdit" name="query_extent_le">
        <property name="font">
@@ -271,21 +286,6 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="0" colspan="4">
-      <widget class="QComboBox" name="query_cbo">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-        </font>
-       </property>
-      </widget>
-     </item>
      <item row="1" column="3">
       <widget class="QPushButton" name="query_set_pb">
        <property name="font">
@@ -299,89 +299,6 @@
       </widget>
      </item>
     </layout>
-   </item>
-   <item row="0" column="0" colspan="3">
-    <widget class="QGroupBox" name="server_grp">
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="title">
-      <string>EDR Server connection:</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_7">
-      <item row="0" column="1">
-       <widget class="QLineEdit" name="server_url_le">
-        <property name="font">
-         <font>
-          <pointsize>10</pointsize>
-          <weight>50</weight>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label">
-        <property name="font">
-         <font>
-          <pointsize>10</pointsize>
-          <weight>50</weight>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Server URL:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QPushButton" name="change_server_pb">
-        <property name="font">
-         <font>
-          <pointsize>10</pointsize>
-          <weight>50</weight>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Change..</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1" colspan="2">
-       <widget class="QgsAuthConfigSelect" name="server_auth_config">
-        <property name="font">
-         <font>
-          <pointsize>10</pointsize>
-          <weight>50</weight>
-          <bold>false</bold>
-         </font>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_5">
-        <property name="font">
-         <font>
-          <pointsize>10</pointsize>
-          <weight>50</weight>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Server credentials:</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
    </item>
    <item row="16" column="0" colspan="3">
     <widget class="QgsCollapsibleGroupBox" name="vertical_grp">
@@ -725,9 +642,9 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="load_pb">
+      <widget class="QPushButton" name="run_and_save_pb">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="font">
         <font>
@@ -735,7 +652,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Load query</string>
+        <string>Run and Save query</string>
        </property>
       </widget>
      </item>
@@ -767,6 +684,106 @@
      </property>
     </widget>
    </item>
+   <item row="0" column="0" colspan="3">
+    <widget class="QGroupBox" name="server_grp">
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="title">
+      <string>EDR Server connection:</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_7">
+      <item row="2" column="1" colspan="4">
+       <widget class="QgsAuthConfigSelect" name="server_auth_config">
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Server credentials:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label">
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Server URL:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1" colspan="4">
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QComboBox" name="server_url_cbo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="remove_server_pb">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Remove</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="add_server_pb">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Add</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
   </layout>
  </widget>
  <customwidgets>
@@ -793,8 +810,9 @@
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>server_url_le</tabstop>
-  <tabstop>change_server_pb</tabstop>
+  <tabstop>server_url_cbo</tabstop>
+  <tabstop>add_server_pb</tabstop>
+  <tabstop>remove_server_pb</tabstop>
   <tabstop>collection_cbo</tabstop>
   <tabstop>instance_cbo</tabstop>
   <tabstop>query_cbo</tabstop>
@@ -818,8 +836,8 @@
   <tabstop>toggle_custom_intervals_cbox</tabstop>
   <tabstop>download_dir_le</tabstop>
   <tabstop>change_download_dir_pb</tabstop>
-  <tabstop>load_pb</tabstop>
   <tabstop>run_pb</tabstop>
+  <tabstop>run_and_save_pb</tabstop>
   <tabstop>cancel_pb</tabstop>
  </tabstops>
  <resources/>

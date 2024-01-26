@@ -102,6 +102,12 @@ class EdrApiClient:
         collections = response_json.get("collections", [])
         return collections
 
+    def get_collection(self, collection_id):
+        response = self.get_request_reply(self.collection_path(collection_id))
+        raw_content = response.content().data().decode(errors="ignore")
+        collection = json.loads(raw_content)
+        return collection
+
     def get_collection_instances(self, collection_id):
         response = self.get_request_reply(self.collection_instances_path(collection_id))
         raw_content = response.content().data().decode(errors="ignore")

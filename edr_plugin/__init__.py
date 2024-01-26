@@ -1,10 +1,13 @@
 import os.path
 
+from qgis.core import QgsApplication
 from qgis.PyQt.QtCore import QThreadPool
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
 from edr_plugin.gui import EdrDialog
+from edr_plugin.gui.browser_panel_models import SavedQueriesItemProvider
+from edr_plugin.utils import icon_filepath
 from edr_plugin.utils.communication import UICommunication
 from edr_plugin.visualization import EdrLayerManager
 
@@ -21,9 +24,12 @@ class EDRPlugin:
     def __init__(self, iface):
         self.iface = iface
         self.plugin_dir = os.path.dirname(__file__)
+        self.plugin_icon_path = icon_filepath("edr.png")
         self.menu = self.PLUGIN_NAME
         self.toolbar = self.iface.addToolBar(self.PLUGIN_ENTRY_NAME)
         self.toolbar.setObjectName(self.PLUGIN_ENTRY_NAME)
+        self.saved_queries_provider = SavedQueriesItemProvider(self)
+        QgsApplication.instance().dataItemProviderRegistry().addProvider(self.saved_queries_provider)
         self.downloader_pool = QThreadPool()
         self.downloader_pool.setMaxThreadCount(self.MAX_SIMULTANEOUS_DOWNLOADS)
         self.main_dialog = None
@@ -68,8 +74,7 @@ class EDRPlugin:
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-        icon_path = os.path.join(self.plugin_dir, "icon.png")
-        self.add_action(icon_path, text=self.PLUGIN_NAME, callback=self.run, parent=self.iface.mainWindow())
+        self.add_action(self.plugin_icon_path, text=self.PLUGIN_NAME, callback=self.run, parent=self.iface.mainWindow())
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -79,10 +84,13 @@ class EDRPlugin:
         # remove the toolbar
         del self.toolbar
 
-    def run(self):
-        """Run method that loads and starts the plugin"""
+    def ensure_main_dialog_initialized(self):
         if self.main_dialog is None:
             self.main_dialog = EdrDialog(self)
+
+    def run(self):
+        """Run method that loads and starts the plugin"""
+        self.ensure_main_dialog_initialized()
         self.main_dialog.show()
         self.main_dialog.raise_()
         self.main_dialog.activateWindow()

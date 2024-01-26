@@ -55,6 +55,45 @@ class EDRDataQueryDefinition:
             query_parameters[custom_dimension_name] = custom_dimension_value
         return self.collection_id, sub_endpoint_queries, query_parameters
 
+    def populate_from_request_parameters(self, sub_endpoint_queries, query_parameters):
+        self.instance_id = sub_endpoint_queries.pop("instance_id", None)
+        self.output_crs = query_parameters.pop("crs", None)
+        self.output_format = query_parameters.pop("f", None)
+        parameter_name = query_parameters.pop("parameter-name", None)
+        if parameter_name:
+            self.parameters = parameter_name.split(",")
+        datetime_str = query_parameters.pop("datetime", None)
+        if datetime_str:
+            self.temporal_range = tuple(datetime_str.split("/"))
+        z = query_parameters.pop("z", None)
+        if z:
+            if "/" in z:
+                vertical_intervals = z.split("/")
+                vertical_is_min_max_range = True
+            else:
+                vertical_intervals = z.split(",")
+                vertical_is_min_max_range = False
+            self.vertical_extent = (
+                vertical_intervals,
+                vertical_is_min_max_range,
+            )
+        custom_dimensions = query_parameters  # Nothing should be left in parameters beside custom dimensions
+        for custom_dimension_name, custom_dimension_value in custom_dimensions.items():
+            if "/" in custom_dimension_value:
+                custom_intervals = custom_dimension_value.split("/")
+                custom_is_min_max_range = True
+            else:
+                custom_intervals = custom_dimension_value.split(",")
+                custom_is_min_max_range = False
+            self.custom_dimension = custom_dimension_name, custom_intervals, custom_is_min_max_range
+            break  # We support only one dimension at the moment
+
+    @classmethod
+    def from_request_parameters(cls, collection_id, sub_endpoint_queries, query_parameters):
+        query_definition = cls(collection_id)
+        query_definition.populate_from_request_parameters(sub_endpoint_queries, query_parameters)
+        return query_definition
+
 
 class AreaQueryDefinition(EDRDataQueryDefinition):
     NAME = EdrDataQuery.AREA.value
@@ -68,6 +107,13 @@ class AreaQueryDefinition(EDRDataQueryDefinition):
         query_parameters["coords"] = self.wkt_polygon
         return collection_id, sub_endpoint_queries, query_parameters
 
+    @classmethod
+    def from_request_parameters(cls, collection_id, sub_endpoint_queries, query_parameters):
+        wkt_polygon = query_parameters.pop("coords", None)
+        query_definition = cls(collection_id, wkt_polygon)
+        query_definition.populate_from_request_parameters(sub_endpoint_queries, query_parameters)
+        return query_definition
+
 
 class PositionQueryDefinition(EDRDataQueryDefinition):
     NAME = EdrDataQuery.POSITION.value
@@ -80,6 +126,13 @@ class PositionQueryDefinition(EDRDataQueryDefinition):
         collection_id, sub_endpoint_queries, query_parameters = super().as_request_parameters()
         query_parameters["coords"] = self.wkt_point
         return collection_id, sub_endpoint_queries, query_parameters
+
+    @classmethod
+    def from_request_parameters(cls, collection_id, sub_endpoint_queries, query_parameters):
+        wkt_point = query_parameters.pop("coords", None)
+        query_definition = cls(collection_id, wkt_point)
+        query_definition.populate_from_request_parameters(sub_endpoint_queries, query_parameters)
+        return query_definition
 
 
 class RadiusQueryDefinition(EDRDataQueryDefinition):
@@ -98,6 +151,15 @@ class RadiusQueryDefinition(EDRDataQueryDefinition):
         query_parameters["within-units"] = self.units
         return collection_id, sub_endpoint_queries, query_parameters
 
+    @classmethod
+    def from_request_parameters(cls, collection_id, sub_endpoint_queries, query_parameters):
+        wkt_point = query_parameters.pop("coords", None)
+        radius = query_parameters.pop("within", None)
+        units = query_parameters.pop("within-units", None)
+        query_definition = cls(collection_id, wkt_point, radius, units)
+        query_definition.populate_from_request_parameters(sub_endpoint_queries, query_parameters)
+        return query_definition
+
 
 class ItemsQueryDefinition(EDRDataQueryDefinition):
     NAME = EdrDataQuery.ITEMS.value
@@ -111,6 +173,13 @@ class ItemsQueryDefinition(EDRDataQueryDefinition):
         sub_endpoint_queries["item_id"] = self.item_id
         return collection_id, sub_endpoint_queries, query_parameters
 
+    @classmethod
+    def from_request_parameters(cls, collection_id, sub_endpoint_queries, query_parameters):
+        item_id = query_parameters.pop("item_id", None)
+        query_definition = cls(collection_id, item_id)
+        query_definition.populate_from_request_parameters(sub_endpoint_queries, query_parameters)
+        return query_definition
+
 
 class LocationsQueryDefinition(EDRDataQueryDefinition):
     NAME = EdrDataQuery.LOCATIONS.value
@@ -123,3 +192,10 @@ class LocationsQueryDefinition(EDRDataQueryDefinition):
         collection_id, sub_endpoint_queries, query_parameters = super().as_request_parameters()
         sub_endpoint_queries["location_id"] = self.location_id
         return collection_id, sub_endpoint_queries, query_parameters
+
+    @classmethod
+    def from_request_parameters(cls, collection_id, sub_endpoint_queries, query_parameters):
+        location_id = query_parameters.pop("location_id", None)
+        query_definition = cls(collection_id, location_id)
+        query_definition.populate_from_request_parameters(sub_endpoint_queries, query_parameters)
+        return query_definition

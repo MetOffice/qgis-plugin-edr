@@ -123,3 +123,10 @@ def reproject_geometry(geometry, src_crs, dst_crs, transformation=None):
         transformation = QgsCoordinateTransform(src_crs, dst_crs, transform_context)
     geometry.transform(transformation)
     return geometry
+
+
+def icon_filepath(icon_filename):
+    """Return icon filepath."""
+    plugin_dirname = os.path.dirname(os.path.dirname(__file__))
+    filepath = os.path.join(plugin_dirname, "icons", icon_filename)
+    return filepath
