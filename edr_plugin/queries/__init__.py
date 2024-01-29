@@ -29,7 +29,7 @@ class EDRDataQueryDefinition:
     def as_request_parameters(self) -> Tuple[str, Dict, Dict]:
         sub_endpoint_queries = {
             "instance_id": self.instance_id,
-            "data_query_name": self.NAME,
+            "query": self.NAME,
         }
         query_parameters = {
             "crs": self.output_crs,
