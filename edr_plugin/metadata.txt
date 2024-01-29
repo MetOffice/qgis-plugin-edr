@@ -39,7 +39,7 @@ tags=OGC, EDR, meteo, Met Office, data, atmosphere, multidimensional, environmen
 
 homepage=https://github.com/lutraconsulting/qgis-plugin-edr
 category=Plugins
-icon=icon.png
+icon=icons/edr.png
 # experimental flag
 experimental=False
 
