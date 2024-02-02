@@ -77,7 +77,7 @@ class EdrServerItem(EdrRootItem):
         self.plugin.main_dialog.server_url_cbo.setCurrentText(self.server_url)
         self.plugin.run()
 
-    def delete_all_children_queries(self):
+    def delete_server_queries(self):
         deletion_confirmed = self.plugin.communication.ask(
             None, "Confirm deletion", "Are you sure you want to delete all saved queries for this server?"
         )
@@ -106,9 +106,9 @@ class EdrServerItem(EdrRootItem):
     def actions(self, parent):
         action_new_server_query = QAction(QIcon(icon_filepath("play_solid.png")), "New server query", parent)
         action_new_server_query.triggered.connect(self.new_server_query)
-        action_delete_all_queries = QAction(QIcon(icon_filepath("delete_all.png")), "Delete all queries", parent)
-        action_delete_all_queries.triggered.connect(self.delete_all_children_queries)
-        actions = [action_new_server_query, action_delete_all_queries]
+        action_delete_server_queries = QAction(QIcon(icon_filepath("delete_all.png")), "Delete server queries", parent)
+        action_delete_server_queries.triggered.connect(self.delete_server_queries)
+        actions = [action_new_server_query, action_delete_server_queries]
         return actions
 
 
