@@ -136,6 +136,7 @@ def icon_filepath(icon_filename):
 class EdrSettingsPath(Enum):
     """Enumerator with EDR settings paths."""
 
+    SAVED_SERVERS = "edr_plugin/server_urls"
     LAST_SERVER_URL = "edr_plugin/last_server_url"
     LAST_AUTHCFG = "edr_plugin/edr_authcfg"
     DOWNLOAD_DIR = "edr_plugin/download_dir"

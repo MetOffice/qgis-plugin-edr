@@ -26,7 +26,7 @@ class EdrRootItem(QgsDataCollectionItem):
 
     def createChildren(self):
         settings = QgsSettings()
-        available_servers = settings.value("edr_plugin/server_urls", [])
+        available_servers = settings.value(EdrSettingsPath.SAVED_SERVERS.value, [])
         items = []
         for server_url in available_servers:
             server_item = EdrServerItem(self.plugin, server_url, self)

@@ -76,13 +76,13 @@ class EdrDialog(QDialog):
 
     def read_server_urls(self):
         """Read server urls from QGIS settings."""
-        server_urls = self.settings.value("edr_plugin/server_urls", [])
+        server_urls = self.settings.value(EdrSettingsPath.SAVED_SERVERS.value, [])
         return server_urls
 
     def save_server_urls(self):
         """Save server urls into QGIS settings."""
         server_urls = [self.server_url_cbo.itemText(i) for i in range(self.server_url_cbo.count())]
-        self.settings.setValue("edr_plugin/server_urls", server_urls)
+        self.settings.setValue(EdrSettingsPath.SAVED_SERVERS.value, server_urls)
 
     def set_edr_server_url(self):
         """Set EDR server URL."""
