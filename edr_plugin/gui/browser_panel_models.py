@@ -5,7 +5,7 @@ from qgis.core import QgsDataCollectionItem, QgsDataItem, QgsDataItemProvider, Q
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
-from edr_plugin.utils import icon_filepath
+from edr_plugin.utils import EdrSettingsPath, icon_filepath
 
 
 class EdrRootItem(QgsDataCollectionItem):
@@ -74,7 +74,7 @@ class EdrServerItem(EdrRootItem):
 
     def createChildren(self):
         settings = QgsSettings()
-        saved_queries = json.loads(settings.value("edr_plugin/saved_queries", "{}"))
+        saved_queries = json.loads(settings.value(EdrSettingsPath.SAVED_QUERIES.value, "{}"))
         queries = saved_queries.get(self.server_url, {})
         items = []
         for query_name in queries.keys():
@@ -109,9 +109,9 @@ class SavedQueryItem(QgsDataItem):
 
     def delete_query(self):
         settings = QgsSettings()
-        saved_queries = json.loads(settings.value("edr_plugin/saved_queries", "{}"))
+        saved_queries = json.loads(settings.value(EdrSettingsPath.SAVED_QUERIES.value, "{}"))
         del saved_queries[self.server_url][self.query_name]
-        settings.setValue("edr_plugin/saved_queries", json.dumps(saved_queries))
+        settings.setValue(EdrSettingsPath.SAVED_QUERIES.value, json.dumps(saved_queries))
         self.parent().refresh()
 
     def actions(self, parent):

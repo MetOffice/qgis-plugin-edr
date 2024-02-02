@@ -13,7 +13,7 @@ from edr_plugin.queries import (
     PositionQueryDefinition,
     RadiusQueryDefinition,
 )
-from edr_plugin.utils import reproject_geometry
+from edr_plugin.utils import EdrSettingsPath, reproject_geometry
 
 
 class AreaQueryBuilderTool(QDialog):
@@ -127,8 +127,8 @@ class RadiusQueryBuilderTool(QDialog):
 
     def accept(self):
         settings = QgsSettings()
-        settings.setValue("edr_plugin/last_radius", str(self.radius_spinbox.value()))
-        settings.setValue("edr_plugin/last_radius_units", self.radius_units_cbo.currentText())
+        settings.setValue(EdrSettingsPath.LAST_RADIUS.value, str(self.radius_spinbox.value()))
+        settings.setValue(EdrSettingsPath.LAST_RADIUS_UNITS.value, self.radius_units_cbo.currentText())
         self.edr_dialog.query_extent_le.setText(self.last_radius_center_geometry.asWkt())
         self.edr_dialog.query_extent_le.setCursorPosition(0)
         self.edr_dialog.show()
@@ -149,8 +149,8 @@ class RadiusQueryBuilderTool(QDialog):
         within_units = radius_query_data["link"]["variables"]["within_units"]
         self.radius_units_cbo.addItems(within_units)
         settings = QgsSettings()
-        last_radius = settings.value("edr_plugin/last_radius", 10.0, type=float)
-        last_radius_units = settings.value("edr_plugin/last_radius_units", "")
+        last_radius = settings.value(EdrSettingsPath.LAST_RADIUS.value, 10.0, type=float)
+        last_radius_units = settings.value(EdrSettingsPath.LAST_RADIUS_UNITS.value, "")
         self.radius_spinbox.setValue(last_radius)
         self.radius_units_cbo.setCurrentText(last_radius_units)
 
@@ -203,7 +203,7 @@ class ItemsQueryBuilderTool(QDialog):
 
     def accept(self):
         selected_item = self.items_cbo.currentText()
-        QgsSettings().setValue("edr_plugin/last_item", selected_item)
+        QgsSettings().setValue(EdrSettingsPath.LAST_ITEM.value, selected_item)
         self.edr_dialog.query_extent_le.setText(selected_item)
         self.edr_dialog.query_extent_le.setCursorPosition(0)
         self.edr_dialog.show()
@@ -224,7 +224,7 @@ class ItemsQueryBuilderTool(QDialog):
             collection_items = []
         for collection_item in collection_items:
             self.items_cbo.addItem(collection_item["id"], collection_item)
-        last_item = QgsSettings().value("edr_plugin/last_item", "")
+        last_item = QgsSettings().value(EdrSettingsPath.LAST_ITEM.value, "")
         self.items_cbo.setCurrentText(last_item)
 
     def get_query_definition(self):
@@ -250,7 +250,7 @@ class LocationsQueryBuilderTool(QDialog):
 
     def accept(self):
         selected_location = self.locations_cbo.currentText()
-        QgsSettings().setValue("edr_plugin/last_location", selected_location)
+        QgsSettings().setValue(EdrSettingsPath.LAST_LOCATION.value, selected_location)
         self.edr_dialog.query_extent_le.setText(selected_location)
         self.edr_dialog.query_extent_le.setCursorPosition(0)
         self.edr_dialog.show()
@@ -271,7 +271,7 @@ class LocationsQueryBuilderTool(QDialog):
             collection_locations = []
         for collection_location in collection_locations:
             self.locations_cbo.addItem(collection_location["id"], collection_location)
-        last_location = QgsSettings().value("edr_plugin/last_location", "")
+        last_location = QgsSettings().value(EdrSettingsPath.LAST_LOCATION.value, "")
         self.locations_cbo.setCurrentText(last_location)
 
     def get_query_definition(self):

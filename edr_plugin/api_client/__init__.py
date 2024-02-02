@@ -14,21 +14,27 @@ class EdrApiClientError(Exception):
 class EdrApiClient:
     """EDR API client class."""
 
-    def __init__(self, root, authentication_config_id=None):
+    def __init__(self, root, authentication_config_id=None, use_post_request=False):
         self.root = root
         self.authentication_config_id = authentication_config_id
+        self.use_post_request = use_post_request
 
     def get_request(self, url, **params):
         request_url = QUrl(url)
-        request_query = QUrlQuery()
-        for k, v in params.items():
-            request_query.addQueryItem(k, v)
-        request_url.setQuery(request_query)
-        network_request = QNetworkRequest(request_url)
         blocking_network_request = QgsBlockingNetworkRequest()
         if self.authentication_config_id:
             blocking_network_request.setAuthCfg(self.authentication_config_id)
-        blocking_network_request.get(network_request)
+        request_query = QUrlQuery()
+        for k, v in params.items():
+            request_query.addQueryItem(k, v)
+        if self.use_post_request:
+            network_request = QNetworkRequest(request_url)
+            request_query_data = request_query.toString(QUrl.PrettyDecoded).encode()
+            blocking_network_request.post(network_request, request_query_data)
+        else:
+            request_url.setQuery(request_query)
+            network_request = QNetworkRequest(request_url)
+            blocking_network_request.get(network_request)
         error_message = blocking_network_request.errorMessage()
         if error_message:
             raise EdrApiClientError(error_message)
@@ -130,7 +136,7 @@ class EdrApiClient:
         return collection_locations
 
     def get_edr_data(
-        self, collection_id, query_parameters, instance_id=None, item_id=None, location_id=None, data_query_name=None
+        self, collection_id, query_parameters, instance_id=None, item_id=None, location_id=None, query=None
     ):
         data_endpoint = f"{self.root}/collections/{collection_id}"
         if instance_id is not None:
@@ -140,6 +146,6 @@ class EdrApiClient:
         elif location_id is not None:
             data_endpoint += f"/locations/{location_id}"
         else:
-            data_endpoint += f"/{data_query_name}"
+            data_endpoint += f"/{query}"
         response = self.get_request_reply(data_endpoint, **query_parameters)
         return response
