@@ -451,21 +451,31 @@ class EdrDialog(QDialog):
 
     def query_data_collection(self, save_query=False):
         """Define data query and get the data collection."""
+        collection = self.collection_cbo.currentData()
+        if not collection:
+            self.plugin.communication.show_warn(f"There is no any collection selected. Action aborted.")
+            self.raise_()
+            return
         data_query = self.query_cbo.currentText()
         if not data_query:
+            self.plugin.communication.show_warn(f"There is no any query selected. Action aborted.")
+            self.raise_()
             return
         if data_query not in self.data_query_tools:
             self.plugin.communication.show_warn(
                 f"Missing implementation for '{data_query}' data queries. Action aborted."
             )
+            self.raise_()
             return
         if self.current_data_query_tool is None:
             self.plugin.communication.show_warn("Query spatial extent is not set. Please set it and try again.")
+            self.raise_()
             return
         data_query_definition = self.current_data_query_tool.get_query_definition()
         download_dir = self.download_dir_le.text()
         if not download_dir:
             self.plugin.communication.show_warn("There is no download folder specified. Please set it and try again.")
+            self.raise_()
             return
         server_url = self.server_url_cbo.currentText()
         edr_authcfg = self.server_auth_config.configId()
