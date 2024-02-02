@@ -1,4 +1,5 @@
 import os
+from enum import Enum
 from types import MappingProxyType
 from uuid import uuid4
 
@@ -130,3 +131,16 @@ def icon_filepath(icon_filename):
     plugin_dirname = os.path.dirname(os.path.dirname(__file__))
     filepath = os.path.join(plugin_dirname, "icons", icon_filename)
     return filepath
+
+
+class EdrSettingsPath(Enum):
+    """Enumerator with EDR settings paths."""
+
+    LAST_SERVER_URL = "edr_plugin/last_server_url"
+    LAST_AUTHCFG = "edr_plugin/edr_authcfg"
+    DOWNLOAD_DIR = "edr_plugin/download_dir"
+    SAVED_QUERIES = "edr_plugin/saved_queries_json"
+    LAST_RADIUS = "edr_plugin/last_radius"
+    LAST_RADIUS_UNITS = "edr_plugin/last_radius_units"
+    LAST_ITEM = "edr_plugin/last_item"
+    LAST_LOCATION = "edr_plugin/last_location"

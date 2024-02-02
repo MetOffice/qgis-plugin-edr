@@ -24,13 +24,14 @@ class EdrApiClient:
         blocking_network_request = QgsBlockingNetworkRequest()
         if self.authentication_config_id:
             blocking_network_request.setAuthCfg(self.authentication_config_id)
+        request_query = QUrlQuery()
+        for k, v in params.items():
+            request_query.addQueryItem(k, v)
         if self.use_post_request:
             network_request = QNetworkRequest(request_url)
-            blocking_network_request.post(network_request, json.dumps(params).encode())
+            request_query_data = request_query.toString(QUrl.PrettyDecoded).encode()
+            blocking_network_request.post(network_request, request_query_data)
         else:
-            request_query = QUrlQuery()
-            for k, v in params.items():
-                request_query.addQueryItem(k, v)
             request_url.setQuery(request_query)
             network_request = QNetworkRequest(request_url)
             blocking_network_request.get(network_request)

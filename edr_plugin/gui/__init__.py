@@ -26,7 +26,7 @@ from edr_plugin.queries import (
     RadiusQueryDefinition,
 )
 from edr_plugin.threading import EdrDataDownloader
-from edr_plugin.utils import is_dir_writable
+from edr_plugin.utils import EdrSettingsPath, is_dir_writable
 
 
 class EdrDialog(QDialog):
@@ -40,12 +40,12 @@ class EdrDialog(QDialog):
         self.settings = QgsSettings()
         server_urls = self.read_server_urls()
         self.server_url_cbo.addItems(server_urls)
-        last_used_server_url = self.settings.value("edr_plugin/last_server_url")
+        last_used_server_url = self.settings.value(EdrSettingsPath.LAST_SERVER_URL.value)
         if last_used_server_url:
             self.server_url_cbo.setCurrentText(last_used_server_url)
-        edr_authcfg = self.settings.value("edr_plugin/edr_authcfg", "", type=str)
+        edr_authcfg = self.settings.value(EdrSettingsPath.LAST_AUTHCFG.value, "", type=str)
         self.server_auth_config.setConfigId(edr_authcfg)
-        download_dir = self.settings.value("edr_plugin/download_dir", "", type=str)
+        download_dir = self.settings.value(EdrSettingsPath.DOWNLOAD_DIR.value, "", type=str)
         self.download_dir_le.setText(download_dir)
         self.api_client = EdrApiClient(
             self.server_url_cbo.currentText(),
@@ -93,7 +93,7 @@ class EdrDialog(QDialog):
             authentication_config_id=authcfg,
             use_post_request=self.post_cbox.isChecked(),
         )
-        self.settings.setValue("edr_plugin/last_server_url", current_server_url)
+        self.settings.setValue(EdrSettingsPath.LAST_SERVER_URL.value, current_server_url)
         self.populate_collections()
         self.populate_collection_data()
 
@@ -118,7 +118,7 @@ class EdrDialog(QDialog):
     def on_edr_credentials_changed(self, edr_authcfg):
         """Update EDR server credential settings."""
         server_url = self.server_url_cbo.currentText()
-        self.settings.setValue("edr_plugin/edr_authcfg", edr_authcfg)
+        self.settings.setValue(EdrSettingsPath.LAST_AUTHCFG.value, edr_authcfg)
         self.api_client = EdrApiClient(
             server_url,
             authentication_config_id=edr_authcfg,
@@ -135,7 +135,7 @@ class EdrDialog(QDialog):
         if not download_dir:
             return
         if is_dir_writable(download_dir):
-            self.settings.setValue("edr_plugin/download_dir", download_dir)
+            self.settings.setValue(EdrSettingsPath.DOWNLOAD_DIR.value, download_dir)
             self.download_dir_le.setText(download_dir)
         else:
             self.plugin.communication.bar_warn("Can't write to the selected location. Please pick another folder.")
@@ -479,7 +479,7 @@ class EdrDialog(QDialog):
         download_worker.signals.download_success.connect(self.on_success_signal)
         download_worker.signals.download_failure.connect(self.on_failure_signal)
         if save_query:
-            saved_queries = json.loads(self.settings.value("edr_plugin/saved_queries", "{}"))
+            saved_queries = json.loads(self.settings.value(EdrSettingsPath.SAVED_QUERIES.value, "{}"))
             data_query_request_parameters = data_query_definition.as_request_parameters()
             timestamp = datetime.now().isoformat().split(".")[0]
             saved_query_id = f"{data_query_definition.collection_id} [{timestamp}]"
@@ -494,14 +494,14 @@ class EdrDialog(QDialog):
                 saved_queries[server_url][saved_query_id] = saved_query_value
             except KeyError:
                 saved_queries[server_url] = {saved_query_id: saved_query_value}
-            self.settings.setValue("edr_plugin/saved_queries", json.dumps(saved_queries))
+            self.settings.setValue(EdrSettingsPath.SAVED_QUERIES.value, json.dumps(saved_queries))
             self.plugin.saved_queries_provider.root_item.refresh_server_items()
         self.plugin.downloader_pool.start(download_worker)
         self.close()
 
     def read_saved_query(self, server_url, saved_query_id):
         """Read saved query data definition with server URL and authorization config ID."""
-        saved_queries = json.loads(self.settings.value("edr_plugin/saved_queries", "{}"))
+        saved_queries = json.loads(self.settings.value(EdrSettingsPath.SAVED_QUERIES.value, "{}"))
         saved_query_value = saved_queries[server_url][saved_query_id]
         data_query_request_parameters = saved_query_value["query"]
         collection_id, sub_endpoint_queries, query_parameters = data_query_request_parameters
