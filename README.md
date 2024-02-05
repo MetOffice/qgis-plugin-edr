@@ -23,7 +23,7 @@ You can use QGIS native tools to style and explore the data.
 Currently, there are some limitations in using the plugin:
 
 - Lack of support for trajectories and cubic spatial/temporal queries
-- CoverageJSON: the plugin only supports a subset of this formt
-- Performace: depending on the spatial/temporal extent of your query, QGIS
+- CoverageJSON: the plugin only supports a subset of this format
+- Performance: depending on the spatial/temporal extent of your query, QGIS
 might struggle with rendering and displaying the results.
 
