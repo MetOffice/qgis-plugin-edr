@@ -34,6 +34,7 @@ class AreaQueryBuilderTool(QDialog):
     def accept(self):
         current_extent = self.extent_grp.outputExtent()
         wkt_extent = current_extent.asWktPolygon()
+        self.edr_dialog.current_data_query_tool = self
         self.edr_dialog.query_extent_le.setText(wkt_extent)
         self.edr_dialog.query_extent_le.setCursorPosition(0)
         self.edr_dialog.show()
@@ -129,6 +130,7 @@ class RadiusQueryBuilderTool(QDialog):
         settings = QgsSettings()
         settings.setValue(EdrSettingsPath.LAST_RADIUS.value, str(self.radius_spinbox.value()))
         settings.setValue(EdrSettingsPath.LAST_RADIUS_UNITS.value, self.radius_units_cbo.currentText())
+        self.edr_dialog.current_data_query_tool = self
         self.edr_dialog.query_extent_le.setText(self.last_radius_center_geometry.asWkt())
         self.edr_dialog.query_extent_le.setCursorPosition(0)
         self.edr_dialog.show()
@@ -204,6 +206,7 @@ class ItemsQueryBuilderTool(QDialog):
     def accept(self):
         selected_item = self.items_cbo.currentText()
         QgsSettings().setValue(EdrSettingsPath.LAST_ITEM.value, selected_item)
+        self.edr_dialog.current_data_query_tool = self
         self.edr_dialog.query_extent_le.setText(selected_item)
         self.edr_dialog.query_extent_le.setCursorPosition(0)
         self.edr_dialog.show()
@@ -251,6 +254,7 @@ class LocationsQueryBuilderTool(QDialog):
     def accept(self):
         selected_location = self.locations_cbo.currentText()
         QgsSettings().setValue(EdrSettingsPath.LAST_LOCATION.value, selected_location)
+        self.edr_dialog.current_data_query_tool = self
         self.edr_dialog.query_extent_le.setText(selected_location)
         self.edr_dialog.query_extent_le.setCursorPosition(0)
         self.edr_dialog.show()

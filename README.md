@@ -8,7 +8,7 @@ The [Open Geospatial Consortium (OGC) Environmental Data Retrieval (EDR) API sta
 The EDR API standard uses a simple query-based approach to access data. Clients
 can specify the data they want by providing a location, time range, and a set of
 parameters. The server then returns the data in a standard format, such as
-JSON, GeoJSON, GoeTIFF, GRIB, etc.
+JSON, GeoJSON, GeoTIFF, GRIB, etc.
 
 ## QGIS plugin
 

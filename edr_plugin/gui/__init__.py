@@ -70,6 +70,7 @@ class EdrDialog(QDialog):
         self.cancel_pb.clicked.connect(self.close)
         self.run_and_save_pb.clicked.connect(partial(self.query_data_collection, True))
         self.run_pb.clicked.connect(self.query_data_collection)
+        self.run_pb.setFocus()
         if server_urls:
             self.populate_collections()
             self.populate_collection_data()
@@ -249,156 +250,175 @@ class EdrDialog(QDialog):
                 if not collection_name:
                     collection_name = collection_id
                 self.collection_cbo.addItem(collection_name, collection)
-        except EdrApiClientError as e:
+        except Exception as e:
             self.plugin.communication.show_error(f"Fetching collections failed due to the following error:\n{e}")
 
     def populate_collection_data(self):
         """Populate collection data."""
-        self.clear_widgets(*self.collection_level_widgets)
-        collection = self.collection_cbo.currentData()
-        if not collection:
-            return
         try:
-            data_queries = collection["data_queries"]
-        except KeyError:
-            return
-        if "instances" in data_queries:
-            self.instance_cbo.setEnabled(True)
-            self.populate_instances()
-        else:
-            self.instance_cbo.setDisabled(True)
-            self.populate_data_queries()
+            self.clear_widgets(*self.collection_level_widgets)
+            collection = self.collection_cbo.currentData()
+            if not collection:
+                return
+            try:
+                data_queries = collection["data_queries"]
+            except KeyError:
+                return
+            if "instances" in data_queries:
+                self.instance_cbo.setEnabled(True)
+                self.populate_instances()
+            else:
+                self.instance_cbo.setDisabled(True)
+                self.populate_data_queries()
+        except Exception as e:
+            self.plugin.communication.show_error(f"Populating collection data failed due to the following error:\n{e}")
 
     def populate_instances(self):
         """Populate instances."""
-        self.clear_widgets(*self.collection_level_widgets)
-        self.instance_cbo.setEnabled(True)
-        collection = self.collection_cbo.currentData()
-        if not collection:
-            return
-        collection_id = collection["id"]
-        instances = self.api_client.get_collection_instances(collection_id)
-        for instance in instances:
-            instance_id = instance["id"]
-            self.instance_cbo.addItem(instance_id, instance)
-        self.populate_data_queries()
+        try:
+            self.clear_widgets(*self.collection_level_widgets)
+            self.instance_cbo.setEnabled(True)
+            collection = self.collection_cbo.currentData()
+            if not collection:
+                return
+            collection_id = collection["id"]
+            instances = self.api_client.get_collection_instances(collection_id)
+            for instance in instances:
+                instance_id = instance["id"]
+                self.instance_cbo.addItem(instance_id, instance)
+            self.populate_data_queries()
+        except Exception as e:
+            self.plugin.communication.show_error(f"Populating instances failed due to the following error:\n{e}")
 
     def populate_data_queries(self):
         """Populate collection data queries."""
-        self.clear_widgets(*self.instance_level_widgets)
-        if self.instance_cbo.isEnabled():
-            collection = self.instance_cbo.currentData()
-        else:
-            collection = self.collection_cbo.currentData()
-        if not collection:
-            return
         try:
-            data_queries = collection["data_queries"]
-        except KeyError:
-            return
-        for query_name, data_query in data_queries.items():
-            self.query_cbo.addItem(query_name, data_query)
-        self.populate_data_query_attributes()
+            self.clear_widgets(*self.instance_level_widgets)
+            if self.instance_cbo.isEnabled():
+                collection = self.instance_cbo.currentData()
+            else:
+                collection = self.collection_cbo.currentData()
+            if not collection:
+                return
+            try:
+                data_queries = collection["data_queries"]
+            except KeyError:
+                return
+            for query_name, data_query in data_queries.items():
+                self.query_cbo.addItem(query_name, data_query)
+            self.populate_data_query_attributes()
+        except Exception as e:
+            self.plugin.communication.show_error(f"Populating data queries failed due to the following error:\n{e}")
 
     def populate_custom_dimension_values(self):
         """Populate custom dimension values."""
-        self.custom_intervals_cbo.clear()
-        current_dimension = self.custom_dimension_cbo.currentData()
-        if current_dimension:
-            raw_custom_values = current_dimension["values"]
-            if len(raw_custom_values) == 1:
-                value = raw_custom_values[0]
-                if isinstance(value, str):
-                    if value.startswith("R"):
-                        try:
-                            num_of_intervals, min_value, interval_step = [int(v) for v in value[1:].split("/")]
-                            custom_values = [str(v) for v in range(min_value, num_of_intervals + 1, interval_step)]
-                        except ValueError:
+        try:
+            self.custom_intervals_cbo.clear()
+            current_dimension = self.custom_dimension_cbo.currentData()
+            if current_dimension:
+                raw_custom_values = current_dimension["values"]
+                if len(raw_custom_values) == 1:
+                    value = raw_custom_values[0]
+                    if isinstance(value, str):
+                        if value.startswith("R"):
+                            try:
+                                num_of_intervals, min_value, interval_step = [int(v) for v in value[1:].split("/")]
+                                custom_values = [str(v) for v in range(min_value, num_of_intervals + 1, interval_step)]
+                            except ValueError:
+                                custom_values = [value]
+                        elif "," in value:
+                            custom_values = [v for v in value.split(",")]
+                        else:
                             custom_values = [value]
-                    elif "," in value:
-                        custom_values = [v for v in value.split(",")]
                     else:
-                        custom_values = [value]
+                        custom_values = [str(value)]
                 else:
-                    custom_values = [str(value)]
-            else:
-                custom_values = raw_custom_values
-            self.custom_intervals_cbo.addItems(custom_values)
-            self.custom_intervals_cbo.toggleItemCheckState(0)
+                    custom_values = raw_custom_values
+                self.custom_intervals_cbo.addItems(custom_values)
+                self.custom_intervals_cbo.toggleItemCheckState(0)
+        except Exception as e:
+            self.plugin.communication.show_error(
+                f"Populating custom dimensions failed due to the following error:\n{e}"
+            )
 
     def populate_data_query_attributes(self):
         """Populate data query attributes."""
-        self.current_data_query_tool = None
-        self.clear_widgets(*self.query_level_widgets)
-        if self.instance_cbo.isEnabled():
-            collection = self.instance_cbo.currentData()
-        else:
-            collection = self.collection_cbo.currentData()
-        if not collection:
-            return
-        data_query = self.query_cbo.currentData()
-        if not data_query:
-            return
-        crs_data = []
-        for crs_name in collection.get("crs", []):
-            crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
-            crs_wkt = crs.toWkt()
-            crs_data.append((crs_name, crs_wkt))
-        output_formats = collection.get("output_formats", [])
-        default_output_format = ""
-        data_link = data_query["link"]
-        data_query_variables = data_link.get("variables", {})
-        if data_query_variables:
-            crs_details = data_query_variables.get("crs_details", [])
-            if crs_details:
-                del crs_data[:]
-            for crs_detail in crs_details:
-                crs_name = crs_detail["crs"]
-                crs_wkt = crs_detail["wkt"]
+        try:
+            self.current_data_query_tool = None
+            self.clear_widgets(*self.query_level_widgets)
+            if self.instance_cbo.isEnabled():
+                collection = self.instance_cbo.currentData()
+            else:
+                collection = self.collection_cbo.currentData()
+            if not collection:
+                return
+            data_query = self.query_cbo.currentData()
+            if not data_query:
+                return
+            crs_data = []
+            for crs_name in collection.get("crs", []):
+                crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
+                crs_wkt = crs.toWkt()
                 crs_data.append((crs_name, crs_wkt))
-            output_formats = data_query_variables.get("output_formats", output_formats)
-            default_output_format = data_query_variables.get("default_output_format", default_output_format)
-        for crs_name, crs_wkt in crs_data:
-            self.crs_cbo.addItem(crs_name, crs_wkt)
-        self.format_cbo.addItems(output_formats)
-        self.format_cbo.setCurrentText(default_output_format)
-        parameter_names = collection["parameter_names"]
-        for parameter, parameter_data in parameter_names.items():
-            observed_property = parameter_data["observedProperty"]
-            observed_property_label = observed_property["label"]
-            parameter_description = parameter_data.get("description", observed_property_label)
-            self.parameters_cbo.addItem(parameter_description, parameter)
-        self.parameters_cbo.toggleItemCheckState(0)
-        collection_extent = collection["extent"]
-        try:
-            self.temporal_grp.setEnabled(True)
-            temporal_extent = collection_extent["temporal"]
-            temporal_interval = temporal_extent["interval"]
-            from_datetime_str, to_datetime_str = temporal_interval[0]
-            from_datetime = QDateTime.fromString(from_datetime_str, Qt.ISODate)
-            to_datetime = QDateTime.fromString(to_datetime_str, Qt.ISODate)
-            self.from_datetime.setDateTime(from_datetime)
-            self.to_datetime.setDateTime(to_datetime)
-        except KeyError:
-            self.temporal_grp.setDisabled(True)
-        try:
-            self.vertical_grp.setEnabled(True)
-            vertical_extent = collection_extent["vertical"]
-            vertical_values = vertical_extent["values"]
-            self.vertical_intervals_cbo.addItems(vertical_values)
-            self.vertical_intervals_cbo.toggleItemCheckState(0)
-        except KeyError:
-            self.vertical_grp.setDisabled(True)
-        try:
-            self.custom_grp.setEnabled(True)
-            custom_dimensions = collection_extent["custom"]
-            for custom_dimension in custom_dimensions:
-                custom_dimension_name = custom_dimension["id"]
-                self.custom_dimension_cbo.addItem(custom_dimension_name, custom_dimension)
-            self.custom_dimension_cbo.setCurrentIndex(0)
-            self.populate_custom_dimension_values()
-        except KeyError:
-            self.custom_grp.setDisabled(True)
+            output_formats = collection.get("output_formats", [])
+            default_output_format = ""
+            data_link = data_query["link"]
+            data_query_variables = data_link.get("variables", {})
+            if data_query_variables:
+                crs_details = data_query_variables.get("crs_details", [])
+                if crs_details:
+                    del crs_data[:]
+                for crs_detail in crs_details:
+                    crs_name = crs_detail["crs"]
+                    crs_wkt = crs_detail["wkt"]
+                    crs_data.append((crs_name, crs_wkt))
+                output_formats = data_query_variables.get("output_formats", output_formats)
+                default_output_format = data_query_variables.get("default_output_format", default_output_format)
+            for crs_name, crs_wkt in crs_data:
+                self.crs_cbo.addItem(crs_name, crs_wkt)
+            self.format_cbo.addItems(output_formats)
+            self.format_cbo.setCurrentText(default_output_format)
+            parameter_names = collection["parameter_names"]
+            for parameter, parameter_data in parameter_names.items():
+                observed_property = parameter_data["observedProperty"]
+                observed_property_label = observed_property["label"]
+                parameter_description = parameter_data.get("description", observed_property_label)
+                self.parameters_cbo.addItem(parameter_description, parameter)
+            self.parameters_cbo.toggleItemCheckState(0)
+            collection_extent = collection["extent"]
+            try:
+                self.temporal_grp.setEnabled(True)
+                temporal_extent = collection_extent["temporal"]
+                temporal_interval = temporal_extent["interval"]
+                from_datetime_str, to_datetime_str = temporal_interval[0]
+                from_datetime = QDateTime.fromString(from_datetime_str, Qt.ISODate)
+                to_datetime = QDateTime.fromString(to_datetime_str, Qt.ISODate)
+                self.from_datetime.setDateTime(from_datetime)
+                self.to_datetime.setDateTime(to_datetime)
+            except KeyError:
+                self.temporal_grp.setDisabled(True)
+            try:
+                self.vertical_grp.setEnabled(True)
+                vertical_extent = collection_extent["vertical"]
+                vertical_values = vertical_extent["values"]
+                self.vertical_intervals_cbo.addItems(vertical_values)
+                self.vertical_intervals_cbo.toggleItemCheckState(0)
+            except KeyError:
+                self.vertical_grp.setDisabled(True)
+            try:
+                self.custom_grp.setEnabled(True)
+                custom_dimensions = collection_extent["custom"]
+                for custom_dimension in custom_dimensions:
+                    custom_dimension_name = custom_dimension["id"]
+                    self.custom_dimension_cbo.addItem(custom_dimension_name, custom_dimension)
+                self.custom_dimension_cbo.setCurrentIndex(0)
+                self.populate_custom_dimension_values()
+            except KeyError:
+                self.custom_grp.setDisabled(True)
+        except Exception as e:
+            self.plugin.communication.show_error(
+                f"Populating data query attributes failed due to the following error:\n{e}"
+            )
 
     def collect_query_parameters(self):
         """Collect query parameters from the widgets."""
@@ -447,7 +467,7 @@ class EdrDialog(QDialog):
                 f"Missing implementation for '{data_query}' data queries. Action aborted."
             )
             return
-        self.current_data_query_tool = data_query_tool_cls(self)
+        data_query_tool_cls(self)
 
     def query_data_collection(self, save_query=False):
         """Define data query and get the data collection."""
@@ -469,7 +489,7 @@ class EdrDialog(QDialog):
             return
         if self.current_data_query_tool is None:
             self.plugin.communication.show_warn("Query spatial extent is not set. Please set it and try again.")
-            self.raise_()
+            self.set_query_extent()
             return
         data_query_definition = self.current_data_query_tool.get_query_definition()
         download_dir = self.download_dir_le.text()
