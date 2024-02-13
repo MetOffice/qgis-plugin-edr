@@ -17,7 +17,6 @@ from edr_plugin.gui.query_tools import (
     PositionQueryBuilderTool,
     RadiusQueryBuilderTool,
 )
-from edr_plugin.models.enumerators import EdrDataQuery
 from edr_plugin.queries import (
     AreaQueryDefinition,
     ItemsQueryDefinition,
@@ -25,6 +24,7 @@ from edr_plugin.queries import (
     PositionQueryDefinition,
     RadiusQueryDefinition,
 )
+from edr_plugin.queries.enumerators import EdrDataQuery
 from edr_plugin.threading import EdrDataDownloader
 from edr_plugin.utils import EdrSettingsPath, is_dir_writable
 

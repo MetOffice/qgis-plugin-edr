@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple
 
-from edr_plugin.models.enumerators import EdrDataQuery
+from edr_plugin.queries.enumerators import EdrDataQuery
 
 
 class EDRDataQueryDefinition:
