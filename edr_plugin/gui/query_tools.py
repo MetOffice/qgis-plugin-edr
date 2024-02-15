@@ -84,6 +84,7 @@ class PositionQueryBuilderTool(QgsMapToolEmitPoint):
         else:
             self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
         self.map_canvas.setMapTool(self)
+        self.edr_dialog.current_data_query_tool = self
 
     def canvasPressEvent(self, e):
         """On canvas press event."""
@@ -127,6 +128,10 @@ class RadiusQueryBuilderTool(QDialog):
         self.show()
 
     def accept(self):
+        if self.last_radius_center_geometry is None:
+            warn_msg = "Radius centre point is not set. Please select it and try again."
+            self.edr_dialog.plugin.communication.show_warn(warn_msg)
+            return
         settings = QgsSettings()
         settings.setValue(EdrSettingsPath.LAST_RADIUS.value, str(self.radius_spinbox.value()))
         settings.setValue(EdrSettingsPath.LAST_RADIUS_UNITS.value, self.radius_units_cbo.currentText())

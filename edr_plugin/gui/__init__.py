@@ -305,6 +305,8 @@ class EdrDialog(QDialog):
             except KeyError:
                 return
             for query_name, data_query in data_queries.items():
+                if query_name not in self.data_query_tools:
+                    continue
                 self.query_cbo.addItem(query_name, data_query)
             self.populate_data_query_attributes()
         except Exception as e:
