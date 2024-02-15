@@ -6,7 +6,8 @@ Introduction
 
 The QGIS EDR Plugin allows users of the open source geographical
 information system to gain access to Open Geospatial Consortium (OGC)
-API -Environmental Date Retrieval (EDR) compatible services. The
+API -[Environmental Date Retrieval (EDR)](https://ogcapi.ogc.org/edr/)
+compatible services. The
 services will return data to the client machines and save it locally.
 The plugin allows users to re-run saved queries for a particular
 location, for example, given the nature of the spatio-temporal service
