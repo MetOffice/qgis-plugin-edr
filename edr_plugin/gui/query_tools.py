@@ -8,6 +8,7 @@ from qgis.PyQt.QtWidgets import QDialog
 from edr_plugin.api_client import EdrApiClientError
 from edr_plugin.queries import (
     AreaQueryDefinition,
+    CubeQueryDefinition,    
     ItemsQueryDefinition,
     LocationsQueryDefinition,
     PositionQueryDefinition,
@@ -61,6 +62,54 @@ class AreaQueryBuilderTool(QDialog):
         wkt_extent_polygon = current_extent.asWktPolygon()
         collection_id, sub_endpoints, query_parameters = self.edr_dialog.collect_query_parameters()
         query_definition = AreaQueryDefinition(collection_id, wkt_extent_polygon, **sub_endpoints, **query_parameters)
+        return query_definition
+
+
+class CubeQueryBuilderTool(QDialog):
+    """Dialog for defining cube data query."""
+
+    def __init__(self, edr_dialog):
+        QDialog.__init__(self, parent=edr_dialog)
+        ui_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "query_cube.ui")
+        self.ui = uic.loadUi(ui_filepath, self)
+        self.edr_dialog = edr_dialog
+        self.map_canvas = self.edr_dialog.plugin.iface.mapCanvas()
+        self.output_crs = None
+        self.ok_pb.clicked.connect(self.accept)
+        self.setup_data_query_tool()
+        self.edr_dialog.hide()
+        self.show()
+
+    def accept(self):
+        current_extent = self.extent_grp.outputExtent()
+        bbox = f'{current_extent.xMinimum()},{current_extent.yMinimum()},{current_extent.xMaximum()},{current_extent.yMaximum()}'
+        self.edr_dialog.current_data_query_tool = self
+        self.edr_dialog.query_extent_le.setText(bbox)
+        self.edr_dialog.query_extent_le.setCursorPosition(0)
+        self.edr_dialog.show()
+        super().accept()
+
+    def reject(self):
+        self.edr_dialog.show()
+        super().accept()
+
+    def setup_data_query_tool(self):
+        """Initial data query tool setup."""
+        self.extent_grp.setMapCanvas(self.map_canvas)
+        crs_name, crs_wkt = self.edr_dialog.crs_cbo.currentText(), self.edr_dialog.crs_cbo.currentData()
+        if crs_wkt:
+            self.output_crs = QgsCoordinateReferenceSystem.fromWkt(crs_wkt)
+        else:
+            self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
+        self.extent_grp.setOutputCrs(self.output_crs)
+        self.extent_grp.setOutputExtentFromCurrent()
+
+    def get_query_definition(self):
+        """Return query definition object based on user input."""
+        current_extent = self.extent_grp.outputExtent()
+        bbox = f'{current_extent.xMinimum()},{current_extent.yMinimum()},{current_extent.xMaximum()},{current_extent.yMaximum()}'
+        collection_id, sub_endpoints, query_parameters = self.edr_dialog.collect_query_parameters()
+        query_definition = CubeQueryDefinition(collection_id, bbox, **sub_endpoints, **query_parameters)
         return query_definition
 
 
