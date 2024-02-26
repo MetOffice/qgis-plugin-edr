@@ -278,8 +278,8 @@ class EdrDialog(QDialog):
                 self.instance_cbo.setEnabled(True)
                 self.populate_instances()
             else:
-                self.instance_cbo.setEnabled(True)
-                self.populate_instances()                        
+                self.instance_cbo.setDisabled(True)
+                self.populate_data_queries()                      
 
         except Exception as e:
             self.plugin.communication.show_error(f"Populating collection data failed due to the following error:\n{e}")
