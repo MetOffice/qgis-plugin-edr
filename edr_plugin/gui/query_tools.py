@@ -354,11 +354,14 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         self.iface = self.edr_dialog.plugin.iface
         self.map_canvas = self.iface.mapCanvas()
         self.active_layer = self.iface.activeLayer()
+
+        # Rubber band for highlighting selected feature
         self.rubber_band = QgsRubberBand(self.map_canvas, Qgis.GeometryType.Line)
         self.rubber_band.setColor(QColor.fromRgb(255, 255, 0))
         self.rubber_band.setWidth(2)
         self.rubber_band.setOpacity(1)
 
+        # feature and layer for identify
         self.identify_feature = None
         self.identify_layer = None
 
@@ -403,6 +406,7 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
     def canvasPressEvent(self, event):
         self._find_feature(event.x(), event.y())
         if self.identify_feature:
+            # returned geometry is always in project CRS for simplicity
             transform = QgsCoordinateTransform(
                 self.identify_layer.crs(), self.map_canvas.mapSettings().destinationCrs(), QgsProject.instance()
             )
@@ -416,6 +420,7 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
 
     def canvasMoveEvent(self, e: QgsMapMouseEvent) -> None:
         self._find_feature(e.x(), e.y())
+        # highlight feature
         if self.identify_feature:
             self.rubber_band.addGeometry(QgsGeometry(self.identify_feature.geometry()))
         else:
