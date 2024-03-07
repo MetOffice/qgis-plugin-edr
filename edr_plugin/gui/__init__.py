@@ -16,6 +16,7 @@ from edr_plugin.gui.query_tools import (
     LocationsQueryBuilderTool,
     PositionQueryBuilderTool,
     RadiusQueryBuilderTool,
+    TrajectoryQueryBuilderTool,
 )
 from edr_plugin.queries import (
     AreaQueryDefinition,
@@ -188,6 +189,7 @@ class EdrDialog(QDialog):
             EdrDataQuery.RADIUS.value: RadiusQueryBuilderTool,
             EdrDataQuery.ITEMS.value: ItemsQueryBuilderTool,
             EdrDataQuery.LOCATIONS.value: LocationsQueryBuilderTool,
+            EdrDataQuery.TRAJECTORY.value: TrajectoryQueryBuilderTool,
         }
         return query_tools_map
 
