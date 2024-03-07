@@ -1,9 +1,28 @@
 import os
+import typing
 
-from qgis.core import QgsCoordinateReferenceSystem, QgsGeometry, QgsProject, QgsSettings
-from qgis.gui import QgsMapToolEmitPoint
+from qgis.core import (
+    Qgis,
+    QgsCoordinateReferenceSystem,
+    QgsCoordinateTransform,
+    QgsGeometry,
+    QgsPoint,
+    QgsProject,
+    QgsSettings,
+    QgsVectorLayer,
+)
+from qgis.gui import (
+    QgsDateTimeEdit,
+    QgsDoubleValidator,
+    QgsMapMouseEvent,
+    QgsMapToolEmitPoint,
+    QgsMapToolIdentifyFeature,
+    QgsRubberBand,
+)
 from qgis.PyQt import uic
-from qgis.PyQt.QtWidgets import QDialog
+from qgis.PyQt.QtCore import QDateTime, pyqtSignal
+from qgis.PyQt.QtGui import QColor, QDoubleValidator
+from qgis.PyQt.QtWidgets import QDateTimeEdit, QDialog, QHeaderView, QLineEdit, QTableWidget
 
 from edr_plugin.api_client import EdrApiClientError
 from edr_plugin.queries import (
@@ -193,6 +212,214 @@ class RadiusQueryBuilderTool(QDialog):
             **query_parameters,
         )
         return query_definition
+
+
+class TrajectoryQueryBuilderTool(QDialog):
+    """Dialog for defining trajectory data query."""
+
+    linestring_tw: QTableWidget
+
+    def __init__(self, edr_dialog):
+        QDialog.__init__(self, parent=edr_dialog)
+        ui_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "query_trajectory.ui")
+        self.ui = uic.loadUi(ui_filepath, self)
+        self.edr_dialog = edr_dialog
+        self.map_canvas = self.edr_dialog.plugin.iface.mapCanvas()
+        self.output_crs = None
+        self.selected_geometry = None
+
+        self.setup_data_query_tool()
+
+        self.line_select_tool = LineSelectMapTool(self.edr_dialog)
+        self.line_select_tool.featureSelected.connect(self.on_feature_selected)
+
+        self.line_select_pb.clicked.connect(self.on_line_select_button_clicked)
+
+        self.linestring_tw.setColumnCount(4)
+        self.linestring_tw.setHorizontalHeaderLabels(["x", "y", "z", "Time"])
+        header = self.linestring_tw.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.Stretch)
+
+        self.ok_pb.clicked.connect(self.accept)
+
+        self.edr_dialog.hide()
+        self.show()
+
+    def setup_data_query_tool(self):
+        """Initial data query tool setup."""
+        crs_name, crs_wkt = self.edr_dialog.crs_cbo.currentText(), self.edr_dialog.crs_cbo.currentData()
+        if crs_wkt:
+            self.output_crs = QgsCoordinateReferenceSystem.fromWkt(crs_wkt)
+        else:
+            self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
+
+    def on_line_select_button_clicked(self):
+        """Activate line select tool."""
+        self.map_canvas.setMapTool(self.line_select_tool)
+        self.hide()
+
+    def accept(self) -> None:
+        """Accept line."""
+        self.set_geometry()
+        return super().accept()
+
+    def on_feature_selected(self, geom: QgsGeometry):
+        """Select feature and read its vertices."""
+        self.line_select_pb.setText("Linestring : <SELECTED>")
+        self.show()
+        self.selected_geometry = geom
+        source_crs = QgsProject.instance().crs()
+        reproject_geometry(self.selected_geometry, source_crs, self.output_crs)
+        self._fill_table()
+
+    def _table_item_float(self, value: typing.Optional[float]) -> QLineEdit:
+        """Table item for float value."""
+        item = QLineEdit()
+        item.setValidator(QgsDoubleValidator(item))
+        if value is not None:
+            item.setText(str(value))
+        return item
+
+    def _table_item_datetime(self, value: typing.Optional[int]) -> QgsDateTimeEdit:
+        """Table item for datetime value."""
+        item = QgsDateTimeEdit()
+        if value is not None:
+            date_time = QDateTime.fromMSecsSinceEpoch(value)
+            item.setDateTime(date_time)
+        else:
+            item.clear()
+        return item
+
+    def _fill_table(self) -> None:
+        """Fill table with vertices from selected geometry."""
+        for i, vertex in enumerate(self.selected_geometry.vertices()):
+            self.linestring_tw.insertRow(i)
+
+            self.linestring_tw.setCellWidget(i, 0, self._table_item_float(vertex.x()))
+            self.linestring_tw.setCellWidget(i, 1, self._table_item_float(vertex.y()))
+
+            z_value = None
+            if vertex.is3D():
+                z_value = vertex.z()
+            self.linestring_tw.setCellWidget(i, 2, self._table_item_float(z_value))
+
+            m_value = None
+            if vertex.isMeasure():
+                m_value = int(vertex.m())
+            self.linestring_tw.setCellWidget(i, 3, self._table_item_datetime(m_value))
+
+    def _cell_to_float(self, row: int, col: int) -> typing.Optional[float]:
+        """Convert cell value from TableWidget to float."""
+        text = self.linestring_tw.cellWidget(row, col).text()
+        if len(text) == 0:
+            value = None
+        else:
+            value = QgsDoubleValidator.toDouble(text)
+        return value
+
+    def _cell_to_datetime_milisecs(self, row: int, col: int) -> typing.Optional[int]:
+        """Convert cell value from TableWidget to datetime in miliseconds."""
+        date_time = self.linestring_tw.cellWidget(row, col).dateTime()
+        if date_time.isNull():
+            milisecs = None
+        else:
+            milisecs = date_time.toMSecsSinceEpoch()
+        return milisecs
+
+    def set_geometry(self) -> None:
+        """Set geometry to query extent."""
+        points: typing.List[QgsPoint] = []
+
+        for i in range(self.linestring_tw.rowCount()):
+            point = QgsPoint(self._cell_to_float(i, 0), self._cell_to_float(i, 1))
+            z = self._cell_to_float(i, 2)
+            if z:
+                point.addZValue(z)
+            m = self._cell_to_datetime_milisecs(i, 3)
+            if m:
+                point.addMValue(m)
+            points.append(point)
+
+        geom = QgsGeometry.fromPolyline(points)
+        self.edr_dialog.query_extent_le.setText(geom.asWkt())
+
+
+class LineSelectMapTool(QgsMapToolIdentifyFeature):
+    """Tool to select Line from Map Canvas."""
+
+    featureSelected = pyqtSignal(QgsGeometry)
+
+    def __init__(self, edr_dialog) -> None:
+        self.edr_dialog = edr_dialog
+        self.iface = self.edr_dialog.plugin.iface
+        self.map_canvas = self.iface.mapCanvas()
+        self.active_layer = self.iface.activeLayer()
+        self.rubber_band = QgsRubberBand(self.map_canvas, Qgis.GeometryType.Line)
+        self.rubber_band.setColor(QColor.fromRgb(255, 255, 0))
+        self.rubber_band.setWidth(2)
+        self.rubber_band.setOpacity(1)
+
+        self.identify_feature = None
+        self.identify_layer = None
+
+        QgsMapToolIdentifyFeature.__init__(self, self.map_canvas, self.active_layer)
+        self.iface.currentLayerChanged.connect(self.active_changed)
+
+    def active_changed(self, layer):
+        """Change active layer."""
+        try:
+            if self.active_layer:
+                self.active_layer.removeSelection()
+            if isinstance(layer, QgsVectorLayer) and layer.isSpatial():
+                self.active_layer = layer
+                self.setLayer(self.active_layer)
+        except Exception:
+            pass
+
+    @property
+    def _line_layers(self):
+        """Select layers that have Line GeometryType."""
+        map_layers = QgsProject.instance().mapLayers()
+
+        selected_layers = [
+            x
+            for x in map_layers.values()
+            if isinstance(x, QgsVectorLayer) and x.geometryType() == Qgis.GeometryType.Line
+        ]
+
+        return selected_layers
+
+    def _find_feature(self, x: float, y: float) -> None:
+        """Set identify feature and layer for given coordinates."""
+        self.identify_feature = None
+        self.identify_layer = None
+
+        features = self.identify(x, y, self._line_layers, QgsMapToolIdentifyFeature.TopDownAll)
+        if features:
+            self.identify_feature = features[0].mFeature
+            self.identify_layer = features[0].mLayer
+        return None
+
+    def canvasPressEvent(self, event):
+        self._find_feature(event.x(), event.y())
+        if self.identify_feature:
+            transform = QgsCoordinateTransform(
+                self.identify_layer.crs(), self.map_canvas.mapSettings().destinationCrs(), QgsProject.instance()
+            )
+            geom = QgsGeometry(self.identify_feature.geometry())
+            result = geom.transform(transform)
+            if result == Qgis.GeometryOperationResult.Success:
+                self.featureSelected.emit(geom)
+        self.rubber_band.reset()
+        self.map_canvas.unsetMapTool(self)
+        self.edr_dialog.show()
+
+    def canvasMoveEvent(self, e: QgsMapMouseEvent) -> None:
+        self._find_feature(e.x(), e.y())
+        if self.identify_feature:
+            self.rubber_band.addGeometry(QgsGeometry(self.identify_feature.geometry()))
+        else:
+            self.rubber_band.reset()
 
 
 class ItemsQueryBuilderTool(QDialog):
