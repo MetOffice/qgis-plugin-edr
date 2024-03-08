@@ -282,6 +282,11 @@ def axes_to_geometries(axes_geom: typing.Dict, domain_type: str) -> typing.List[
         for i in range(len(axes_geom["x"]["values"])):
             geometries.append(QgsGeometry(QgsPoint(axes_geom["x"]["values"][i], axes_geom["y"]["values"][i])))
 
+    if domain_type == "multipoint":
+        json_geoms = axes_geom["composite"]["values"]
+        for json_geom in json_geoms:
+            geometries.append(json_to_point(json_geom))
+
     return geometries
 
 
@@ -354,6 +359,7 @@ def covjson_geom_to_wkb_type(covjson_geom_type: str) -> str:
         "trajectory": "LineString",
         "pointseries": "Point",
         "point": "Point",
+        "multipoint": "Point",
     }
 
     if covjson_geom_type not in types:
