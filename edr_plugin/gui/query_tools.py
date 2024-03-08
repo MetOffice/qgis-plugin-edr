@@ -255,10 +255,10 @@ class TrajectoryQueryBuilderTool(QDialog):
     def setup_data_query_tool(self):
         """Initial data query tool setup."""
         settings = QgsSettings()
-        self.constant_z_cb.setChecked(settings.value(EdrSettingsPath.LAST_TRAJECTORY_USE_CONSTANT_Z.value, False))
+        self.constant_z_cb.setChecked(bool(settings.value(EdrSettingsPath.LAST_TRAJECTORY_USE_CONSTANT_Z.value, False)))
         self.constant_z_le.setText(settings.value(EdrSettingsPath.LAST_TRAJECTORY_CONSTANT_Z.value, "0"))
         self.constant_datetime_cb.setChecked(
-            settings.value(EdrSettingsPath.LAST_TRAJECTORY_USE_CONSTANT_DATETIME.value, False)
+            bool(settings.value(EdrSettingsPath.LAST_TRAJECTORY_USE_CONSTANT_DATETIME.value, False))
         )
         self.constant_datetime_dte.setDateTime(
             QDateTime.fromMSecsSinceEpoch(
