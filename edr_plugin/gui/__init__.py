@@ -24,6 +24,7 @@ from edr_plugin.queries import (
     LocationsQueryDefinition,
     PositionQueryDefinition,
     RadiusQueryDefinition,
+    TrajectoryQueryDefinition,
 )
 from edr_plugin.queries.enumerators import EdrDataQuery
 from edr_plugin.threading import EdrDataDownloader
@@ -177,6 +178,7 @@ class EdrDialog(QDialog):
             EdrDataQuery.RADIUS.value: RadiusQueryDefinition,
             EdrDataQuery.ITEMS.value: ItemsQueryDefinition,
             EdrDataQuery.LOCATIONS.value: LocationsQueryDefinition,
+            EdrDataQuery.TRAJECTORY.value: TrajectoryQueryDefinition,
         }
         return query_definitions_map
 
