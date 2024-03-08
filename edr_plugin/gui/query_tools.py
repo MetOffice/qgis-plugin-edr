@@ -325,6 +325,7 @@ class TrajectoryQueryBuilderTool(QDialog):
     def _fill_table(self) -> None:
         """Fill table with vertices from selected geometry."""
         self.linestring_tw.clear()
+        self._setup_table()
         for i, vertex in enumerate(self.selected_geometry.vertices()):
             self.linestring_tw.insertRow(i)
 
