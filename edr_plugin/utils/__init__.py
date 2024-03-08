@@ -1,4 +1,5 @@
 import os
+import typing
 from enum import Enum
 from types import MappingProxyType
 from uuid import uuid4
@@ -149,3 +150,10 @@ class EdrSettingsPath(Enum):
     LAST_TRAJECTORY_CONSTANT_Z = "edr_plugin/last_trajectory_constant_z"
     LAST_TRAJECTORY_USE_CONSTANT_DATETIME = "edr_plugin/last_trajectory_use_constant_datetime"
     LAST_TRAJECTORY_CONSTANT_DATETIME = "edr_plugin/last_trajectory_constant_datetime"
+
+
+def string_to_bool(value: typing.Union[str, bool]) -> bool:
+    """Convert value to boolean."""
+    if isinstance(value, bool):
+        return value
+    return value.lower() == "true"
