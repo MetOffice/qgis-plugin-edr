@@ -33,7 +33,7 @@ from edr_plugin.queries import (
     RadiusQueryDefinition,
     TrajectoryQueryDefinition,
 )
-from edr_plugin.utils import EdrSettingsPath, reproject_geometry
+from edr_plugin.utils import EdrSettingsPath, reproject_geometry, string_to_bool
 
 
 class AreaQueryBuilderTool(QDialog):
@@ -255,10 +255,12 @@ class TrajectoryQueryBuilderTool(QDialog):
     def setup_data_query_tool(self):
         """Initial data query tool setup."""
         settings = QgsSettings()
-        self.constant_z_cb.setChecked(bool(settings.value(EdrSettingsPath.LAST_TRAJECTORY_USE_CONSTANT_Z.value, False)))
+        self.constant_z_cb.setChecked(
+            string_to_bool(settings.value(EdrSettingsPath.LAST_TRAJECTORY_USE_CONSTANT_Z.value, False))
+        )
         self.constant_z_le.setText(settings.value(EdrSettingsPath.LAST_TRAJECTORY_CONSTANT_Z.value, "0"))
         self.constant_datetime_cb.setChecked(
-            bool(settings.value(EdrSettingsPath.LAST_TRAJECTORY_USE_CONSTANT_DATETIME.value, False))
+            string_to_bool(settings.value(EdrSettingsPath.LAST_TRAJECTORY_USE_CONSTANT_DATETIME.value, False))
         )
         self.constant_datetime_dte.setDateTime(
             QDateTime.fromMSecsSinceEpoch(
@@ -278,6 +280,10 @@ class TrajectoryQueryBuilderTool(QDialog):
         self.map_canvas.setMapTool(self.line_select_tool)
         self.hide()
 
+    def reject(self) -> None:
+        self.edr_dialog.show()
+        super().accept()
+
     def accept(self) -> None:
         """Accept line."""
         self.edr_dialog.current_data_query_tool = self
@@ -293,6 +299,8 @@ class TrajectoryQueryBuilderTool(QDialog):
         )
         geom = self.query_geometry()
         self.edr_dialog.query_extent_le.setText(geom.asWkt())
+        self.edr_dialog.query_extent_le.setCursorPosition(0)
+        self.edr_dialog.show()
         return super().accept()
 
     def on_feature_selected(self, geom: QgsGeometry):
