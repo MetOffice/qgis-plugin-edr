@@ -125,9 +125,9 @@ class CubeQueryDefinition(EDRDataQueryDefinition):
     def as_request_parameters(self) -> Tuple[str, Dict, Dict]:
         collection_id, sub_endpoint_queries, query_parameters = super().as_request_parameters()
         z = query_parameters.pop("z", None)
-        if (not (z is None)):
+        if not (z is None):
             if (z.find("/") + z.find(",")) < 0:
-                query_parameters["z"] = f'{z}/{z}'
+                query_parameters["z"] = f"{z}/{z}"
             else:
                 query_parameters["z"] = z
         query_parameters["bbox"] = self.bbox

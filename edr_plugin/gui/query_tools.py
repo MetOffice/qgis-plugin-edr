@@ -27,7 +27,7 @@ from qgis.PyQt.QtWidgets import QCheckBox, QDialog, QHeaderView, QLineEdit, QTab
 from edr_plugin.api_client import EdrApiClientError
 from edr_plugin.queries import (
     AreaQueryDefinition,
-    CubeQueryDefinition,    
+    CubeQueryDefinition,
     ItemsQueryDefinition,
     LocationsQueryDefinition,
     PositionQueryDefinition,
@@ -102,7 +102,7 @@ class CubeQueryBuilderTool(QDialog):
 
     def accept(self):
         current_extent = self.extent_grp.outputExtent()
-        bbox = f'{current_extent.xMinimum()},{current_extent.yMinimum()},{current_extent.xMaximum()},{current_extent.yMaximum()}'
+        bbox = f"{current_extent.xMinimum()},{current_extent.yMinimum()},{current_extent.xMaximum()},{current_extent.yMaximum()}"
         self.edr_dialog.current_data_query_tool = self
         self.edr_dialog.query_extent_le.setText(bbox)
         self.edr_dialog.query_extent_le.setCursorPosition(0)
@@ -127,7 +127,7 @@ class CubeQueryBuilderTool(QDialog):
     def get_query_definition(self):
         """Return query definition object based on user input."""
         current_extent = self.extent_grp.outputExtent()
-        bbox = f'{current_extent.xMinimum()},{current_extent.yMinimum()},{current_extent.xMaximum()},{current_extent.yMaximum()}'
+        bbox = f"{current_extent.xMinimum()},{current_extent.yMinimum()},{current_extent.xMaximum()},{current_extent.yMaximum()}"
         collection_id, sub_endpoints, query_parameters = self.edr_dialog.collect_query_parameters()
         query_definition = CubeQueryDefinition(collection_id, bbox, **sub_endpoints, **query_parameters)
         return query_definition
