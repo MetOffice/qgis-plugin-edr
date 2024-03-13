@@ -12,6 +12,7 @@ from qgis.PyQt.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QDialog, QF
 from edr_plugin.api_client import EdrApiClient, EdrApiClientError
 from edr_plugin.gui.query_tools import (
     AreaQueryBuilderTool,
+    CubeQueryBuilderTool,    
     ItemsQueryBuilderTool,
     LocationsQueryBuilderTool,
     PositionQueryBuilderTool,
@@ -20,6 +21,7 @@ from edr_plugin.gui.query_tools import (
 )
 from edr_plugin.queries import (
     AreaQueryDefinition,
+    CubeQueryDefinition,    
     ItemsQueryDefinition,
     LocationsQueryDefinition,
     PositionQueryDefinition,
@@ -174,6 +176,7 @@ class EdrDialog(QDialog):
         """Return query definition class associated with type of the query."""
         query_definitions_map = {
             EdrDataQuery.AREA.value: AreaQueryDefinition,
+            EdrDataQuery.CUBE.value: CubeQueryDefinition,            
             EdrDataQuery.POSITION.value: PositionQueryDefinition,
             EdrDataQuery.RADIUS.value: RadiusQueryDefinition,
             EdrDataQuery.ITEMS.value: ItemsQueryDefinition,
@@ -187,6 +190,7 @@ class EdrDialog(QDialog):
         """Return query builder tool associated with type of the query."""
         query_tools_map = {
             EdrDataQuery.AREA.value: AreaQueryBuilderTool,
+            EdrDataQuery.CUBE.value: CubeQueryBuilderTool,            
             EdrDataQuery.POSITION.value: PositionQueryBuilderTool,
             EdrDataQuery.RADIUS.value: RadiusQueryBuilderTool,
             EdrDataQuery.ITEMS.value: ItemsQueryBuilderTool,
@@ -265,15 +269,22 @@ class EdrDialog(QDialog):
             if not collection:
                 return
             try:
+                instance_link = False
                 data_queries = collection["data_queries"]
+                # Add for legacy implementations
+                c_links = collection["links"]
+                for c_link in c_links:
+                    if "/instances" in c_link["href"].lower():
+                        instance_link = True
             except KeyError:
                 return
-            if "instances" in data_queries:
+            if ("instances" in data_queries) or instance_link:
                 self.instance_cbo.setEnabled(True)
                 self.populate_instances()
             else:
                 self.instance_cbo.setDisabled(True)
-                self.populate_data_queries()
+                self.populate_data_queries()                      
+
         except Exception as e:
             self.plugin.communication.show_error(f"Populating collection data failed due to the following error:\n{e}")
 
@@ -310,7 +321,7 @@ class EdrDialog(QDialog):
                 return
             for query_name, data_query in data_queries.items():
                 if query_name not in self.data_query_tools:
-                    continue
+                    continue                
                 self.query_cbo.addItem(query_name, data_query)
             self.populate_data_query_attributes()
         except Exception as e:
