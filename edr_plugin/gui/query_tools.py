@@ -387,8 +387,11 @@ class LineStringQueryBuilderTool(QDialog):
 
     def disable_main_edr_widgets_based_geometry_type(self) -> None:
         geom = self.selected_geometry.constGet()
-        self.edr_dialog.vertical_grp.setEnabled(not geom.is3D())
-        self.edr_dialog.temporal_grp.setEnabled(not geom.isMeasure())
+        collection_extent = self.edr_dialog.collection_cbo.currentData()["extent"]
+        if "temporal" in collection_extent:
+            self.edr_dialog.vertical_grp.setEnabled(not geom.is3D())
+        if "vertical" in collection_extent:
+            self.edr_dialog.temporal_grp.setEnabled(not geom.isMeasure())
 
     @abstractmethod
     def get_query_definition(self): ...
