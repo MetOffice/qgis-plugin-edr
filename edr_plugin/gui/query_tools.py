@@ -294,14 +294,11 @@ class TrajectoryQueryBuilderTool(QDialog):
 
     def setup_data_query_tool(self):
         """Initial data query tool setup."""
-        settings = QgsSettings()
         crs_name, crs_wkt = self.edr_dialog.crs_cbo.currentText(), self.edr_dialog.crs_cbo.currentData()
         if crs_wkt:
             self.output_crs = QgsCoordinateReferenceSystem.fromWkt(crs_wkt)
         else:
             self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
-        query_data = self.edr_dialog.query_cbo.currentData()
-        # TODO Z units?
 
     def on_line_select_button_clicked(self):
         """Activate line select tool."""
@@ -319,7 +316,6 @@ class TrajectoryQueryBuilderTool(QDialog):
             self.edr_dialog.plugin.communication.show_warn(warn_msg)
             return
         self.edr_dialog.current_data_query_tool = self
-        settings = QgsSettings()
         geom = self.query_geometry()
         self.edr_dialog.query_extent_le.setText(geom.asWkt())
         self.edr_dialog.query_extent_le.setCursorPosition(0)
