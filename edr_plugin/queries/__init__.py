@@ -115,6 +115,32 @@ class AreaQueryDefinition(EDRDataQueryDefinition):
         return query_definition
 
 
+class CubeQueryDefinition(EDRDataQueryDefinition):
+    NAME = EdrDataQuery.CUBE.value
+
+    def __init__(self, collection_id, bbox, **sub_endpoints_with_parameters):
+        super().__init__(collection_id, **sub_endpoints_with_parameters)
+        self.bbox = bbox
+
+    def as_request_parameters(self) -> Tuple[str, Dict, Dict]:
+        collection_id, sub_endpoint_queries, query_parameters = super().as_request_parameters()
+        z = query_parameters.pop("z", None)
+        if (not (z is None)):
+            if (z.find("/") + z.find(",")) < 0:
+                query_parameters["z"] = f'{z}/{z}'
+            else:
+                query_parameters["z"] = z
+        query_parameters["bbox"] = self.bbox
+        return collection_id, sub_endpoint_queries, query_parameters
+
+    @classmethod
+    def from_request_parameters(cls, collection_id, sub_endpoint_queries, query_parameters):
+        bbox = query_parameters.pop("bbox", None)
+        query_definition = cls(collection_id, bbox)
+        query_definition.populate_from_request_parameters(sub_endpoint_queries, query_parameters)
+        return query_definition
+
+
 class PositionQueryDefinition(EDRDataQueryDefinition):
     NAME = EdrDataQuery.POSITION.value
 

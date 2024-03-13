@@ -18,6 +18,7 @@ CONTENT_TYPE_EXTENSIONS = MappingProxyType(
     {
         "application/json": ".json",
         "application/prs.coverage+json": ".covjson",
+        "application/vnd.cov+json": ".covjson",
         "application/geo+json": ".geojson",
         "application/geopackage+sqlite3": ".gpkg",
         "application/x-netcdf4": ".nc",

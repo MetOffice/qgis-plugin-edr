@@ -365,10 +365,11 @@ def covjson_geom_to_wkb_type(covjson_geom_type: str) -> str:
 def prepare_vector_layer(
     wkb_type: str, crs: QgsCoordinateReferenceSystem, layer_name: str = "CoverageJSON"
 ) -> QgsVectorLayer:
+
     if crs.isValid():
-        crs_str = crs.authid()
+        crs_str = crs.toWkt()
     else:
-        crs_str = "EPSG:4326"
+        crs_str = "EPSG:4326"    
 
     layer = QgsVectorLayer(f"{covjson_geom_to_wkb_type(wkb_type)}?crs={crs_str}", layer_name, "memory")
 
