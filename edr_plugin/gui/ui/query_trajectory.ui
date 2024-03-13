@@ -10,13 +10,27 @@
     <x>0</x>
     <y>0</y>
     <width>760</width>
-    <height>415</height>
+    <height>341</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Trajectory query</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <item row="7" column="0" colspan="3">
+    <widget class="QPushButton" name="ok_pb">
+     <property name="font">
+      <font>
+       <pointsize>11</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>OK</string>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="0" colspan="3">
     <widget class="QLabel" name="label">
      <property name="font">
@@ -31,30 +45,6 @@
      </property>
     </widget>
    </item>
-   <item row="11" column="0" colspan="3">
-    <widget class="QPushButton" name="ok_pb">
-     <property name="font">
-      <font>
-       <pointsize>11</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>OK</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0">
-    <widget class="QTableWidget" name="linestring_tw"/>
-   </item>
-   <item row="2" column="0" colspan="3">
-    <widget class="QPushButton" name="line_select_pb">
-     <property name="text">
-      <string>Linestring : &lt;NOT SET&gt;</string>
-     </property>
-    </widget>
-   </item>
    <item row="3" column="0" colspan="3">
     <layout class="QGridLayout" name="gridLayout_2">
      <property name="bottomMargin">
@@ -62,7 +52,7 @@
      </property>
     </layout>
    </item>
-   <item row="10" column="0" colspan="2">
+   <item row="6" column="0" colspan="2">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -75,35 +65,18 @@
      </property>
     </spacer>
    </item>
-   <item row="7" column="0">
-    <widget class="QCheckBox" name="constant_datetime_cb">
+   <item row="2" column="0" colspan="3">
+    <widget class="QPushButton" name="line_select_pb">
      <property name="text">
-      <string>Use constant date and time value (this drops Date and time value from table above):</string>
+      <string>Linestring : &lt;NOT SET&gt;</string>
      </property>
     </widget>
    </item>
-   <item row="8" column="0">
-    <widget class="QgsDateTimeEdit" name="constant_datetime_dte"/>
-   </item>
-   <item row="5" column="0">
-    <widget class="QCheckBox" name="constant_z_cb">
-     <property name="text">
-      <string>Use constant Z value (this drops Z value from table above):</string>
-     </property>
-    </widget>
-   </item>
-   <item row="6" column="0">
-    <widget class="QLineEdit" name="constant_z_le"/>
+   <item row="4" column="0" rowspan="2">
+    <widget class="QTableWidget" name="linestring_tw"/>
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>QgsDateTimeEdit</class>
-   <extends>QDateTimeEdit</extends>
-   <header>qgsdatetimeedit.h</header>
-  </customwidget>
- </customwidgets>
  <tabstops>
   <tabstop>line_select_pb</tabstop>
   <tabstop>ok_pb</tabstop>

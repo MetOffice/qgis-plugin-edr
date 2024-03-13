@@ -230,26 +230,18 @@ class LocationsQueryDefinition(EDRDataQueryDefinition):
 class TrajectoryQueryDefinition(EDRDataQueryDefinition):
     NAME = EdrDataQuery.TRAJECTORY.value
 
-    def __init__(self, collection_id, wkt_trajectory, constant_z, constant_datetime, **sub_endpoints_with_parameters):
+    def __init__(self, collection_id, wkt_trajectory, **sub_endpoints_with_parameters):
         super().__init__(collection_id, **sub_endpoints_with_parameters)
         self.wkt_trajectory = wkt_trajectory
-        self.constant_z = constant_z
-        self.constant_datetime = constant_datetime
 
     def as_request_parameters(self) -> Tuple[str, Dict, Dict]:
         collection_id, sub_endpoint_queries, query_parameters = super().as_request_parameters()
         query_parameters["coords"] = self.wkt_trajectory
-        if self.constant_z:
-            query_parameters["z"] = self.constant_z
-        if self.constant_datetime:
-            query_parameters["datetime"] = self.constant_datetime
         return collection_id, sub_endpoint_queries, query_parameters
 
     @classmethod
     def from_request_parameters(cls, collection_id, sub_endpoint_queries, query_parameters):
         wkt_trajectory = query_parameters.pop("coords", None)
-        constant_z = query_parameters.pop("z", None)
-        constant_datetime = query_parameters.pop("datetime", None)
-        query_definition = cls(collection_id, wkt_trajectory, constant_z, constant_datetime)
+        query_definition = cls(collection_id, wkt_trajectory)
         query_definition.populate_from_request_parameters(sub_endpoint_queries, query_parameters)
         return query_definition

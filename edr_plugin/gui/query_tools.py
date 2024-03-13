@@ -268,10 +268,6 @@ class TrajectoryQueryBuilderTool(QDialog):
     """Dialog for defining trajectory data query."""
 
     linestring_tw: QTableWidget
-    constant_z_cb: QCheckBox
-    constant_datetime_cb: QCheckBox
-    constant_z_le: QLineEdit
-    constant_datetime_dte: QgsDateTimeEdit
 
     def __init__(self, edr_dialog):
         QDialog.__init__(self, parent=edr_dialog)
@@ -281,11 +277,6 @@ class TrajectoryQueryBuilderTool(QDialog):
         self.map_canvas = self.edr_dialog.plugin.iface.mapCanvas()
         self.output_crs = None
         self.selected_geometry = None
-        self.constant_z_le.setValidator(QgsDoubleValidator(self.constant_z_le))
-        self.constant_z_le.setEnabled(False)
-        self.constant_datetime_dte.setEnabled(False)
-        self.constant_z_cb.stateChanged.connect(self.constant_z_le.setEnabled)
-        self.constant_datetime_cb.stateChanged.connect(self.constant_datetime_dte.setEnabled)
         self.setup_data_query_tool()
         self.line_select_tool = LineSelectMapTool(self.edr_dialog)
         self.line_select_tool.featureSelected.connect(self.on_feature_selected)
@@ -304,18 +295,6 @@ class TrajectoryQueryBuilderTool(QDialog):
     def setup_data_query_tool(self):
         """Initial data query tool setup."""
         settings = QgsSettings()
-        self.constant_z_cb.setChecked(
-            string_to_bool(settings.value(EdrSettingsPath.LAST_TRAJECTORY_USE_CONSTANT_Z.value, False))
-        )
-        self.constant_z_le.setText(settings.value(EdrSettingsPath.LAST_TRAJECTORY_CONSTANT_Z.value, "0"))
-        self.constant_datetime_cb.setChecked(
-            string_to_bool(settings.value(EdrSettingsPath.LAST_TRAJECTORY_USE_CONSTANT_DATETIME.value, False))
-        )
-        self.constant_datetime_dte.setDateTime(
-            QDateTime.fromMSecsSinceEpoch(
-                int(settings.value(EdrSettingsPath.LAST_TRAJECTORY_CONSTANT_DATETIME.value, 0))
-            )
-        )
         crs_name, crs_wkt = self.edr_dialog.crs_cbo.currentText(), self.edr_dialog.crs_cbo.currentData()
         if crs_wkt:
             self.output_crs = QgsCoordinateReferenceSystem.fromWkt(crs_wkt)
@@ -335,17 +314,12 @@ class TrajectoryQueryBuilderTool(QDialog):
 
     def accept(self) -> None:
         """Accept line."""
+        if self.selected_geometry is None:
+            warn_msg = "Line geometry is not set. Please select it and try again."
+            self.edr_dialog.plugin.communication.show_warn(warn_msg)
+            return
         self.edr_dialog.current_data_query_tool = self
         settings = QgsSettings()
-        settings.setValue(EdrSettingsPath.LAST_TRAJECTORY_USE_CONSTANT_Z.value, self.constant_z_cb.isChecked())
-        settings.setValue(
-            EdrSettingsPath.LAST_TRAJECTORY_USE_CONSTANT_DATETIME.value, self.constant_datetime_cb.isChecked()
-        )
-        settings.setValue(EdrSettingsPath.LAST_TRAJECTORY_CONSTANT_Z.value, self.constant_z_le.text())
-        settings.setValue(
-            EdrSettingsPath.LAST_TRAJECTORY_CONSTANT_DATETIME.value,
-            self.constant_datetime_dte.dateTime().toMSecsSinceEpoch(),
-        )
         geom = self.query_geometry()
         self.edr_dialog.query_extent_le.setText(geom.asWkt())
         self.edr_dialog.query_extent_le.setCursorPosition(0)
@@ -354,12 +328,13 @@ class TrajectoryQueryBuilderTool(QDialog):
 
     def on_feature_selected(self, geom: QgsGeometry):
         """Select feature and read its vertices."""
-        self.line_select_pb.setText("Linestring : <SELECTED>")
-        self.show()
         self.selected_geometry = geom
         source_crs = QgsProject.instance().crs()
         reproject_geometry(self.selected_geometry, source_crs, self.output_crs)
+        self.line_select_pb.setText("Linestring : <SELECTED>")
         self._fill_table()
+        self.map_canvas.unsetMapTool(self.line_select_tool)
+        self.show()
 
     def _table_item_float(self, value: typing.Optional[float]) -> QLineEdit:
         """Table item for float value."""
@@ -424,10 +399,10 @@ class TrajectoryQueryBuilderTool(QDialog):
         for i in range(self.linestring_tw.rowCount()):
             point = QgsPoint(self._cell_to_float(i, 0), self._cell_to_float(i, 1))
             z = self._cell_to_float(i, 2)
-            if z and self.constant_z_cb.isChecked() is False:
+            if z:
                 point.addZValue(z)
             m = self._cell_to_datetime_milisecs(i, 3)
-            if m and self.constant_datetime_cb.isChecked() is False:
+            if m:
                 point.addMValue(m)
             points.append(point)
 
@@ -438,17 +413,9 @@ class TrajectoryQueryBuilderTool(QDialog):
         """Return query definition object based on user input."""
         collection_id, sub_endpoints, query_parameters = self.edr_dialog.collect_query_parameters()
         wkt_trajectory = self.edr_dialog.query_extent_le.text()
-        constant_z = None
-        if self.constant_z_cb.isChecked():
-            constant_z = self.constant_z_le.text()
-        constant_datetime = None
-        if self.constant_datetime_cb.isChecked():
-            constant_datetime = self.constant_datetime_dte.dateTime().toString(Qt.ISODate)
         query_definition = TrajectoryQueryDefinition(
             collection_id,
             wkt_trajectory,
-            constant_z,
-            constant_datetime,
             **sub_endpoints,
             **query_parameters,
         )
