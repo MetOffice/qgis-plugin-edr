@@ -1,6 +1,8 @@
 import os
 import typing
+from abc import abstractmethod
 
+from pytest_qgis import QWidget
 from qgis.core import (
     Qgis,
     QgsCoordinateReferenceSystem,
@@ -22,11 +24,12 @@ from qgis.gui import (
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, Qt, pyqtSignal
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtWidgets import QCheckBox, QDialog, QHeaderView, QLineEdit, QTableWidget
+from qgis.PyQt.QtWidgets import QComboBox, QDialog, QDoubleSpinBox, QHeaderView, QLineEdit, QTableWidget
 
 from edr_plugin.api_client import EdrApiClientError
 from edr_plugin.queries import (
     AreaQueryDefinition,
+    CorridorQueryDefinition,
     CubeQueryDefinition,
     ItemsQueryDefinition,
     LocationsQueryDefinition,
@@ -264,46 +267,10 @@ class RadiusQueryBuilderTool(QDialog):
         return query_definition
 
 
-class TrajectoryQueryBuilderTool(QDialog):
-    """Dialog for defining trajectory data query."""
+class LineStringQueryBuilderTool(QDialog):
+    """Dialog for defining line string data query - base of Trajectory and Corridor."""
 
     linestring_tw: QTableWidget
-
-    def __init__(self, edr_dialog):
-        QDialog.__init__(self, parent=edr_dialog)
-        ui_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "query_trajectory.ui")
-        self.ui = uic.loadUi(ui_filepath, self)
-        self.edr_dialog = edr_dialog
-        self.map_canvas = self.edr_dialog.plugin.iface.mapCanvas()
-        self.output_crs = None
-        self.selected_geometry = None
-        self.setup_data_query_tool()
-        self.line_select_tool = LineSelectMapTool(self.edr_dialog)
-        self.line_select_tool.featureSelected.connect(self.on_feature_selected)
-        self.line_select_pb.clicked.connect(self.on_line_select_button_clicked)
-        self.ok_pb.clicked.connect(self.accept)
-        self._setup_table()
-        self.edr_dialog.hide()
-        self.show()
-
-    def _setup_table(self):
-        self.linestring_tw.setColumnCount(4)
-        self.linestring_tw.setHorizontalHeaderLabels(["x", "y", "z", "Time"])
-        header = self.linestring_tw.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.Stretch)
-
-    def setup_data_query_tool(self):
-        """Initial data query tool setup."""
-        crs_name, crs_wkt = self.edr_dialog.crs_cbo.currentText(), self.edr_dialog.crs_cbo.currentData()
-        if crs_wkt:
-            self.output_crs = QgsCoordinateReferenceSystem.fromWkt(crs_wkt)
-        else:
-            self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
-
-    def on_line_select_button_clicked(self):
-        """Activate line select tool."""
-        self.map_canvas.setMapTool(self.line_select_tool)
-        self.hide()
 
     def reject(self) -> None:
         self.edr_dialog.show()
@@ -319,8 +286,14 @@ class TrajectoryQueryBuilderTool(QDialog):
         geom = self.query_geometry()
         self.edr_dialog.query_extent_le.setText(geom.asWkt())
         self.edr_dialog.query_extent_le.setCursorPosition(0)
+        self.disable_main_edr_widgets_based_geometry_type()
         self.edr_dialog.show()
         return super().accept()
+
+    def on_line_select_button_clicked(self):
+        """Activate line select tool."""
+        self.map_canvas.setMapTool(self.line_select_tool)
+        self.hide()
 
     def on_feature_selected(self, geom: QgsGeometry):
         """Select feature and read its vertices."""
@@ -350,25 +323,32 @@ class TrajectoryQueryBuilderTool(QDialog):
             item.clear()
         return item
 
+    def _setup_table(self):
+        self.linestring_tw.setColumnCount(4)
+        self.linestring_tw.setHorizontalHeaderLabels(["x", "y", "z", "Time"])
+        header = self.linestring_tw.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.Stretch)
+
     def _fill_table(self) -> None:
         """Fill table with vertices from selected geometry."""
         self.linestring_tw.clear()
         self._setup_table()
-        for i, vertex in enumerate(self.selected_geometry.vertices()):
-            self.linestring_tw.insertRow(i)
+        if self.selected_geometry:
+            for i, vertex in enumerate(self.selected_geometry.vertices()):
+                self.linestring_tw.insertRow(i)
 
-            self.linestring_tw.setCellWidget(i, 0, self._table_item_float(vertex.x()))
-            self.linestring_tw.setCellWidget(i, 1, self._table_item_float(vertex.y()))
+                self.linestring_tw.setCellWidget(i, 0, self._table_item_float(vertex.x()))
+                self.linestring_tw.setCellWidget(i, 1, self._table_item_float(vertex.y()))
 
-            z_value = None
-            if vertex.is3D():
-                z_value = vertex.z()
-            self.linestring_tw.setCellWidget(i, 2, self._table_item_float(z_value))
+                z_value = None
+                if vertex.is3D():
+                    z_value = vertex.z()
+                self.linestring_tw.setCellWidget(i, 2, self._table_item_float(z_value))
 
-            m_value = None
-            if vertex.isMeasure():
-                m_value = int(vertex.m())
-            self.linestring_tw.setCellWidget(i, 3, self._table_item_datetime(m_value))
+                m_value = None
+                if vertex.isMeasure():
+                    m_value = int(vertex.m())
+                self.linestring_tw.setCellWidget(i, 3, self._table_item_datetime(m_value))
 
     def _cell_to_float(self, row: int, col: int) -> typing.Optional[float]:
         """Convert cell value from TableWidget to float."""
@@ -404,6 +384,100 @@ class TrajectoryQueryBuilderTool(QDialog):
 
         geom = QgsGeometry.fromPolyline(points)
         return geom
+
+    def disable_main_edr_widgets_based_geometry_type(self) -> None:
+        geom = self.selected_geometry.constGet()
+        self.edr_dialog.vertical_grp.setEnabled(not geom.is3D())
+        self.edr_dialog.temporal_grp.setEnabled(not geom.isMeasure())
+
+    @abstractmethod
+    def get_query_definition(self): ...
+
+    @abstractmethod
+    def setup_data_query_tool(self): ...
+
+
+class CorridorQueryBuilderTool(LineStringQueryBuilderTool):
+    """Dialog for defining corridor data query."""
+
+    height_spinbox: QDoubleSpinBox
+    width_spinbox: QDoubleSpinBox
+    width_units_cbo: QComboBox
+    height_units_cbo: QComboBox
+
+    def __init__(self, edr_dialog) -> None:
+        super().__init__(parent=edr_dialog)
+        ui_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "query_corridor.ui")
+        self.ui = uic.loadUi(ui_filepath, self)
+        self.edr_dialog = edr_dialog
+        self.map_canvas = self.edr_dialog.plugin.iface.mapCanvas()
+        self.output_crs = None
+        self.setup_data_query_tool()
+        self.selected_geometry: typing.Optional[QgsGeometry] = None
+        self.line_select_tool = LineSelectMapTool(self.edr_dialog)
+        self.line_select_tool.featureSelected.connect(self.on_feature_selected)
+        self.line_select_pb.clicked.connect(self.on_line_select_button_clicked)
+        self.ok_pb.clicked.connect(self.accept)
+        self._setup_table()
+        self.edr_dialog.hide()
+        self.show()
+
+    def setup_data_query_tool(self):
+        """Initial data query tool setup."""
+        crs_name, crs_wkt = self.edr_dialog.crs_cbo.currentText(), self.edr_dialog.crs_cbo.currentData()
+        if crs_wkt:
+            self.output_crs = QgsCoordinateReferenceSystem.fromWkt(crs_wkt)
+        else:
+            self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
+        corridor_query_data = self.edr_dialog.query_cbo.currentData()
+        width_units = corridor_query_data["link"]["variables"]["width_units"]
+        self.width_units_cbo.addItems(width_units)
+        height_units = corridor_query_data["link"]["variables"]["height_units"]
+        self.height_units_cbo.addItems(height_units)
+
+    def get_query_definition(self):
+        collection_id, sub_endpoints, query_parameters = self.edr_dialog.collect_query_parameters()
+        wkt_corridor = self.edr_dialog.query_extent_le.text()
+        query_definition = CorridorQueryDefinition(
+            collection_id,
+            wkt_corridor,
+            str(self.width_spinbox.value()),
+            self.width_units_cbo.currentText(),
+            str(self.height_spinbox.value()),
+            self.height_units_cbo.currentText(),
+            **sub_endpoints,
+            **query_parameters,
+        )
+        return query_definition
+
+
+class TrajectoryQueryBuilderTool(LineStringQueryBuilderTool):
+    """Dialog for defining trajectory data query."""
+
+    def __init__(self, edr_dialog):
+        super().__init__(parent=edr_dialog)
+        ui_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ui", "query_trajectory.ui")
+        self.ui = uic.loadUi(ui_filepath, self)
+        self.edr_dialog = edr_dialog
+        self.map_canvas = self.edr_dialog.plugin.iface.mapCanvas()
+        self.output_crs = None
+        self.setup_data_query_tool()
+        self.selected_geometry: typing.Optional[QgsGeometry] = None
+        self.line_select_tool = LineSelectMapTool(self.edr_dialog)
+        self.line_select_tool.featureSelected.connect(self.on_feature_selected)
+        self.line_select_pb.clicked.connect(self.on_line_select_button_clicked)
+        self.ok_pb.clicked.connect(self.accept)
+        self._setup_table()
+        self.edr_dialog.hide()
+        self.show()
+
+    def setup_data_query_tool(self):
+        """Initial data query tool setup."""
+        crs_name, crs_wkt = self.edr_dialog.crs_cbo.currentText(), self.edr_dialog.crs_cbo.currentData()
+        if crs_wkt:
+            self.output_crs = QgsCoordinateReferenceSystem.fromWkt(crs_wkt)
+        else:
+            self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
 
     def get_query_definition(self):
         """Return query definition object based on user input."""
