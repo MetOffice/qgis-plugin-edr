@@ -147,10 +147,6 @@ class EdrSettingsPath(Enum):
     LAST_RADIUS_UNITS = "edr_plugin/last_radius_units"
     LAST_ITEM = "edr_plugin/last_item"
     LAST_LOCATION = "edr_plugin/last_location"
-    LAST_TRAJECTORY_USE_CONSTANT_Z = "edr_plugin/last_trajectory_use_constant_z"
-    LAST_TRAJECTORY_CONSTANT_Z = "edr_plugin/last_trajectory_constant_z"
-    LAST_TRAJECTORY_USE_CONSTANT_DATETIME = "edr_plugin/last_trajectory_use_constant_datetime"
-    LAST_TRAJECTORY_CONSTANT_DATETIME = "edr_plugin/last_trajectory_constant_datetime"
 
 
 def string_to_bool(value: typing.Union[str, bool]) -> bool:
