@@ -2,7 +2,6 @@ import os
 import typing
 from abc import abstractmethod
 
-from pytest_qgis import QWidget
 from qgis.core import (
     Qgis,
     QgsCoordinateReferenceSystem,
