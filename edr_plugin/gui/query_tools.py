@@ -15,6 +15,7 @@ from qgis.core import (
 )
 from qgis.gui import (
     QgsDateTimeEdit,
+    QgsDoubleSpinBox,
     QgsDoubleValidator,
     QgsMapMouseEvent,
     QgsMapToolEmitPoint,
@@ -407,6 +408,9 @@ class CorridorQueryBuilderTool(LineStringQueryBuilderTool):
     width_spinbox: QDoubleSpinBox
     width_units_cbo: QComboBox
     height_units_cbo: QComboBox
+    resolution_x_spinbox: QgsDoubleSpinBox
+    resolution_y_spinbox: QgsDoubleSpinBox
+    resolution_z_spinbox: QgsDoubleSpinBox
 
     def __init__(self, edr_dialog) -> None:
         super().__init__(parent=edr_dialog)
@@ -415,6 +419,15 @@ class CorridorQueryBuilderTool(LineStringQueryBuilderTool):
         self.edr_dialog = edr_dialog
         self.map_canvas = self.edr_dialog.plugin.iface.mapCanvas()
         self.output_crs = None
+        self.resolution_x_spinbox.clear()
+        self.resolution_x_spinbox.setClearValue(0, "None")
+        self.resolution_x_spinbox.setValue(0)
+        self.resolution_y_spinbox.clear()
+        self.resolution_y_spinbox.setClearValue(0, "None")
+        self.resolution_y_spinbox.setValue(0)
+        self.resolution_z_spinbox.clear()
+        self.resolution_z_spinbox.setClearValue(0, "None")
+        self.resolution_z_spinbox.setValue(0)
         self.setup_data_query_tool()
         self.selected_geometry: typing.Optional[QgsGeometry] = None
         self.line_select_tool = LineSelectMapTool(self.edr_dialog)
@@ -441,6 +454,15 @@ class CorridorQueryBuilderTool(LineStringQueryBuilderTool):
     def get_query_definition(self):
         collection_id, sub_endpoints, query_parameters = self.edr_dialog.collect_query_parameters()
         wkt_corridor = self.edr_dialog.query_extent_le.text()
+        resolution_x = self.resolution_x_spinbox.value()
+        if resolution_x == 0:
+            resolution_x = None
+        resolution_y = self.resolution_y_spinbox.value()
+        if resolution_y == 0:
+            resolution_y = None
+        resolution_z = self.resolution_z_spinbox.value()
+        if resolution_z == 0:
+            resolution_z = None
         query_definition = CorridorQueryDefinition(
             collection_id,
             wkt_corridor,

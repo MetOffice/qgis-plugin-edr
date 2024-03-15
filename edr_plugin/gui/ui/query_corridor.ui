@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>760</width>
-    <height>448</height>
+    <height>515</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -56,6 +56,36 @@
    </item>
    <item>
     <layout class="QGridLayout" name="gridLayout">
+     <item row="1" column="1">
+      <widget class="QDoubleSpinBox" name="height_spinbox">
+       <property name="decimals">
+        <number>3</number>
+       </property>
+       <property name="minimum">
+        <double>0.001000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>1000000.000000000000000</double>
+       </property>
+       <property name="value">
+        <double>1.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Corridor height:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>Resolution X:</string>
+       </property>
+      </widget>
+     </item>
      <item row="0" column="2">
       <widget class="QLabel" name="label_3">
        <property name="text">
@@ -86,32 +116,16 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="3">
-      <widget class="QComboBox" name="width_units_cbo"/>
-     </item>
      <item row="1" column="3">
       <widget class="QComboBox" name="height_units_cbo"/>
      </item>
-     <item row="1" column="1">
-      <widget class="QDoubleSpinBox" name="height_spinbox">
-       <property name="decimals">
-        <number>3</number>
-       </property>
-       <property name="minimum">
-        <double>0.001000000000000</double>
-       </property>
-       <property name="maximum">
-        <double>1000000.000000000000000</double>
-       </property>
-       <property name="value">
-        <double>1.000000000000000</double>
-       </property>
-      </widget>
+     <item row="0" column="3">
+      <widget class="QComboBox" name="width_units_cbo"/>
      </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_4">
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_7">
        <property name="text">
-        <string>Corridor height:</string>
+        <string>Resolution Y:</string>
        </property>
       </widget>
      </item>
@@ -119,6 +133,70 @@
       <widget class="QLabel" name="label_5">
        <property name="text">
         <string>Units:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>Resolution Z:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QgsDoubleSpinBox" name="resolution_x_spinbox">
+       <property name="decimals">
+        <number>3</number>
+       </property>
+       <property name="minimum">
+        <double>0.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>1000000.000000000000000</double>
+       </property>
+       <property name="value">
+        <double>0.000000000000000</double>
+       </property>
+       <property name="clearValue">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QgsDoubleSpinBox" name="resolution_y_spinbox">
+       <property name="decimals">
+        <number>3</number>
+       </property>
+       <property name="minimum">
+        <double>0.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>1000000.000000000000000</double>
+       </property>
+       <property name="value">
+        <double>0.000000000000000</double>
+       </property>
+       <property name="clearValue">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QgsDoubleSpinBox" name="resolution_z_spinbox">
+       <property name="decimals">
+        <number>3</number>
+       </property>
+       <property name="minimum">
+        <double>0.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>1000000.000000000000000</double>
+       </property>
+       <property name="value">
+        <double>0.000000000000000</double>
+       </property>
+       <property name="clearValue">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -153,6 +231,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QgsDoubleSpinBox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header>qgsdoublespinbox.h</header>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>line_select_pb</tabstop>
   <tabstop>ok_pb</tabstop>

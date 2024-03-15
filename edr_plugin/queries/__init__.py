@@ -251,7 +251,17 @@ class CorridorQueryDefinition(EDRDataQueryDefinition):
     NAME = EdrDataQuery.CORRIDOR.value
 
     def __init__(
-        self, collection_id, wkt_trajectory, width, width_units, height, height_units, **sub_endpoints_with_parameters
+        self,
+        collection_id,
+        wkt_trajectory,
+        width,
+        width_units,
+        height,
+        height_units,
+        resolution_x,
+        resolution_y,
+        resolution_z,
+        **sub_endpoints_with_parameters,
     ):
         super().__init__(collection_id, **sub_endpoints_with_parameters)
         self.wkt_corridor = wkt_trajectory
@@ -259,6 +269,9 @@ class CorridorQueryDefinition(EDRDataQueryDefinition):
         self.width_units = width_units
         self.height = height
         self.height_units = height_units
+        self.resolution_x = resolution_x
+        self.resolution_y = resolution_y
+        self.resolution_z = resolution_z
 
     def as_request_parameters(self) -> Tuple[str, Dict, Dict]:
         collection_id, sub_endpoint_queries, query_parameters = super().as_request_parameters()
@@ -267,6 +280,9 @@ class CorridorQueryDefinition(EDRDataQueryDefinition):
         query_parameters["width-units"] = self.width_units
         query_parameters["corridor-height"] = self.height
         query_parameters["height-units"] = self.height_units
+        query_parameters["resolution-x"] = self.resolution_x
+        query_parameters["resolution-y"] = self.resolution_y
+        query_parameters["resolution-z"] = self.resolution_z
         return collection_id, sub_endpoint_queries, query_parameters
 
     @classmethod
@@ -276,6 +292,19 @@ class CorridorQueryDefinition(EDRDataQueryDefinition):
         width_units = query_parameters.pop("width-units", None)
         height = query_parameters.pop("corridor-height", None)
         height_units = query_parameters.pop("height-units", None)
-        query_definition = cls(collection_id, wkt_corridor, width, width_units, height, height_units)
+        resolution_x = query_parameters.pop("resolution-x", None)
+        resolution_y = query_parameters.pop("resolution-y", None)
+        resolution_z = query_parameters.pop("resolution-z", None)
+        query_definition = cls(
+            collection_id,
+            wkt_corridor,
+            width,
+            width_units,
+            height,
+            height_units,
+            resolution_x,
+            resolution_y,
+            resolution_z,
+        )
         query_definition.populate_from_request_parameters(sub_endpoint_queries, query_parameters)
         return query_definition
