@@ -4,6 +4,7 @@ from abc import abstractmethod
 
 from qgis.core import (
     Qgis,
+    QgsApplication,
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
     QgsGeometry,
@@ -24,7 +25,16 @@ from qgis.gui import (
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, Qt, pyqtSignal
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtWidgets import QComboBox, QDialog, QDoubleSpinBox, QHeaderView, QLineEdit, QTableWidget
+from qgis.PyQt.QtWidgets import (
+    QComboBox,
+    QDialog,
+    QDoubleSpinBox,
+    QHeaderView,
+    QLineEdit,
+    QPlainTextEdit,
+    QTableWidget,
+    QToolButton,
+)
 
 from edr_plugin.api_client import EdrApiClientError
 from edr_plugin.queries import (
@@ -271,6 +281,11 @@ class LineStringQueryBuilderTool(QDialog):
     """Dialog for defining line string data query - base of Trajectory and Corridor."""
 
     linestring_tw: QTableWidget
+    plus_toolbutton: QToolButton
+    minus_toolbutton: QToolButton
+    wkt_plaintext: QPlainTextEdit
+
+    line_geometry_definition_updated = pyqtSignal()
 
     def reject(self) -> None:
         self.edr_dialog.show()
@@ -290,10 +305,32 @@ class LineStringQueryBuilderTool(QDialog):
         self.edr_dialog.show()
         return super().accept()
 
+    def on_wkt_edit(self) -> None:
+        geom = QgsGeometry.fromWkt(self.wkt_plaintext.toPlainText())
+        if not geom.isNull():
+            self.line_select_pb.setText("Linestring : <MANUAL ENTRY>")
+            self.selected_geometry = geom
+            self._fill_table()
+
+    def on_line_remove_button_clicked(self) -> None:
+        current_row = self.linestring_tw.currentRow()
+        self.linestring_tw.removeRow(current_row)
+        QgsApplication.processEvents()
+        self.line_geometry_definition_updated.emit()
+
+    def on_line_add_button_clicked(self) -> None:
+        current_row = self.linestring_tw.currentRow()
+        insert_row = current_row + 1
+        self.linestring_tw.insertRow(insert_row)
+        self.linestring_tw.setCellWidget(insert_row, 0, self._table_item_float(None))
+        self.linestring_tw.setCellWidget(insert_row, 1, self._table_item_float(None))
+        self.linestring_tw.setCellWidget(insert_row, 2, self._table_item_float(None))
+        self.linestring_tw.setCellWidget(insert_row, 3, self._table_item_datetime(None))
+        self.line_geometry_definition_updated.emit()
+
     def on_line_select_button_clicked(self):
         """Activate line select tool."""
         self.map_canvas.setMapTool(self.line_select_tool)
-        self.edr_dialog.hide()
         self.hide()
 
     def on_feature_selected(self, geom: QgsGeometry):
@@ -304,24 +341,27 @@ class LineStringQueryBuilderTool(QDialog):
         self.line_select_pb.setText("Linestring : <SELECTED>")
         self._fill_table()
         self.map_canvas.unsetMapTool(self.line_select_tool)
+        self.line_geometry_definition_updated.emit()
         self.show()
 
     def _table_item_float(self, value: typing.Optional[float]) -> QLineEdit:
         """Table item for float value."""
-        item = QLineEdit()
+        item = QLineEdit(self.linestring_tw)
         item.setValidator(QgsDoubleValidator(item))
         if value is not None:
             item.setText(str(value))
+        item.textChanged.connect(self.line_geometry_definition_updated.emit)
         return item
 
     def _table_item_datetime(self, value: typing.Optional[int]) -> QgsDateTimeEdit:
         """Table item for datetime value."""
-        item = QgsDateTimeEdit()
+        item = QgsDateTimeEdit(self.linestring_tw)
         if value is not None:
             date_time = QDateTime.fromMSecsSinceEpoch(value)
             item.setDateTime(date_time)
         else:
             item.clear()
+        item.dateTimeChanged.connect(self.line_geometry_definition_updated.emit)
         return item
 
     def _setup_table(self):
@@ -387,6 +427,10 @@ class LineStringQueryBuilderTool(QDialog):
         geom = QgsGeometry.fromPolyline(points)
         return geom
 
+    def update_geometry_wkt(self) -> None:
+        geom = self.query_geometry()
+        self.wkt_plaintext.setPlainText(geom.asWkt())
+
     def disable_main_edr_widgets_based_geometry_type(self) -> None:
         geom = self.selected_geometry.constGet()
         collection_extent = self.edr_dialog.collection_cbo.currentData()["extent"]
@@ -429,6 +473,11 @@ class CorridorQueryBuilderTool(LineStringQueryBuilderTool):
         self.resolution_z_spinbox.clear()
         self.resolution_z_spinbox.setClearValue(0, "None")
         self.resolution_z_spinbox.setValue(0)
+        self.plus_toolbutton.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
+        self.plus_toolbutton.clicked.connect(self.on_line_add_button_clicked)
+        self.minus_toolbutton.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
+        self.minus_toolbutton.clicked.connect(self.on_line_remove_button_clicked)
+        self.wkt_plaintext.textChanged.connect(self.on_wkt_edit)
         self.setup_data_query_tool()
         self.selected_geometry: typing.Optional[QgsGeometry] = None
         self.line_select_tool = LineSelectMapTool(self.edr_dialog)
@@ -436,6 +485,7 @@ class CorridorQueryBuilderTool(LineStringQueryBuilderTool):
         self.line_select_pb.clicked.connect(self.on_line_select_button_clicked)
         self.ok_pb.clicked.connect(self.accept)
         self._setup_table()
+        self.line_geometry_definition_updated.connect(self.update_geometry_wkt)
         self.edr_dialog.hide()
         self.show()
 
@@ -487,6 +537,11 @@ class TrajectoryQueryBuilderTool(LineStringQueryBuilderTool):
         self.edr_dialog = edr_dialog
         self.map_canvas = self.edr_dialog.plugin.iface.mapCanvas()
         self.output_crs = None
+        self.plus_toolbutton.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
+        self.plus_toolbutton.clicked.connect(self.on_line_add_button_clicked)
+        self.minus_toolbutton.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
+        self.minus_toolbutton.clicked.connect(self.on_line_remove_button_clicked)
+        self.wkt_plaintext.textChanged.connect(self.on_wkt_edit)
         self.setup_data_query_tool()
         self.selected_geometry: typing.Optional[QgsGeometry] = None
         self.line_select_tool = LineSelectMapTool(self.edr_dialog)
@@ -494,6 +549,7 @@ class TrajectoryQueryBuilderTool(LineStringQueryBuilderTool):
         self.line_select_pb.clicked.connect(self.on_line_select_button_clicked)
         self.ok_pb.clicked.connect(self.accept)
         self._setup_table()
+        self.line_geometry_definition_updated.connect(self.update_geometry_wkt)
         self.edr_dialog.hide()
         self.show()
 
@@ -590,7 +646,6 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
                 self.featureSelected.emit(geom)
         self.rubber_band.reset()
         self.map_canvas.unsetMapTool(self)
-        self.edr_dialog.show()
 
     def canvasMoveEvent(self, e: QgsMapMouseEvent) -> None:
         self._find_feature(e.x(), e.y())
