@@ -8,7 +8,7 @@ name=Environmental Data Retrival
 qgisMinimumVersion=3.28
 qgisMaximumVersion=3.99
 description=Environmental Data Retrival QGIS plugin
-version=0.11.0
+version=0.11.1
 author=Lutra Consulting
 email=info@lutraconsulting.co.uk
 
