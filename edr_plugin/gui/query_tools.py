@@ -293,6 +293,7 @@ class LineStringQueryBuilderTool(QDialog):
     def on_line_select_button_clicked(self):
         """Activate line select tool."""
         self.map_canvas.setMapTool(self.line_select_tool)
+        self.edr_dialog.hide()
         self.hide()
 
     def on_feature_selected(self, geom: QgsGeometry):
@@ -332,6 +333,7 @@ class LineStringQueryBuilderTool(QDialog):
     def _fill_table(self) -> None:
         """Fill table with vertices from selected geometry."""
         self.linestring_tw.clear()
+        self.linestring_tw.setRowCount(0)
         self._setup_table()
         if self.selected_geometry:
             for i, vertex in enumerate(self.selected_geometry.vertices()):
@@ -375,10 +377,10 @@ class LineStringQueryBuilderTool(QDialog):
         for i in range(self.linestring_tw.rowCount()):
             point = QgsPoint(self._cell_to_float(i, 0), self._cell_to_float(i, 1))
             z = self._cell_to_float(i, 2)
-            if z:
+            if z is not None:
                 point.addZValue(z)
             m = self._cell_to_datetime_milisecs(i, 3)
-            if m:
+            if m is not None:
                 point.addMValue(m)
             points.append(point)
 
