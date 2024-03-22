@@ -12,19 +12,23 @@ from qgis.PyQt.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QDialog, QF
 from edr_plugin.api_client import EdrApiClient, EdrApiClientError
 from edr_plugin.gui.query_tools import (
     AreaQueryBuilderTool,
-    CubeQueryBuilderTool,    
+    CorridorQueryBuilderTool,
+    CubeQueryBuilderTool,
     ItemsQueryBuilderTool,
     LocationsQueryBuilderTool,
     PositionQueryBuilderTool,
     RadiusQueryBuilderTool,
+    TrajectoryQueryBuilderTool,
 )
 from edr_plugin.queries import (
     AreaQueryDefinition,
-    CubeQueryDefinition,    
+    CorridorQueryDefinition,
+    CubeQueryDefinition,
     ItemsQueryDefinition,
     LocationsQueryDefinition,
     PositionQueryDefinition,
     RadiusQueryDefinition,
+    TrajectoryQueryDefinition,
 )
 from edr_plugin.queries.enumerators import EdrDataQuery
 from edr_plugin.threading import EdrDataDownloader
@@ -174,11 +178,13 @@ class EdrDialog(QDialog):
         """Return query definition class associated with type of the query."""
         query_definitions_map = {
             EdrDataQuery.AREA.value: AreaQueryDefinition,
-            EdrDataQuery.CUBE.value: CubeQueryDefinition,            
+            EdrDataQuery.CUBE.value: CubeQueryDefinition,
             EdrDataQuery.POSITION.value: PositionQueryDefinition,
             EdrDataQuery.RADIUS.value: RadiusQueryDefinition,
             EdrDataQuery.ITEMS.value: ItemsQueryDefinition,
             EdrDataQuery.LOCATIONS.value: LocationsQueryDefinition,
+            EdrDataQuery.TRAJECTORY.value: TrajectoryQueryDefinition,
+            EdrDataQuery.CORRIDOR.value: CorridorQueryDefinition,
         }
         return query_definitions_map
 
@@ -187,11 +193,13 @@ class EdrDialog(QDialog):
         """Return query builder tool associated with type of the query."""
         query_tools_map = {
             EdrDataQuery.AREA.value: AreaQueryBuilderTool,
-            EdrDataQuery.CUBE.value: CubeQueryBuilderTool,            
+            EdrDataQuery.CUBE.value: CubeQueryBuilderTool,
             EdrDataQuery.POSITION.value: PositionQueryBuilderTool,
             EdrDataQuery.RADIUS.value: RadiusQueryBuilderTool,
             EdrDataQuery.ITEMS.value: ItemsQueryBuilderTool,
             EdrDataQuery.LOCATIONS.value: LocationsQueryBuilderTool,
+            EdrDataQuery.TRAJECTORY.value: TrajectoryQueryBuilderTool,
+            EdrDataQuery.CORRIDOR.value: CorridorQueryBuilderTool,
         }
         return query_tools_map
 
@@ -279,7 +287,7 @@ class EdrDialog(QDialog):
                 self.populate_instances()
             else:
                 self.instance_cbo.setDisabled(True)
-                self.populate_data_queries()                      
+                self.populate_data_queries()
 
         except Exception as e:
             self.plugin.communication.show_error(f"Populating collection data failed due to the following error:\n{e}")
@@ -317,7 +325,7 @@ class EdrDialog(QDialog):
                 return
             for query_name, data_query in data_queries.items():
                 if query_name not in self.data_query_tools:
-                    continue                
+                    continue
                 self.query_cbo.addItem(query_name, data_query)
             self.populate_data_query_attributes()
         except Exception as e:

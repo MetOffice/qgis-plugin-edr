@@ -1,4 +1,5 @@
 import os
+import typing
 from enum import Enum
 from types import MappingProxyType
 from uuid import uuid4
@@ -146,3 +147,10 @@ class EdrSettingsPath(Enum):
     LAST_RADIUS_UNITS = "edr_plugin/last_radius_units"
     LAST_ITEM = "edr_plugin/last_item"
     LAST_LOCATION = "edr_plugin/last_location"
+
+
+def string_to_bool(value: typing.Union[str, bool]) -> bool:
+    """Convert value to boolean."""
+    if isinstance(value, bool):
+        return value
+    return value.lower() == "true"
