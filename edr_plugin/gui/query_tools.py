@@ -8,6 +8,7 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
     QgsGeometry,
+    QgsLayerTreeUtils,
     QgsPoint,
     QgsProject,
     QgsSettings,
@@ -619,10 +620,15 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         """Select layers that have Line GeometryType."""
         map_layers = QgsProject.instance().mapLayers()
 
+        layer_tree_root = QgsProject.instance().layerTreeRoot()
+        invisible_layers = QgsLayerTreeUtils.invisibleLayerList(layer_tree_root)
+
         selected_layers = [
             x
             for x in map_layers.values()
-            if isinstance(x, QgsVectorLayer) and x.geometryType() == Qgis.GeometryType.Line
+            if isinstance(x, QgsVectorLayer)
+            and x.geometryType() == Qgis.GeometryType.Line
+            and x.id() not in invisible_layers
         ]
 
         return selected_layers
