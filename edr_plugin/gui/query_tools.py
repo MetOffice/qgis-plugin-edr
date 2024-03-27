@@ -662,7 +662,7 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         self._find_feature(e.x(), e.y())
         # highlight feature
         if self.identify_feature:
-            self.rubber_band.addGeometry(QgsGeometry(self.identify_feature.geometry()))
+            self.rubber_band.addGeometry(geom)
         else:
             self.rubber_band.reset()
 
