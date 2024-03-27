@@ -12,6 +12,7 @@ from qgis.core import (
     QgsProject,
     QgsSettings,
     QgsVectorLayer,
+    QgsWkbTypes,
 )
 from qgis.gui import (
     QgsDateTimeEdit,
@@ -586,7 +587,11 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         self.active_layer = self.iface.activeLayer()
 
         # Rubber band for highlighting selected feature
-        self.rubber_band = QgsRubberBand(self.map_canvas, Qgis.GeometryType.Line)
+        if Qgis.QGIS_VERSION_INT >= 33000:
+            type = Qgis.GeometryType.Line
+        else:
+            type = QgsWkbTypes.GeometryType
+        self.rubber_band = QgsRubberBand(self.map_canvas, type)
         self.rubber_band.setColor(QColor.fromRgb(255, 255, 0))
         self.rubber_band.setWidth(2)
         self.rubber_band.setOpacity(1)
