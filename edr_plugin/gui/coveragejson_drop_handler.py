@@ -1,8 +1,15 @@
-from PyQt5.QtCore import QMimeData, Qt
 from qgis.core import QgsDataItem, QgsDataItemProvider, QgsDataProvider, QgsMimeDataUtils
 from qgis.gui import QgsCustomDropHandler
 from qgis.PyQt.QtCore import QCoreApplication, QDir, QFileInfo
 from qgis.PyQt.QtWidgets import QAction
+
+COVERAGE_JSON_PROVIDERKEY = "coveragejson"
+
+
+def is_path_coverage_json(path: str) -> bool:
+    if path.lower().endswith("covjson") or path.lower().endswith("coveragejson"):
+        return True
+    return False
 
 
 class CoverageJSONDropHandler(QgsCustomDropHandler):
@@ -15,10 +22,19 @@ class CoverageJSONDropHandler(QgsCustomDropHandler):
         self.layer_manager = layer_manager
 
     def handleFileDrop(self, file):  # pylint: disable=missing-docstring
-        if not (file.lower().endswith("coveragejson") or file.lower().endswith("covjson")):
+        if not is_path_coverage_json(file):
             return False
         self.layer_manager.add_layer_from_file(file)
         return True
+
+    def handleCustomUriDrop(self, uri: QgsMimeDataUtils.Uri) -> None:
+        self.layer_manager.add_layer_from_file(uri.uri)
+        return super().handleCustomUriDrop(uri)
+
+    def customUriProviderKey(self) -> str:
+        return COVERAGE_JSON_PROVIDERKEY
+
+
 class CoverageJSONItemProvider(QgsDataItemProvider):
     """
     Data item provider for coveragejson files
@@ -37,7 +53,7 @@ class CoverageJSONItemProvider(QgsDataItemProvider):
     def createDataItem(self, path, parentItem):  # pylint: disable=missing-docstring
         file_info = QFileInfo(path)
 
-        if file_info.suffix().lower() == "coveragejson" or file_info.suffix().lower() == "covjson":
+        if is_path_coverage_json(file_info.suffix()):
             return CoverageJSONItem(parentItem, file_info.fileName(), path, self.layer_manager)
         return None
 
@@ -60,17 +76,10 @@ class CoverageJSONItem(QgsDataItem):
         self.open_coveragejson()
         return True
 
-    def handleDrop(self, a0: QMimeData, a1: Qt.DropAction) -> bool:
-        pass
-        return super().handleDrop(a0, a1)
-
-    # def icon(self):  # pylint: disable=missing-docstring
-    #     return GuiUtils.get_icon("mxd.svg")
-
     def mimeUri(self):  # pylint: disable=missing-docstring
         u = QgsMimeDataUtils.Uri()
         u.layerType = "custom"
-        u.providerKey = "coveragejson"
+        u.providerKey = COVERAGE_JSON_PROVIDERKEY
         u.name = self.name()
         u.uri = self.path()
         return u
@@ -86,7 +95,7 @@ class CoverageJSONItem(QgsDataItem):
         return True
 
     def actions(self, parent):  # pylint: disable=missing-docstring
-        if self.path().lower().endswith("covjson") or self.path().lower().endswith("coveragejson"):
+        if is_path_coverage_json(self.path()):
             action_text = QCoreApplication.translate("CoverageJSON", "&Open CoverageJSON…")
         open_action = QAction(action_text, parent)
         open_action.triggered.connect(self.open_coveragejson)
