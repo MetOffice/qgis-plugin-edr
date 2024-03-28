@@ -7,6 +7,7 @@ from qgis.PyQt.QtWidgets import QAction
 
 from edr_plugin.gui import EdrDialog
 from edr_plugin.gui.browser_panel_models import SavedQueriesItemProvider
+from edr_plugin.gui.coveragejson_drop_handler import CoverageJSONDropHandler
 from edr_plugin.utils import icon_filepath
 from edr_plugin.utils.communication import UICommunication
 from edr_plugin.visualization import EdrLayerManager
@@ -36,6 +37,7 @@ class EDRPlugin:
         self.layer_manager = EdrLayerManager(self)
         self.communication = UICommunication(self.iface, self.PLUGIN_NAME)
         self.actions = []
+        self.coveragejson_drop_handler = CoverageJSONDropHandler(self.communication, self.layer_manager)
 
     def add_action(
         self,
@@ -75,6 +77,7 @@ class EDRPlugin:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         self.add_action(self.plugin_icon_path, text=self.PLUGIN_NAME, callback=self.run, parent=self.iface.mainWindow())
+        self.iface.registerCustomDropHandler(self.coveragejson_drop_handler)
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -83,6 +86,7 @@ class EDRPlugin:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
+        self.iface.unregisterCustomDropHandler(self.coveragejson_drop_handler)
 
     def ensure_main_dialog_initialized(self):
         if self.main_dialog is None:
