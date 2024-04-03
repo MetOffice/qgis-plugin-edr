@@ -1,4 +1,5 @@
-from qgis.core import QgsDataItem, QgsDataItemProvider, QgsDataProvider, QgsMimeDataUtils
+from PyQt5.QtGui import QIcon
+from qgis.core import QgsApplication, QgsDataItem, QgsDataItemProvider, QgsDataProvider, QgsMimeDataUtils
 from qgis.gui import QgsCustomDropHandler
 from qgis.PyQt.QtCore import QCoreApplication, QDir, QFileInfo
 from qgis.PyQt.QtWidgets import QAction
@@ -103,3 +104,6 @@ class CoverageJSONItem(QgsDataItem):
         open_action = QAction(action_text, parent)
         open_action.triggered.connect(self.open_coveragejson)
         return [open_action]
+
+    def icon(self) -> QIcon:
+        return QIcon(QgsApplication.getThemeIcon("/mIconFile.svg"))
