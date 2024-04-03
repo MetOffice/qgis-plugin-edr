@@ -5,10 +5,13 @@ from qgis.PyQt.QtWidgets import QAction
 
 COVERAGE_JSON_PROVIDERKEY = "coveragejson"
 
+COVERAGEJSON_EXTENSIONS = ["covjson", "coveragejson"]
+
 
 def is_path_coverage_json(path: str) -> bool:
-    if path.lower().endswith("covjson") or path.lower().endswith("coveragejson"):
-        return True
+    for ext in COVERAGEJSON_EXTENSIONS:
+        if path.lower().endswith(ext):
+            return True
     return False
 
 
