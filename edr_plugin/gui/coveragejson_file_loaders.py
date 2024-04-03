@@ -18,7 +18,7 @@ def is_path_coverage_json(path: str) -> bool:
 
 class CoverageJSONDropHandler(QgsCustomDropHandler):
     """
-    coveragejson file drop handler
+    CoverageJSON file drop handler
     """
 
     def __init__(self, layer_manager) -> None:
@@ -41,7 +41,7 @@ class CoverageJSONDropHandler(QgsCustomDropHandler):
 
 class CoverageJSONItemProvider(QgsDataItemProvider):
     """
-    Data item provider for coveragejson files
+    Data item provider for CoverageJSON files
     """
 
     def __init__(self, layer_manager):
@@ -64,7 +64,7 @@ class CoverageJSONItemProvider(QgsDataItemProvider):
 
 class CoverageJSONItem(QgsDataItem):
     """
-    Data item for .mxd files
+    Data item for CoverageJSON files
     """
 
     def __init__(self, parent, name, path, layer_manager):
