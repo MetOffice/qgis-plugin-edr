@@ -8,10 +8,12 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
     QgsGeometry,
+    QgsLayerTreeUtils,
     QgsPoint,
     QgsProject,
     QgsSettings,
     QgsVectorLayer,
+    QgsWkbTypes,
 )
 from qgis.gui import (
     QgsDateTimeEdit,
@@ -586,7 +588,11 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         self.active_layer = self.iface.activeLayer()
 
         # Rubber band for highlighting selected feature
-        self.rubber_band = QgsRubberBand(self.map_canvas, Qgis.GeometryType.Line)
+        if Qgis.QGIS_VERSION_INT >= 33000:
+            type = Qgis.GeometryType.Line
+        else:
+            type = QgsWkbTypes.LineGeometry
+        self.rubber_band = QgsRubberBand(self.map_canvas, type)
         self.rubber_band.setColor(QColor.fromRgb(255, 255, 0))
         self.rubber_band.setWidth(2)
         self.rubber_band.setOpacity(1)
@@ -609,15 +615,22 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         except Exception:
             pass
 
-    @property
     def _line_layers(self):
         """Select layers that have Line GeometryType."""
         map_layers = QgsProject.instance().mapLayers()
 
+        layer_tree_root = QgsProject.instance().layerTreeRoot()
+        invisible_layers = QgsLayerTreeUtils.invisibleLayerList(layer_tree_root)
+
+        if Qgis.QGIS_VERSION_INT >= 33000:
+            type_to_select = Qgis.GeometryType.Line
+        else:
+            type_to_select = QgsWkbTypes.LineGeometry
+
         selected_layers = [
             x
             for x in map_layers.values()
-            if isinstance(x, QgsVectorLayer) and x.geometryType() == Qgis.GeometryType.Line
+            if isinstance(x, QgsVectorLayer) and x.geometryType() == type_to_select and x.id() not in invisible_layers
         ]
 
         return selected_layers
@@ -627,7 +640,7 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         self.identify_feature = None
         self.identify_layer = None
 
-        features = self.identify(x, y, self._line_layers, QgsMapToolIdentifyFeature.TopDownAll)
+        features = self.identify(x, y, self._line_layers(), QgsMapToolIdentifyFeature.TopDownAll)
         if features:
             self.identify_feature = features[0].mFeature
             self.identify_layer = features[0].mLayer
@@ -651,7 +664,13 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         self._find_feature(e.x(), e.y())
         # highlight feature
         if self.identify_feature:
-            self.rubber_band.addGeometry(QgsGeometry(self.identify_feature.geometry()))
+            geom = QgsGeometry(self.identify_feature.geometry())
+            if self.identify_layer.crs() != self.map_canvas.mapSettings().destinationCrs():
+                transform = QgsCoordinateTransform(
+                    self.identify_layer.crs(), self.map_canvas.mapSettings().destinationCrs(), QgsProject.instance()
+                )
+                geom.transform(transform)
+            self.rubber_band.addGeometry(geom)
         else:
             self.rubber_band.reset()
 
