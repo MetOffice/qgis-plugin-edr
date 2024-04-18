@@ -401,8 +401,11 @@ class EdrDialog(QDialog):
             self.format_cbo.setCurrentText(default_output_format)
             parameter_names = collection["parameter_names"]
             for parameter, parameter_data in parameter_names.items():
-                observed_property = parameter_data["observedProperty"]
-                observed_property_label = observed_property["label"]
+                if "label" in parameter_data:
+                    observed_property_label = parameter_data["label"]
+                else:
+                    observed_property = parameter_data["observedProperty"]
+                    observed_property_label = observed_property["label"]
                 parameter_description = parameter_data.get("description", observed_property_label)
                 self.parameters_cbo.addItem(parameter_description, parameter)
             self.parameters_cbo.toggleItemCheckState(0)
