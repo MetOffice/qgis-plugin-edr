@@ -396,7 +396,10 @@ class LineStringQueryBuilderTool(QDialog):
 
     def _cell_to_float(self, row: int, col: int) -> typing.Optional[float]:
         """Convert cell value from TableWidget to float."""
-        text = self.linestring_tw.cellWidget(row, col).text()
+        cell_widget = self.linestring_tw.cellWidget(row, col)
+        if cell_widget is None:
+            return None
+        text = cell_widget.text()
         if len(text) == 0:
             value = None
         else:
@@ -405,7 +408,10 @@ class LineStringQueryBuilderTool(QDialog):
 
     def _cell_to_datetime_milisecs(self, row: int, col: int) -> typing.Optional[int]:
         """Convert cell value from TableWidget to datetime in miliseconds."""
-        date_time = self.linestring_tw.cellWidget(row, col).dateTime()
+        cell_widget = self.linestring_tw.cellWidget(row, col)
+        if cell_widget is None:
+            return None
+        date_time = cell_widget.dateTime()
         if date_time.isNull():
             milisecs = None
         else:
