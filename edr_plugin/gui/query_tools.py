@@ -313,6 +313,11 @@ class LineStringQueryBuilderTool(QDialog):
             self.line_select_pb.setText("Linestring : <MANUAL ENTRY>")
             self.selected_geometry = geom
             self._fill_table()
+        else:
+            message = "Invalid WKT format."
+            if "nan" in self.wkt_plaintext.toPlainText():
+                message += " Cannot process WKT that contains `nan` values."
+            self.edr_dialog.plugin.communication.show_warn(message)
 
     def on_line_remove_button_clicked(self) -> None:
         current_row = self.linestring_tw.currentRow()
@@ -363,7 +368,7 @@ class LineStringQueryBuilderTool(QDialog):
             item.setDateTime(date_time)
         else:
             item.clear()
-        item.dateTimeChanged.connect(self.line_geometry_definition_updated.emit)
+        item.valueChanged.connect(self.line_geometry_definition_updated.emit)
         return item
 
     def _setup_table(self):
@@ -437,7 +442,9 @@ class LineStringQueryBuilderTool(QDialog):
 
     def update_geometry_wkt(self) -> None:
         geom = self.query_geometry()
+        self.wkt_plaintext.blockSignals(True)
         self.wkt_plaintext.setPlainText(geom.asWkt())
+        self.wkt_plaintext.blockSignals(False)
 
     def disable_main_edr_widgets_based_geometry_type(self) -> None:
         geom = self.selected_geometry.constGet()
