@@ -23,7 +23,7 @@ repository=https://github.com/lutraconsulting/qgis-plugin-edr
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=<p>
- <p>0.13.1 Fix line selection tool
+ <p>0.13.1 Fix line selection tool and corridor and trajectory windows
  <p>0.13.0 Allow drag and drop load of CoverageJSON files, also allow loading them from Browser 
  <p>0.12.2 Fix trajectory and corridor queries QGIS versions older then 3.30
  <p>0.12.1 Fix line selection issues
