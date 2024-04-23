@@ -14,7 +14,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Trajectory query</string>
+   <string>Corridor query</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
