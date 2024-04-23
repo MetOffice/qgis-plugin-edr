@@ -313,6 +313,11 @@ class LineStringQueryBuilderTool(QDialog):
             self.line_select_pb.setText("Linestring : <MANUAL ENTRY>")
             self.selected_geometry = geom
             self._fill_table()
+        else:
+            message = "Invalid WKT format."
+            if "nan" in self.wkt_plaintext.toPlainText():
+                message += " Cannot process WKT that contains `nan` values."
+            self.edr_dialog.plugin.communication.show_warn(message)
 
     def on_line_remove_button_clicked(self) -> None:
         current_row = self.linestring_tw.currentRow()
@@ -363,7 +368,7 @@ class LineStringQueryBuilderTool(QDialog):
             item.setDateTime(date_time)
         else:
             item.clear()
-        item.dateTimeChanged.connect(self.line_geometry_definition_updated.emit)
+        item.valueChanged.connect(self.line_geometry_definition_updated.emit)
         return item
 
     def _setup_table(self):
@@ -396,7 +401,10 @@ class LineStringQueryBuilderTool(QDialog):
 
     def _cell_to_float(self, row: int, col: int) -> typing.Optional[float]:
         """Convert cell value from TableWidget to float."""
-        text = self.linestring_tw.cellWidget(row, col).text()
+        cell_widget = self.linestring_tw.cellWidget(row, col)
+        if cell_widget is None:
+            return None
+        text = cell_widget.text()
         if len(text) == 0:
             value = None
         else:
@@ -405,7 +413,10 @@ class LineStringQueryBuilderTool(QDialog):
 
     def _cell_to_datetime_milisecs(self, row: int, col: int) -> typing.Optional[int]:
         """Convert cell value from TableWidget to datetime in miliseconds."""
-        date_time = self.linestring_tw.cellWidget(row, col).dateTime()
+        cell_widget = self.linestring_tw.cellWidget(row, col)
+        if cell_widget is None:
+            return None
+        date_time = cell_widget.dateTime()
         if date_time.isNull():
             milisecs = None
         else:
@@ -431,7 +442,9 @@ class LineStringQueryBuilderTool(QDialog):
 
     def update_geometry_wkt(self) -> None:
         geom = self.query_geometry()
+        self.wkt_plaintext.blockSignals(True)
         self.wkt_plaintext.setPlainText(geom.asWkt())
+        self.wkt_plaintext.blockSignals(False)
 
     def disable_main_edr_widgets_based_geometry_type(self) -> None:
         geom = self.selected_geometry.constGet()
@@ -601,7 +614,7 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         self.identify_feature = None
         self.identify_layer = None
 
-        QgsMapToolIdentifyFeature.__init__(self, self.map_canvas, self.active_layer)
+        QgsMapToolIdentifyFeature.__init__(self, self.map_canvas)
         self.iface.currentLayerChanged.connect(self.active_changed)
 
     def active_changed(self, layer):
