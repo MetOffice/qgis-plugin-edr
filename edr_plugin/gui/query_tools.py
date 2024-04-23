@@ -614,7 +614,7 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         self.identify_feature = None
         self.identify_layer = None
 
-        QgsMapToolIdentifyFeature.__init__(self, self.map_canvas, self.active_layer)
+        QgsMapToolIdentifyFeature.__init__(self, self.map_canvas)
         self.iface.currentLayerChanged.connect(self.active_changed)
 
     def active_changed(self, layer):
