@@ -301,7 +301,7 @@ class LineStringQueryBuilderTool(QDialog):
             return
         self.edr_dialog.current_data_query_tool = self
         geom = self.query_geometry()
-        self.edr_dialog.query_extent_le.setText(geom.asWkt())
+        self.edr_dialog.query_extent_le.setText(geom.asWkt().upper())
         self.edr_dialog.query_extent_le.setCursorPosition(0)
         self.disable_main_edr_widgets_based_geometry_type()
         self.edr_dialog.show()
