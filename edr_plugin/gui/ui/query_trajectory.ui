@@ -27,14 +27,14 @@
       </font>
      </property>
      <property name="text">
-      <string>Corridor definition:</string>
+      <string>Trajectory definition:</string>
      </property>
     </widget>
    </item>
    <item>
     <widget class="QPushButton" name="line_select_pb">
      <property name="text">
-      <string>Linestring : &lt;NOT SET&gt;</string>
+      <string>Select an existing line feature</string>
      </property>
     </widget>
    </item>
