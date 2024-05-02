@@ -308,15 +308,20 @@ class LineStringQueryBuilderTool(QDialog):
         return super().accept()
 
     def on_wkt_edit(self) -> None:
+        self.wkt_plaintext.setToolTip("WKT.")
+        self.wkt_plaintext.setStyleSheet("background-color: white;")
         geom = QgsGeometry.fromWkt(self.wkt_plaintext.toPlainText())
         if not geom.isNull():
+            self.wkt_plaintext.setToolTip("WKT is valid.")
+            self.wkt_plaintext.setStyleSheet("background-color: white;")
             self.selected_geometry = geom
             self._fill_table()
         else:
             message = "Invalid WKT format."
             if "nan" in self.wkt_plaintext.toPlainText():
                 message += " Cannot process WKT that contains `nan` values."
-            self.edr_dialog.plugin.communication.show_warn(message)
+            self.wkt_plaintext.setToolTip(message)
+            self.wkt_plaintext.setStyleSheet("background-color: #ffafaf;")
 
     def on_line_remove_button_clicked(self) -> None:
         current_row = self.linestring_tw.currentRow()
