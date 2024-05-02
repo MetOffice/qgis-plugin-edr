@@ -417,6 +417,8 @@ class EdrDialog(QDialog):
                 from_datetime_str, to_datetime_str = temporal_interval[0]
                 from_datetime = QDateTime.fromString(from_datetime_str, Qt.ISODate)
                 to_datetime = QDateTime.fromString(to_datetime_str, Qt.ISODate)
+                self.from_datetime.setTimeSpec(Qt.UTC)
+                self.to_datetime.setTimeSpec(Qt.UTC)                
                 self.from_datetime.setDateTime(from_datetime)
                 self.to_datetime.setDateTime(to_datetime)
             except KeyError:
@@ -455,8 +457,8 @@ class EdrDialog(QDialog):
         query_parameters["output_format"] = self.format_cbo.currentText()
         query_parameters["parameters"] = self.parameters_cbo.checkedItemsData()
         if self.temporal_grp.isEnabled():
-            from_datetime = self.from_datetime.dateTime().toString(Qt.ISODate)
-            to_datetime = self.to_datetime.dateTime().toString(Qt.ISODate)
+            from_datetime = self.from_datetime.dateTime().toTimeSpec(Qt.UTC).toString(Qt.ISODate)
+            to_datetime = self.to_datetime.dateTime().toTimeSpec(Qt.UTC).toString(Qt.ISODate)
             temporal_range = (
                 (from_datetime,)
                 if not to_datetime
@@ -649,6 +651,8 @@ class RepeatQueryDialog(QDialog):
             from_datetime_str, to_datetime_str = temporal_interval[0]
             from_datetime = QDateTime.fromString(from_datetime_str, Qt.ISODate)
             to_datetime = QDateTime.fromString(to_datetime_str, Qt.ISODate)
+            self.from_datetime.setTimeSpec(Qt.UTC)
+            self.to_datetime.setTimeSpec(Qt.UTC)                
             self.from_datetime.setDateTime(from_datetime)
             self.to_datetime.setDateTime(to_datetime)
         except KeyError:
@@ -658,8 +662,8 @@ class RepeatQueryDialog(QDialog):
         """Collect variables from the dialog."""
         instance_id = self.instance_cbo.currentText() if self.instance_grp.isEnabled() else None
         if self.temporal_grp.isEnabled():
-            from_datetime = self.from_datetime.dateTime().toString(Qt.ISODate)
-            to_datetime = self.to_datetime.dateTime().toString(Qt.ISODate)
+            from_datetime = self.from_datetime.dateTime().toTimeSpec(Qt.UTC).toString(Qt.ISODate)
+            to_datetime = self.to_datetime.dateTime().toTimeSpec(Qt.UTC).toString(Qt.ISODate)
             temporal_range = (
                 (from_datetime,)
                 if not to_datetime
