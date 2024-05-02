@@ -301,23 +301,27 @@ class LineStringQueryBuilderTool(QDialog):
             return
         self.edr_dialog.current_data_query_tool = self
         geom = self.query_geometry()
-        self.edr_dialog.query_extent_le.setText(geom.asWkt())
+        self.edr_dialog.query_extent_le.setText(geom.asWkt().upper())
         self.edr_dialog.query_extent_le.setCursorPosition(0)
         self.disable_main_edr_widgets_based_geometry_type()
         self.edr_dialog.show()
         return super().accept()
 
     def on_wkt_edit(self) -> None:
+        self.wkt_plaintext.setToolTip("WKT.")
+        self.wkt_plaintext.setStyleSheet("background-color: white;")
         geom = QgsGeometry.fromWkt(self.wkt_plaintext.toPlainText())
         if not geom.isNull():
-            self.line_select_pb.setText("Linestring : <MANUAL ENTRY>")
+            self.wkt_plaintext.setToolTip("WKT is valid.")
+            self.wkt_plaintext.setStyleSheet("background-color: white;")
             self.selected_geometry = geom
             self._fill_table()
         else:
             message = "Invalid WKT format."
             if "nan" in self.wkt_plaintext.toPlainText():
                 message += " Cannot process WKT that contains `nan` values."
-            self.edr_dialog.plugin.communication.show_warn(message)
+            self.wkt_plaintext.setToolTip(message)
+            self.wkt_plaintext.setStyleSheet("background-color: #ffafaf;")
 
     def on_line_remove_button_clicked(self) -> None:
         current_row = self.linestring_tw.currentRow()
@@ -345,7 +349,6 @@ class LineStringQueryBuilderTool(QDialog):
         self.selected_geometry = geom
         source_crs = QgsProject.instance().crs()
         reproject_geometry(self.selected_geometry, source_crs, self.output_crs)
-        self.line_select_pb.setText("Linestring : <SELECTED>")
         self._fill_table()
         self.map_canvas.unsetMapTool(self.line_select_tool)
         self.line_geometry_definition_updated.emit()

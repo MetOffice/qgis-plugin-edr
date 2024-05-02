@@ -8,7 +8,7 @@ name=Environmental Data Retrival
 qgisMinimumVersion=3.28
 qgisMaximumVersion=3.99
 description=Environmental Data Retrival QGIS plugin
-version=0.13.1
+version=0.13.3
 author=Lutra Consulting
 email=info@lutraconsulting.co.uk
 
@@ -23,6 +23,7 @@ repository=https://github.com/lutraconsulting/qgis-plugin-edr
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=<p>
+ <p>0.13.3 More updates to line selection tool, GUI text updates, minor fixes
  <p>0.13.2 Fix line selection tool and corridor and trajectory windows
  <p>0.13.0 Allow drag and drop load of CoverageJSON files, also allow loading them from Browser 
  <p>0.12.2 Fix trajectory and corridor queries QGIS versions older then 3.30

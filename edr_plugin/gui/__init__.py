@@ -418,7 +418,7 @@ class EdrDialog(QDialog):
                 from_datetime = QDateTime.fromString(from_datetime_str, Qt.ISODate)
                 to_datetime = QDateTime.fromString(to_datetime_str, Qt.ISODate)
                 self.from_datetime.setTimeSpec(Qt.UTC)
-                self.to_datetime.setTimeSpec(Qt.UTC)                
+                self.to_datetime.setTimeSpec(Qt.UTC)
                 self.from_datetime.setDateTime(from_datetime)
                 self.to_datetime.setDateTime(to_datetime)
             except KeyError:
@@ -652,7 +652,7 @@ class RepeatQueryDialog(QDialog):
             from_datetime = QDateTime.fromString(from_datetime_str, Qt.ISODate)
             to_datetime = QDateTime.fromString(to_datetime_str, Qt.ISODate)
             self.from_datetime.setTimeSpec(Qt.UTC)
-            self.to_datetime.setTimeSpec(Qt.UTC)                
+            self.to_datetime.setTimeSpec(Qt.UTC)
             self.from_datetime.setDateTime(from_datetime)
             self.to_datetime.setDateTime(to_datetime)
         except KeyError:
