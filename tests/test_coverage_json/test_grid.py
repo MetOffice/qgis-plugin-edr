@@ -175,3 +175,63 @@ def test_two_dimensions_data(data_dir):
     assert len(layers) == 4
     for layer in layers:
         assert isinstance(layer, QgsMapLayer)
+
+
+def test_grid_empty_layer(data_dir):
+    filename = data_dir / "grid_empty_layer.covjson"
+
+    assert filename.exists()
+
+    coverage_json = CoverageJSONReader(filename)
+
+    assert coverage_json.file_size_mg == pytest.approx(0.05364, 0.001)
+    assert coverage_json.domain_type == "Grid"
+    assert coverage_json.coverages_count == 1
+
+    coverage = coverage_json.coverage()
+    assert isinstance(coverage, Coverage)
+
+    assert coverage.has_t is True
+    assert coverage.has_z is False
+
+    x_values = coverage.axe_values("x")
+    y_values = coverage.axe_values("y")
+    t_values = coverage.axe_values("t")
+
+    assert len(x_values) == 7
+    assert len(y_values) == 6
+    assert len(t_values) == 55
+
+    assert coverage.parameter_names == ["altitude_at_base_of_effective_convective_inflow"]
+
+    parameter_name = "altitude_at_base_of_effective_convective_inflow"
+
+    assert coverage.parameter_ranges(parameter_name)
+    assert isinstance(coverage.parameter_ranges(parameter_name), typing.Dict)
+
+    rasters = coverage._format_values_into_rasters(parameter_name)
+    assert isinstance(rasters, typing.Dict)
+
+    for key, raster in rasters.items():
+        assert isinstance(raster, ArrayWithTZ)
+        assert isinstance(raster.array, np.ndarray)
+        assert isinstance(raster.time, QDateTime)
+        assert raster.array.shape == (6, 7)
+
+        # empty raster
+        if key == "t_2022-07-12T16:00Z":
+            assert (raster.array == None).all()
+
+    layers = coverage.raster_layers(parameter_name)
+
+    assert isinstance(layers, typing.List)
+    assert len(layers) == 55
+    for layer in layers:
+        assert isinstance(layer, QgsRasterLayer)
+
+    layers = coverage_json.map_layers()
+
+    assert isinstance(layers, typing.List)
+    assert len(layers) == 55
+    for layer in layers:
+        assert isinstance(layer, QgsMapLayer)

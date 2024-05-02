@@ -167,10 +167,6 @@ class RasterTemplate:
 
         np_array[np_array == None] = no_data_value
 
-        values = (np_array != no_data_value).sum()
-        if values == 0:
-            raise ValueError("No resulting data in the Query.")
-
         np_array = np.flip(np_array, 0)
 
         band.WriteArray(np_array)
@@ -375,7 +371,7 @@ def prepare_vector_layer(
     if crs.isValid():
         crs_str = crs.toWkt()
     else:
-        crs_str = "EPSG:4326"    
+        crs_str = "EPSG:4326"
 
     layer = QgsVectorLayer(f"{covjson_geom_to_wkb_type(wkb_type)}?crs={crs_str}", layer_name, "memory")
 
