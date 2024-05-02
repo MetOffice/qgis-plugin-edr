@@ -310,7 +310,6 @@ class LineStringQueryBuilderTool(QDialog):
     def on_wkt_edit(self) -> None:
         geom = QgsGeometry.fromWkt(self.wkt_plaintext.toPlainText())
         if not geom.isNull():
-            self.line_select_pb.setText("Linestring : <MANUAL ENTRY>")
             self.selected_geometry = geom
             self._fill_table()
         else:
@@ -345,7 +344,6 @@ class LineStringQueryBuilderTool(QDialog):
         self.selected_geometry = geom
         source_crs = QgsProject.instance().crs()
         reproject_geometry(self.selected_geometry, source_crs, self.output_crs)
-        self.line_select_pb.setText("Linestring : <SELECTED>")
         self._fill_table()
         self.map_canvas.unsetMapTool(self.line_select_tool)
         self.line_geometry_definition_updated.emit()
