@@ -540,6 +540,9 @@ class CorridorQueryBuilderTool(LineStringQueryBuilderTool):
             self.width_units_cbo.currentText(),
             str(self.height_spinbox.value()),
             self.height_units_cbo.currentText(),
+            resolution_x,
+            resolution_y,
+            resolution_z,
             **sub_endpoints,
             **query_parameters,
         )
