@@ -454,9 +454,9 @@ class LineStringQueryBuilderTool(QDialog):
         geom = self.selected_geometry.constGet()
         collection_extent = self.edr_dialog.collection_cbo.currentData()["extent"]
         if "temporal" in collection_extent:
-            self.edr_dialog.vertical_grp.setEnabled(not geom.is3D())
-        if "vertical" in collection_extent:
             self.edr_dialog.temporal_grp.setEnabled(not geom.isMeasure())
+        if "vertical" in collection_extent:
+            self.edr_dialog.vertical_grp.setEnabled(not geom.is3D())
 
     @abstractmethod
     def get_query_definition(self): ...
@@ -516,9 +516,9 @@ class CorridorQueryBuilderTool(LineStringQueryBuilderTool):
         else:
             self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
         corridor_query_data = self.edr_dialog.query_cbo.currentData()
-        width_units = corridor_query_data["link"]["variables"]["width_units"]
+        width_units = corridor_query_data["link"]["variables"]["width-units"]
         self.width_units_cbo.addItems(width_units)
-        height_units = corridor_query_data["link"]["variables"]["height_units"]
+        height_units = corridor_query_data["link"]["variables"]["height-units"]
         self.height_units_cbo.addItems(height_units)
 
     def get_query_definition(self):
