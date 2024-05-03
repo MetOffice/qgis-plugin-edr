@@ -300,7 +300,7 @@ class LineStringQueryBuilderTool(QDialog):
             self.edr_dialog.plugin.communication.show_warn(warn_msg)
             return
         self.edr_dialog.current_data_query_tool = self
-        geom = self.query_geometry()
+        geom = self.get_geometry_from_table()
         self.edr_dialog.query_extent_le.setText(geom.asWkt().upper())
         self.edr_dialog.query_extent_le.setCursorPosition(0)
         self.disable_main_edr_widgets_based_geometry_type()
@@ -426,7 +426,7 @@ class LineStringQueryBuilderTool(QDialog):
             milisecs = date_time.toMSecsSinceEpoch()
         return milisecs
 
-    def query_geometry(self) -> QgsGeometry:
+    def get_geometry_from_table(self) -> QgsGeometry:
         """Set geometry to query extent."""
         points: typing.List[QgsPoint] = []
 
