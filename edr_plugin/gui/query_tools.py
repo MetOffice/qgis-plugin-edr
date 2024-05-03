@@ -444,7 +444,8 @@ class LineStringQueryBuilderTool(QDialog):
         return geom
 
     def update_geometry_wkt(self) -> None:
-        geom = self.query_geometry()
+        geom = self.get_geometry_from_table()
+        self.selected_geometry = geom
         self.wkt_plaintext.blockSignals(True)
         self.wkt_plaintext.setPlainText(geom.asWkt())
         self.wkt_plaintext.blockSignals(False)
