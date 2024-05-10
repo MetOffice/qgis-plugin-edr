@@ -504,7 +504,6 @@ class CorridorQueryBuilderTool(LineStringQueryBuilderTool):
         self.minus_toolbutton.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
         self.minus_toolbutton.clicked.connect(self.on_line_remove_button_clicked)
         self.wkt_plaintext.textChanged.connect(self.on_wkt_edit)
-        self.setup_data_query_tool()
         self.selected_geometry: typing.Optional[QgsGeometry] = None
         self.line_select_tool = LineSelectMapTool(self.edr_dialog)
         self.line_select_tool.featureSelected.connect(self.on_feature_selected)
@@ -514,6 +513,7 @@ class CorridorQueryBuilderTool(LineStringQueryBuilderTool):
         self.line_geometry_definition_updated.connect(self.update_geometry_wkt)
         self.edr_dialog.hide()
         self.show()
+        self.setup_data_query_tool()
 
     def setup_data_query_tool(self):
         """Initial data query tool setup."""
@@ -523,9 +523,22 @@ class CorridorQueryBuilderTool(LineStringQueryBuilderTool):
         else:
             self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
         corridor_query_data = self.edr_dialog.query_cbo.currentData()
-        width_units = corridor_query_data["link"]["variables"]["width-units"]
+        variables = corridor_query_data["link"]["variables"]
+        if "width-units" not in variables:
+            self.edr_dialog.plugin.communication.show_error(
+                "Collection does not have information about `width-units`. The collection is not up with specification."
+            )
+            super().reject()
+            return
+        if "height-units" not in variables:
+            self.edr_dialog.plugin.communication.show_error(
+                "Collection does not have information about `height-units`. The collection is not up with specification."
+            )
+            super().reject()
+            return
+        width_units = variables["width-units"]
         self.width_units_cbo.addItems(width_units)
-        height_units = corridor_query_data["link"]["variables"]["height-units"]
+        height_units = variables["height-units"]
         self.height_units_cbo.addItems(height_units)
 
     def get_query_definition(self):
