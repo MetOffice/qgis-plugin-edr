@@ -4,15 +4,15 @@
 # Mandatory items:
 
 [general]
-name=Environmental Data Retrival
+name=Environmental Data Retrieval
 qgisMinimumVersion=3.28
 qgisMaximumVersion=3.99
-description=Environmental Data Retrival QGIS plugin
-version=0.13.3
+description=Environmental Data Retrieval QGIS plugin
+version=0.13.4
 author=Lutra Consulting
 email=info@lutraconsulting.co.uk
 
-about=QGIS Client for viewing and manipulate data from the OGC Environmental Data Retrival API endpoint.
+about=QGIS Client for viewing and manipulate data from the OGC Environmental Data Retrieval API endpoint.
 
 tracker=https://github.com/lutraconsulting/qgis-plugin-edr/issues
 repository=https://github.com/lutraconsulting/qgis-plugin-edr

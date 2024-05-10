@@ -300,7 +300,7 @@ class LineStringQueryBuilderTool(QDialog):
             self.edr_dialog.plugin.communication.show_warn(warn_msg)
             return
         self.edr_dialog.current_data_query_tool = self
-        geom = self.query_geometry()
+        geom = self.get_geometry_from_table()
         self.edr_dialog.query_extent_le.setText(geom.asWkt().upper())
         self.edr_dialog.query_extent_le.setCursorPosition(0)
         self.disable_main_edr_widgets_based_geometry_type()
@@ -426,7 +426,7 @@ class LineStringQueryBuilderTool(QDialog):
             milisecs = date_time.toMSecsSinceEpoch()
         return milisecs
 
-    def query_geometry(self) -> QgsGeometry:
+    def get_geometry_from_table(self) -> QgsGeometry:
         """Set geometry to query extent."""
         points: typing.List[QgsPoint] = []
 
@@ -444,7 +444,8 @@ class LineStringQueryBuilderTool(QDialog):
         return geom
 
     def update_geometry_wkt(self) -> None:
-        geom = self.query_geometry()
+        geom = self.get_geometry_from_table()
+        self.selected_geometry = geom
         self.wkt_plaintext.blockSignals(True)
         self.wkt_plaintext.setPlainText(geom.asWkt())
         self.wkt_plaintext.blockSignals(False)
@@ -453,9 +454,9 @@ class LineStringQueryBuilderTool(QDialog):
         geom = self.selected_geometry.constGet()
         collection_extent = self.edr_dialog.collection_cbo.currentData()["extent"]
         if "temporal" in collection_extent:
-            self.edr_dialog.vertical_grp.setEnabled(not geom.is3D())
-        if "vertical" in collection_extent:
             self.edr_dialog.temporal_grp.setEnabled(not geom.isMeasure())
+        if "vertical" in collection_extent:
+            self.edr_dialog.vertical_grp.setEnabled(not geom.is3D())
 
     @abstractmethod
     def get_query_definition(self): ...
@@ -515,9 +516,9 @@ class CorridorQueryBuilderTool(LineStringQueryBuilderTool):
         else:
             self.output_crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
         corridor_query_data = self.edr_dialog.query_cbo.currentData()
-        width_units = corridor_query_data["link"]["variables"]["width_units"]
+        width_units = corridor_query_data["link"]["variables"]["width-units"]
         self.width_units_cbo.addItems(width_units)
-        height_units = corridor_query_data["link"]["variables"]["height_units"]
+        height_units = corridor_query_data["link"]["variables"]["height-units"]
         self.height_units_cbo.addItems(height_units)
 
     def get_query_definition(self):
@@ -539,6 +540,9 @@ class CorridorQueryBuilderTool(LineStringQueryBuilderTool):
             self.width_units_cbo.currentText(),
             str(self.height_spinbox.value()),
             self.height_units_cbo.currentText(),
+            resolution_x,
+            resolution_y,
+            resolution_z,
             **sub_endpoints,
             **query_parameters,
         )
