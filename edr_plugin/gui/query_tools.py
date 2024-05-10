@@ -441,6 +441,13 @@ class LineStringQueryBuilderTool(QDialog):
             points.append(point)
 
         geom = QgsGeometry.fromPolyline(points)
+
+        collection_extent = self.edr_dialog.collection_cbo.currentData()["extent"]
+        if "temporal" not in collection_extent:
+            geom.get().dropMValue()
+        if "vertical" not in collection_extent:
+            geom.get().dropZValue()
+
         return geom
 
     def update_geometry_wkt(self) -> None:
