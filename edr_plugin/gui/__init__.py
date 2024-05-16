@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from functools import partial
 
-from qgis.core import QgsCoordinateReferenceSystem, QgsSettings
+from qgis.core import QgsCoordinateReferenceSystem, QgsGeometry, QgsSettings
 from qgis.gui import QgsCollapsibleGroupBox
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, Qt
@@ -32,7 +32,7 @@ from edr_plugin.queries import (
 )
 from edr_plugin.queries.enumerators import EdrDataQuery
 from edr_plugin.threading import EdrDataDownloader
-from edr_plugin.utils import EdrSettingsPath, is_dir_writable
+from edr_plugin.utils import EdrSettingsPath, is_dir_writable, reproject_geometry
 
 
 class EdrDialog(QDialog):
@@ -265,8 +265,25 @@ class EdrDialog(QDialog):
         except Exception as e:
             self.plugin.communication.show_error(f"Fetching collections failed due to the following error:\n{e}")
 
+    def _crs_from_combobox(self) -> QgsCoordinateReferenceSystem:
+        crs_name, crs_wkt = self.crs_cbo.currentText(), self.crs_cbo.currentData()
+        if crs_wkt:
+            crs = QgsCoordinateReferenceSystem.fromWkt(crs_wkt)
+        else:
+            crs = QgsCoordinateReferenceSystem.fromOgcWmsCrs(crs_name)
+        return crs
+
     def populate_collection_data(self):
         """Populate collection data."""
+        previous_geom = None
+        previous_query_type = None
+        previous_crs = None
+        previous_query_data_tool = self.current_data_query_tool
+        if self.query_extent_le.text():
+            previous_geom = QgsGeometry.fromWkt(self.query_extent_le.text())
+            previous_query_type = self.query_cbo.currentText()
+            previous_crs = self._crs_from_combobox()
+
         try:
             self.clear_widgets(*self.collection_level_widgets)
             collection = self.collection_cbo.currentData()
@@ -288,6 +305,18 @@ class EdrDialog(QDialog):
             else:
                 self.instance_cbo.setDisabled(True)
                 self.populate_data_queries()
+
+            if previous_geom:
+                for i in range(self.query_cbo.count()):
+                    query_type = self.query_cbo.itemText(i)
+                    if query_type == previous_query_type:
+                        self.query_cbo.setCurrentIndex(i)
+                        current_crs = self._crs_from_combobox()
+                        if previous_crs == current_crs:
+                            self.current_data_query_tool = previous_query_data_tool
+                            self.query_extent_le.setText(previous_geom.asWkt().upper())
+                            self.query_extent_le.setCursorPosition(0)
+                            break
 
         except Exception as e:
             self.plugin.communication.show_error(f"Populating collection data failed due to the following error:\n{e}")
