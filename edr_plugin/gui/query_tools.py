@@ -349,6 +349,8 @@ class LineStringQueryBuilderTool(QDialog):
         self.selected_geometry = geom
         source_crs = QgsProject.instance().crs()
         reproject_geometry(self.selected_geometry, source_crs, self.output_crs)
+        self.wkt_plaintext.setToolTip("WKT is valid.")
+        self.wkt_plaintext.setStyleSheet("background-color: white;")
         self._fill_table()
         self.map_canvas.unsetMapTool(self.line_select_tool)
         self.line_geometry_definition_updated.emit()
