@@ -528,13 +528,13 @@ class CorridorQueryBuilderTool(LineStringQueryBuilderTool):
         variables = corridor_query_data["link"]["variables"]
         if "width-units" not in variables:
             self.edr_dialog.plugin.communication.show_error(
-                "Collection does not have information about `width-units`. The collection is not up with specification."
+                "The collection does not have information about width-units so is not compatible with the OGC API specification."
             )
             super().reject()
             return
         if "height-units" not in variables:
             self.edr_dialog.plugin.communication.show_error(
-                "Collection does not have information about `height-units`. The collection is not up with specification."
+                "The collection does not have information about height-units so is not compatible with the OGC API specification."
             )
             super().reject()
             return
