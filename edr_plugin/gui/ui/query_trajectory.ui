@@ -107,7 +107,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Or Enter Geometry WKT (as avalid LineString / LineStringZ / LineStringM / LineStringZM) </string>
+      <string>Or Enter Geometry WKT (as a valid LineString / LineStringZ / LineStringM / LineStringZM) </string>
      </property>
     </widget>
    </item>
