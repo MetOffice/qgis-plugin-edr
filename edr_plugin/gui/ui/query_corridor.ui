@@ -56,6 +56,13 @@
     </layout>
    </item>
    <item>
+    <widget class="QLabel" name="label_11">
+     <property name="text">
+      <string>Or Manually Enter Coordinates:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QTableWidget" name="linestring_tw">
      <property name="minimumSize">
       <size>

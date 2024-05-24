@@ -8,7 +8,7 @@ name=Environmental Data Retrieval
 qgisMinimumVersion=3.28
 qgisMaximumVersion=3.99
 description=Environmental Data Retrieval QGIS plugin
-version=0.13.5
+version=1.0.0
 author=Lutra Consulting
 email=info@lutraconsulting.co.uk
 
@@ -23,6 +23,7 @@ repository=https://github.com/lutraconsulting/qgis-plugin-edr
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=<p>
+ <p>1.0.0 release version
  <p>0.13.5 Minor redesign of line selection tools, line selection only exports dimensions supported by the collection, spatial extent of query is retained on collection change (if the attributes are the same) 
  <p>0.13.3 More updates to line selection tool, GUI text updates, minor fixes
  <p>0.13.2 Fix line selection tool and corridor and trajectory windows
