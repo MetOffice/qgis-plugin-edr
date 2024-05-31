@@ -12,10 +12,10 @@ version=1.0.0
 author=Lutra Consulting
 email=info@lutraconsulting.co.uk
 
-about=QGIS Client for viewing and manipulate data from the OGC Environmental Data Retrieval API endpoint.
+about=QGIS Client for viewing and manipulating data from the OGC Environmental Data Retrieval API endpoint.
 
-tracker=https://github.com/lutraconsulting/qgis-plugin-edr/issues
-repository=https://github.com/lutraconsulting/qgis-plugin-edr
+tracker=https://github.com/MetOffice/qgis-plugin-edr/issues
+repository=https://github.com/MetOffice/qgis-plugin-edr/
 # End of mandatory metadata
 
 # Recommended items:
@@ -52,7 +52,7 @@ changelog=<p>
 # Tags are comma separated with spaces allowed
 tags=OGC, EDR, meteo, Met Office, data, atmosphere, multidimensional, environmental, api
 
-homepage=https://github.com/lutraconsulting/qgis-plugin-edr
+homepage=https://github.com/MetOffice/qgis-plugin-edr
 category=Plugins
 icon=icons/edr.png
 # experimental flag
