@@ -120,7 +120,7 @@ style="width:2.06358in;height:0.70871in" alt="Warning of the spatial extent not 
 
 The user will then be given an option to input the extent for the type of query selected based upon the input dialogues listed below.
 
-**NOTE: the corridor and the trajectory queries are experimental services and may experience issues based upon the EDR server configuration. They may not respond well to large quantities of data being returned by an EDR service.**
+**NOTE: the corridor and the trajectory queries are experimental services and may experience issues based upon the EDR server configuration.** All EDR queries, perhaps with the exception of trajectory and point, which are expected to return a large amount of data could suffer from slow responses. For potentially large data requests (large geospatial area, number of levels, timesteps, parameters, high data resolution), users should choose a binary format such as netCDF or GRIB2 (if available). JSON, CoverageJSON and GeoJSON are verbose and can add delay to requests. This can attributed to the time to respond to the request from the server, the time to transmit the data, or the time for QGIS to process and render the data payload.
 
 <img src="./docs/images/image7.png"
 style="width:1.86127in;height:1.06403in" alt="A screenshot of a computer
@@ -363,10 +363,8 @@ execute the query that has been built.
 Running The Query
 -----------------
 
-There are three options for running the query: the first is to cancel
-the query by using the Cancel option. This will cancel the query and not
-run it. There is an option to run and save the query (Run and save
-query) and another just to run the query (Run query).
+There are three options for running the query: There is an option to run and save the query (Run and save
+query), another just to run the query (Run query) and one to cancel the operation.
 
 The run and save query will create an entry in the **QGIS Browser** view
 to be able to re-run the same EDR API request later. This has the
