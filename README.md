@@ -199,10 +199,8 @@ style="width:5.19471in;height:0.59031in" />
 1.  **Cube Query** - the cube query functions similarly to an area query (above). It needs to have a bounding box set for the x, y dimensions of the cube to be defined.
 
 ![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/a41646c6-7887-4591-88cb-14201f08be95)
-![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/a41646c6-7887-4591-88cb-14201f08be95)
 
 The z dimension is determined by selecting the vertical extent in the EDR plugin interface.
-![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/3d1f35b6-a444-42b6-9edd-31dbf7de769d)
 ![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/3d1f35b6-a444-42b6-9edd-31dbf7de769d)
 
 1.  **Corridor Query** - the corridor is based on a line string that can have either x and y parameters, x, y and z or x, y, z and time (m) components. 
@@ -216,11 +214,9 @@ It is possible to define a corridor’s width, height with their units, selected
 As another option it is possible to copy and paste a well known text (WKT) line string that must conform to the WKT LineString / LineStringZ, LineStringM or LineStringZM standard with the elements all present. The interface will turn red for an invalid line string that is pasted into the dialogue box. If this is the case the line string will need to be edited to correct the error.
 
 ![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/8cbaafb2-5cdb-4166-ae5d-eb951cc365d9)
-![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/8cbaafb2-5cdb-4166-ae5d-eb951cc365d9)
 
 **NOTE:** If the EDR service is not configured to include information on width or height units then there will be an error messagge displayed:
 
-![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/3780a0a5-ba8d-4943-b2f9-313abe949b79)
 ![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/3780a0a5-ba8d-4943-b2f9-313abe949b79)
 	
 **THE CORRIDOR QUERY IS EXPERIMENTAL and relies on EDR servers adhering to the OGC API – Environmental Data Retrieval standard.**
@@ -230,13 +226,11 @@ As another option it is possible to copy and paste a well known text (WKT) line 
 To select an existing line feature that must be open on the map, click on the ‘Select an existing line feature box'. Alternatively, there is an option to manually build a trajectory as a line string using x, y, z and m (time) elements or to paste a valid line string WKT object into the enter geometry box. 
 
 ![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/c5913460-4ae3-4483-b91b-670f7cdddd78)
-![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/c5913460-4ae3-4483-b91b-670f7cdddd78)
 
 Upon completion of the trajectory, click on the OK button. 
 
 When the trajectory has been created with a m (temporal) dimension then the  temporal extent (m dimension of the line string) on the main menu will be disabled. When the trajectory has a z (height) dimension set then the vertical extent options are disabled as the values will be taken from the defined geometry object. Both the vertical and temporal extents will be disabled when a z and m value are set on the geometry. 
 
-![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/7ee95a95-a743-4519-9ed8-447362496902)
 ![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/7ee95a95-a743-4519-9ed8-447362496902)
 
 The values in the vertical and temporal extents can be selected when the geometry only has an x and y dimension set on the geometry.
@@ -493,16 +487,13 @@ levels.
 In **versions of QGIS that are 3.37.0, or above,** there is an option to include a vertical slider to visualise the vertical levels in the data at each vertical level. To enable this functionality, which is out of scope of the EDR plugin, navigate to View, select Data Filtering and enable the Elevation Controller. This will enable a controller to vertically navigate the data at different levels in the map view. Once enabled the vertical slider appears in the map view, on the lefthand side. It is possible to adjust the levels using the two sliders by moving them up or down. It is possible to move the range having set it and then sliding and using the left click button at the same time.
 
 ![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/f8db0812-e0c8-4634-bee0-aa279d41864a)
-![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/f8db0812-e0c8-4634-bee0-aa279d41864a)
 
 By default, the slider is set from 0 to 100, although this may be changed or inverted for displaying the data being analysed. 
 
 ![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/cea908db-0e81-41af-bf14-f76aefcf368b)
-![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/cea908db-0e81-41af-bf14-f76aefcf368b)
 
 To invert the direction of the slider from 0 at the top to 100 at the bottom of the control, check the tick box ‘Invert Direction’. Clicking on Set Elevation Range… allows the elevation values to be amended for the data. It will open a Vertical Reference dialogue in the Project Properties. Here it is possible to set the lower and upper elevation range for example and apply a vertical reference system if this is set on the metadata. For terrain it is possible to alter the shading styles. 
 
-![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/3d914908-d183-4edc-b443-c983e333a9ae)
 ![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/3d914908-d183-4edc-b443-c983e333a9ae)
 
 Layer Properties
@@ -511,17 +502,13 @@ Layer Properties
 For each layer it is possible to configure the layer properties, by right clicking on the layer and then selecting layer properties and navigating to ‘Elevation’ on the left of the properties. 
 
 ![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/6b30a7c3-1bae-418f-abf9-0bbe9873939f)
-![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/6b30a7c3-1bae-418f-abf9-0bbe9873939f)
 
 By selecting the Configuration of ‘Fixed Elevation Range Per Group’ from the drop down list, it is possible to add lower and upper bounds to a group of data. In this case it is NetCDF  data. Type the values in the data grid. In the example below there are three isobaric elevations that are set to the values in the grouped layers. They represent 850, 925 and 1000 pressure levels so have had these values added as both upper and lower band values. Click OK or Apply after setting values.
 
-![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/0d7a4253-044a-48cf-bdff-e8d6f6b5dd50)
 ![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/0d7a4253-044a-48cf-bdff-e8d6f6b5dd50)
 
 Having adjusted the lower and upper band values, the vertical slider will then reflect the values added. Sliding the control to one of the values will mean that the data can then be visualised for that level. 
 
 ![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/c23369df-815c-4a17-9e4f-8d6127ca46a1)
-![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/c23369df-815c-4a17-9e4f-8d6127ca46a1)
 
 It is possible to load styles for the data here. Click on Style and load style for example. There are other options to manage the layer styles.
-
