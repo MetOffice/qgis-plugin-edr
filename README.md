@@ -107,19 +107,20 @@ the EDR service.
 The spatial extent needs to be created based upon the type of query
 type. To set the spatial extent, the ‘Set spatial extent’ button should
 be clicked. This will open a dialogue box that will vary according to
-the data query type. A polygon will be created for an area query, a
-point for a position query and a circle radius based on a centre point
-for the radius query for example. These are shown in detail below.
+the data query type. A polygon will be created for an area and cube query, a
+point for a position query, a line string for the corridor and trajectory queries and a circle radius based on a centre point
+for the radius query. These are defined in detail below.
 
 Should the spatial extent not be set, and the user attempts to run the
 query, then there will be a warning message before the user is prompted
 to select the extent after clicking OK.
 
 <img src="./docs/images/image6.png"
-style="width:2.06358in;height:0.70871in" alt="A screenshot of a computer
-Description automatically generated" />
+style="width:2.06358in;height:0.70871in" alt="Warning of the spatial extent not being set" />
 
-The user will then be given an option to input the extent for the query.
+The user will then be given an option to input the extent for the type of query selected based upon the input dialogues listed below.
+
+**NOTE: the corridor and the trajectory queries are experimental services and may experience issues based upon the EDR server configuration.** All EDR queries, perhaps with the exception of trajectory and point, which are expected to return a large amount of data could suffer from slow responses. For potentially large data requests (large geospatial area, number of levels, timesteps, parameters, high data resolution), users should choose a binary format such as netCDF or GRIB2 (if available). JSON, CoverageJSON and GeoJSON are verbose and can add delay to requests. This can be attributed to the time to respond to the request from the server, the time to transmit the data, or the time for QGIS to process and render the data payload.
 
 <img src="./docs/images/image7.png"
 style="width:1.86127in;height:1.06403in" alt="A screenshot of a computer
@@ -132,8 +133,7 @@ Description automatically generated" />
     the map.
 
 <img src="./docs/images/image8.png"
-style="width:2.75936in;height:1.57678in" alt="A screenshot of a computer
-Description automatically generated" />
+style="width:2.75936in;height:1.57678in" alt="Area query spatial extent." />
 
 Clicking on the **Map Canvas Extent** button the coordinates of the
 existing map view will be added to the north, west, east and south
@@ -145,8 +145,7 @@ box and drag the area to form a bounding box. Upon completion the
 coordinates will be populated in the north, west, east and south boxes.
 
 <img src="./docs/images/image9.png"
-style="width:2.48128in;height:1.68085in" alt="A map of a river Description
-automatically generated" />
+style="width:2.48128in;height:1.68085in" alt="Drag a bounding box to draw on the canvas" />
 
 It is also possible to create an extent from a pre-existing **layer**
 that is present in the QGIS project. Select the layer option and select
@@ -164,8 +163,7 @@ functions in the same way, bringing in a selected geometry.
     button which will show the following dialogue:
 
 <img src="./docs/images/image10.png"
-style="width:4.16688in;height:2.25012in" alt="A screenshot of a computer
-Description automatically generated" />
+style="width:4.16688in;height:2.25012in" alt="Defining a radius query" />
 
 Click on the Radius centre point: &lt;NOT SET&gt; to select a point on
 the map and select the desired radius value and units from the drop down
@@ -178,8 +176,7 @@ box or use the selectors to increase or decrease the values by 1.
     then select the location that is of interest.
 
 <img src="./docs/images/image11.png"
-style="width:4.13216in;height:2.27095in" alt="A screenshot of a computer
-Description automatically generated" />
+style="width:4.13216in;height:2.27095in" alt="Select an available location for the location query" />
 
 Select one of the location names and then click on the OK button to get
 data for the pre-defined location.
@@ -192,17 +189,57 @@ data for the pre-defined location.
     Select a value and click OK.
 
 <img src="./docs/images/image12.png"
-style="width:4.13216in;height:2.27095in" alt="A screenshot of a computer
-Description automatically generated" />
+style="width:4.13216in;height:2.27095in" alt="Select an available item from the drop down for an items query" />
 
 Selected items will be displayed on the EDR interface:
 
 <img src="./docs/images/image13.png"
 style="width:5.19471in;height:0.59031in" />
 
-1.  **Other queries** of **corridor**, **cube** and **trajectory** are
-    <span class="underline">not</span> (yet) supported by the QGIS EDR
-    plugin.
+1.  **Cube Query** - the cube query functions similarly to an area query (above). It needs to have a bounding box set for the x, y dimensions of the cube to be defined.
+
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/a41646c6-7887-4591-88cb-14201f08be95)
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/a41646c6-7887-4591-88cb-14201f08be95)
+
+The z dimension is determined by selecting the vertical extent in the EDR plugin interface.
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/3d1f35b6-a444-42b6-9edd-31dbf7de769d)
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/3d1f35b6-a444-42b6-9edd-31dbf7de769d)
+
+1.  **Corridor Query** - the corridor is based on a line string that can have either x and y parameters, x, y and z or x, y, z and time (m) components. 
+	
+It is possible to select an existing line feature that is open on the map to save having to input the nodes of the line. To select an existing line, click on the ‘Select an existing line feature’ button and then select the line on the map view. This will update the table with the coordinates from the line. 
+
+There is a manual option to insert a line node (as x, y / x, y, z  or x, y, z, m (for time)) by clicking on the green + button. Enter the sets of coordinates until the line is defined. To remove a set of coordinates, click on the red – button when the cursor is in that row. 
+
+It is possible to define a corridor’s width, height with their units, selected by the drop downs, and the resolutions for sampling the corridor with the resolution x / y or z parameters (if they are supported by the EDR service). 
+
+As another option it is possible to copy and paste a well known text (WKT) line string that must conform to the WKT LineString / LineStringZ, LineStringM or LineStringZM standard with the elements all present. The interface will turn red for an invalid line string that is pasted into the dialogue box. If this is the case the line string will need to be edited to correct the error.
+
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/8cbaafb2-5cdb-4166-ae5d-eb951cc365d9)
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/8cbaafb2-5cdb-4166-ae5d-eb951cc365d9)
+
+**NOTE:** If the EDR service is not configured to include information on width or height units then there will be an error messagge displayed:
+
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/3780a0a5-ba8d-4943-b2f9-313abe949b79)
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/3780a0a5-ba8d-4943-b2f9-313abe949b79)
+	
+**THE CORRIDOR QUERY IS EXPERIMENTAL and relies on EDR servers adhering to the OGC API – Environmental Data Retrieval standard.**
+
+1.  **Trajectory Query** - the trajectory query allows the input of a 4 dimensional trajectory object that will be sent to the EDR service in WKT format. The input allows an existing trajectory line feature to be selected form the map, coordinates to be input or a WKT line string to be pasted into the dialogue box. Each box will be updated upon the input of line geometry data from one of the other options.
+
+To select an existing line feature that must be open on the map, click on the ‘Select an existing line feature box'. Alternatively, there is an option to manually build a trajectory as a line string using x, y, z and m (time) elements or to paste a valid line string WKT object into the enter geometry box. 
+
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/c5913460-4ae3-4483-b91b-670f7cdddd78)
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/c5913460-4ae3-4483-b91b-670f7cdddd78)
+
+Upon completion of the trajectory, click on the OK button. 
+
+When the trajectory has been created with a m (temporal) dimension then the  temporal extent (m dimension of the line string) on the main menu will be disabled. When the trajectory has a z (height) dimension set then the vertical extent options are disabled as the values will be taken from the defined geometry object. Both the vertical and temporal extents will be disabled when a z and m value are set on the geometry. 
+
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/7ee95a95-a743-4519-9ed8-447362496902)
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/7ee95a95-a743-4519-9ed8-447362496902)
+
+The values in the vertical and temporal extents can be selected when the geometry only has an x and y dimension set on the geometry.
 
 ### Setting Output Options
 
@@ -249,41 +286,36 @@ when they are present. It is possible to change the time range from the
 dropdown menus for the ‘from’ and ‘to’ values.
 
 <img src="./docs/images/image16.png"
-style="width:5.29888in;height:0.56947in" alt="A white rectangular object with a
-black border Description automatically generated" />
+style="width:5.29888in;height:0.56947in" alt="Temporal extent input" />
 
 Clicking on the dropdown menu allows the user to select another date
 from a calendar date picker. It is possible to select a different date
-within the range of the temporal extent.
+within the range of the temporal extent. As mentioned above, this may be disabled for a trajectory query that has had a temporal (m) value defined in the line string. 
 
 <img src="./docs/images/image17.png"
-style="width:5.29194in;height:1.70842in" alt="A screenshot of a calendar
-Description automatically generated" />
+style="width:5.29194in;height:1.70842in" alt="Changing the temporal extent" />
 
 The time values may be edited in the text boxes by overtyping the values
 present. This applies to the ‘from’ and the ‘to’ extents.
 
 <img src="./docs/images/image18.png"
-style="width:2.09038in;height:0.63198in" alt="A screenshot of a computer
-Description automatically generated" />
+style="width:2.09038in;height:0.63198in" alt="The time values can be directly edited" />
 
 ### Vertical Extent
 
 When vertical extents are supported by the collection in the service,
 then there is an option to select these manually from the drop down
 menu. If the service does not support a vertical extent this option will
-be greyed out.
+be greyed out or if there is a trajectory query that has a line string defining the vertical extent.
 
 <img src="./docs/images/image19.png"
-style="width:5.2711in;height:0.79865in" alt="A white rectangular object with a
-white stripe Description automatically generated" />
+style="width:5.2711in;height:0.79865in" alt="The vertical extent drop down" />
 
 Select as many vertical extents as needed by selecting values from the
 drop down menu using the tick boxes.
 
 <img src="./docs/images/image20.png"
-style="width:5.19471in;height:1.46535in" alt="A white rectangular object with a
-black border Description automatically generated" />
+style="width:5.19471in;height:1.46535in" alt="Select vertical extents from the drop down" />
 
 There is also an option to select the minimum and maximum range (click
 the use min/max range tick box) or to select or deselect all (use the
@@ -292,8 +324,7 @@ check/uncheck all tick box).
 Selecting all will show all values as a delimited list in the text box:
 
 <img src="./docs/images/image21.png"
-style="width:5.27805in;height:0.77782in" alt="A close-up of a computer screen
-Description automatically generated" />
+style="width:5.27805in;height:0.77782in" alt="Delimited list of selected vertical extents" />
 
 ### Custom Dimensions
 
@@ -318,24 +349,22 @@ The final option to select on the EDR plugin interface is the directory
 where files returned from the service will be saved.
 
 <img src="./docs/images/image22.png"
-style="width:5.13221in;height:0.27779in" />
+style="width:5.13221in;height:0.27779in" alt="Download directory location" />
 
 This can be altered by clicking on the change button and navigating to a
 directory location where the user wants to save EDR data.
 
 <img src="./docs/images/image23.png"
-style="width:5.87139in;height:2.35573in" />
+style="width:5.87139in;height:2.35573in" alt="Choosing the directory location" />
 
-After all of the above has been selected, there are some options to
+After all the above has been completed, there are some options to
 execute the query that has been built.
 
 Running The Query
 -----------------
 
-There are three options for running the query: the first is to cancel
-the query by using the Cancel option. This will cancel the query and not
-run it. There is an option to run and save the query (Run and save
-query) and another just to run the query (Run query).
+There are three options for running the query: There is an option to run and save the query (Run and save
+query), another just to run the query (Run query) and one to cancel the operation.
 
 The run and save query will create an entry in the **QGIS Browser** view
 to be able to re-run the same EDR API request later. This has the
@@ -345,16 +374,15 @@ The saved queries will appear under the Environmental Data Retrieval
 heading (highlighted below):
 
 <img src="./docs/images/image24.png"
-style="width:2.83237in;height:2.79769in" alt="A screenshot of a computer
-Description automatically generated" />
+style="width:2.83237in;height:2.79769in" alt="The browser window showing where the Environmental Data Retrieval queries are saved" />
 
 Running the query will just download the file format defined into the
-directory that has been specified. When the query is running a blue will
+directory that has been specified. When the query is running a blue bar will
 appear above the map. This shows the user the collection being selected
 and highlights the progress.
 
 <img src="./docs/images/image25.png"
-style="width:6.26806in;height:0.15764in" />
+style="width:6.26806in;height:0.15764in" alt="Query running blue bar" />
 
 Data will be downloaded to the specified directory in the chosen file
 format. When it is downloaded the file will appear on the **QGIS
@@ -372,8 +400,7 @@ on this there are options to have a new server query or delete the
 service reference from the Browser panel.
 
 <img src="./docs/images/image26.png"
-style="width:1.8784in;height:0.47399in" alt="A screenshot of a computer
-Description automatically generated" />
+style="width:1.8784in;height:0.47399in" alt="Right click to run or delete an existing query." />
 
 Below the service URL will be a collection name with a date when the
 query was executed.
@@ -387,8 +414,7 @@ By right clicking on the saved query a menu will appear with options to:
 3.  Delete the query. This allows the query to be deleted.
 
 <img src="./docs/images/image27.png"
-style="width:1.49133in;height:0.65651in" alt="A screenshot of a computer
-Description automatically generated" />
+style="width:1.49133in;height:0.65651in" alt="Optionally repeat, rename or delete an existing query by right clicking on it." />
 
 Guidance: Working With The QGIS Plugin
 ======================================
@@ -406,12 +432,12 @@ menu item View, Panels, Temporal Controller. This will show the
 controller:
 
 <img src="./docs/images/image28.png"
-style="width:6.26806in;height:0.4375in" />
+style="width:6.26806in;height:0.4375in" alt="Temporal controller" />
 
 Temporally enabled layers will have a clock icon next to them in the
 QGIS Layers panel.
 <img src="./docs/images/image29.png"
-style="width:0.13873in;height:0.15607in" />
+style="width:0.13873in;height:0.15607in" alt="Clock icon for the temporal controller" />
 
 Viewing NetCDF Data
 -------------------
@@ -426,8 +452,7 @@ on the ‘turn off temporal navigation’ button (the lefthand button with
 the red cross). It will be shown as disabled:
 
 <img src="./docs/images/image30.png"
-style="width:1.84037in;height:0.45836in" alt="A close up of a logo Description
-automatically generated" />
+style="width:1.84037in;height:0.45836in" alt="Temporal controller showing as disabled with a red cross" />
 
 This should make the NetCDF file appear on the map view.
 
@@ -440,8 +465,7 @@ the temporal controller by clicking on the ‘set to full range’ (refresh)
 button. This is the two blue arrows on the right of the image below.
 
 <img src="./docs/images/image31.png"
-style="width:4.29883in;height:0.75698in" alt="A screenshot of a computer
-Description automatically generated" />
+style="width:4.29883in;height:0.75698in" alt="To refresh the times on the temporal controller press the blue arrow icon." />
 
 Working With Multiple Vertical Extents
 --------------------------------------
@@ -454,17 +478,50 @@ Here data is displayed for the temperature on 13 February 2024 18:00
 model run at three vertical height levels: 850, 925 and 1000.
 
 <img src="./docs/images/image32.png"
-style="width:3.46546in;height:1.02783in" alt="A screenshot of a computer
-Description automatically generated" />
+style="width:3.46546in;height:1.02783in" alt="Data displayed for multiple vertical levels." />
 
 For a NetCDF file it is possible to change the vertical levels by using
 the symbology groups control to toggle each level on or off:
 
 <img src="./docs/images/image33.png"
-style="width:6.26806in;height:1.80625in" alt="A white box with a white border
-Description automatically generated with medium confidence" />
+style="width:6.26806in;height:1.80625in" alt="Click on the right hand group icon to toggle a group on or off" />
 
 In the above diagram the isobaric 1000 vertical height level is on, it
 is possible to click on another value to enable other vertical height
 levels.
+
+In **versions of QGIS that are 3.37.0, or above,** there is an option to include a vertical slider to visualise the vertical levels in the data at each vertical level. To enable this functionality, which is out of scope of the EDR plugin, navigate to View, select Data Filtering and enable the Elevation Controller. This will enable a controller to vertically navigate the data at different levels in the map view. Once enabled the vertical slider appears in the map view, on the lefthand side. It is possible to adjust the levels using the two sliders by moving them up or down. It is possible to move the range having set it and then sliding and using the left click button at the same time.
+
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/f8db0812-e0c8-4634-bee0-aa279d41864a)
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/f8db0812-e0c8-4634-bee0-aa279d41864a)
+
+By default, the slider is set from 0 to 100, although this may be changed or inverted for displaying the data being analysed. 
+
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/cea908db-0e81-41af-bf14-f76aefcf368b)
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/cea908db-0e81-41af-bf14-f76aefcf368b)
+
+To invert the direction of the slider from 0 at the top to 100 at the bottom of the control, check the tick box ‘Invert Direction’. Clicking on Set Elevation Range… allows the elevation values to be amended for the data. It will open a Vertical Reference dialogue in the Project Properties. Here it is possible to set the lower and upper elevation range for example and apply a vertical reference system if this is set on the metadata. For terrain it is possible to alter the shading styles. 
+
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/3d914908-d183-4edc-b443-c983e333a9ae)
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/3d914908-d183-4edc-b443-c983e333a9ae)
+
+Layer Properties
+----------------
+
+For each layer it is possible to configure the layer properties, by right clicking on the layer and then selecting layer properties and navigating to ‘Elevation’ on the left of the properties. 
+
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/6b30a7c3-1bae-418f-abf9-0bbe9873939f)
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/6b30a7c3-1bae-418f-abf9-0bbe9873939f)
+
+By selecting the Configuration of ‘Fixed Elevation Range Per Group’ from the drop down list, it is possible to add lower and upper bounds to a group of data. In this case it is NetCDF  data. Type the values in the data grid. In the example below there are three isobaric elevations that are set to the values in the grouped layers. They represent 850, 925 and 1000 pressure levels so have had these values added as both upper and lower band values. Click OK or Apply after setting values.
+
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/0d7a4253-044a-48cf-bdff-e8d6f6b5dd50)
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/0d7a4253-044a-48cf-bdff-e8d6f6b5dd50)
+
+Having adjusted the lower and upper band values, the vertical slider will then reflect the values added. Sliding the control to one of the values will mean that the data can then be visualised for that level. 
+
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/c23369df-815c-4a17-9e4f-8d6127ca46a1)
+![image](https://github.com/MetOffice/qgis-plugin-edr/assets/4614980/c23369df-815c-4a17-9e4f-8d6127ca46a1)
+
+It is possible to load styles for the data here. Click on Style and load style for example. There are other options to manage the layer styles.
 
