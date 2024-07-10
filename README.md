@@ -455,7 +455,7 @@ Viewing CovJSON Data
 
 The CovJSON data sometimes may not appear on the map, with the temporal
 controller enabled, if this is the case refresh the temporal range from
-the temporal controller by clicking on the ‘set to full range’ (refresh)
+the temporal controller by clicking on the ‘set to full range’ (refresh) ![](./docs/images/refresh.png)
 button. This is the two blue arrows on the right of the image below.
 
 <img src="./docs/images/image31.png"
