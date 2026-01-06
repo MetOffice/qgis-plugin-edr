@@ -689,7 +689,7 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         return None
 
     def canvasPressEvent(self, event):
-        self._find_feature(event.x(), event.y())
+        self._find_feature(event.pixelPoint().x(), event.pixelPoint().y())
         if self.identify_feature:
             # returned geometry is always in project CRS for simplicity
             transform = QgsCoordinateTransform(
@@ -703,7 +703,7 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         self.map_canvas.unsetMapTool(self)
 
     def canvasMoveEvent(self, e: QgsMapMouseEvent) -> None:
-        self._find_feature(e.x(), e.y())
+        self._find_feature(e.pixelPoint().x(), e.pixelPoint().y())
         # highlight feature
         if self.identify_feature:
             geom = QgsGeometry(self.identify_feature.geometry())
