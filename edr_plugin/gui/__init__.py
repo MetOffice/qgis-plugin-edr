@@ -617,7 +617,7 @@ class EdrDialog(QDialog):
             instances = []
         repeat_dialog = RepeatQueryDialog(data_query_definition, collection, instances, parent=self)
         if repeat_dialog.instance_grp.isEnabled() or repeat_dialog.temporal_grp.isEnabled():
-            repeat_dialog.exec_()
+            repeat_dialog.exec()
         worker_api_client = EdrApiClient(
             server_url,
             authentication_config_id=edr_authcfg,
