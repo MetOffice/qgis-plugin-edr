@@ -3,7 +3,7 @@
  <class>Dialog</class>
  <widget class="QDialog" name="Dialog">
   <property name="windowModality">
-   <enum>Qt::ApplicationModal</enum>
+   <enum>Qt::WindowModality::ApplicationModal</enum>
   </property>
   <property name="geometry">
    <rect>
@@ -22,7 +22,6 @@
      <property name="font">
       <font>
        <pointsize>10</pointsize>
-       <weight>75</weight>
        <bold>true</bold>
       </font>
      </property>
@@ -37,7 +36,7 @@
    <item row="2" column="1">
     <spacer name="verticalSpacer">
      <property name="orientation">
-      <enum>Qt::Vertical</enum>
+      <enum>Qt::Orientation::Vertical</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
@@ -52,7 +51,6 @@
      <property name="font">
       <font>
        <pointsize>11</pointsize>
-       <weight>75</weight>
        <bold>true</bold>
       </font>
      </property>
