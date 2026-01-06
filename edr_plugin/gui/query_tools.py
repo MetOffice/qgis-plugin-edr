@@ -630,11 +630,7 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         self.active_layer = self.iface.activeLayer()
 
         # Rubber band for highlighting selected feature
-        if Qgis.QGIS_VERSION_INT >= 33000:
-            type = Qgis.GeometryType.Line
-        else:
-            type = QgsWkbTypes.LineGeometry
-        self.rubber_band = QgsRubberBand(self.map_canvas, type)
+        self.rubber_band = QgsRubberBand(self.map_canvas, QgsWkbTypes.LineGeometry)
         self.rubber_band.setColor(QColor.fromRgb(255, 255, 0))
         self.rubber_band.setWidth(2)
         self.rubber_band.setOpacity(1)
@@ -664,15 +660,12 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         layer_tree_root = QgsProject.instance().layerTreeRoot()
         invisible_layers = QgsLayerTreeUtils.invisibleLayerList(layer_tree_root)
 
-        if Qgis.QGIS_VERSION_INT >= 33000:
-            type_to_select = Qgis.GeometryType.Line
-        else:
-            type_to_select = QgsWkbTypes.LineGeometry
-
         selected_layers = [
             x
             for x in map_layers.values()
-            if isinstance(x, QgsVectorLayer) and x.geometryType() == type_to_select and x.id() not in invisible_layers
+            if isinstance(x, QgsVectorLayer)
+            and x.geometryType() == QgsWkbTypes.LineGeometry
+            and x.id() not in invisible_layers
         ]
 
         return selected_layers
