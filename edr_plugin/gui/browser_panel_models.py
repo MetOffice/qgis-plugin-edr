@@ -1,6 +1,5 @@
 import json
 
-import sip
 from qgis.core import QgsDataCollectionItem, QgsDataItem, QgsDataItemProvider, QgsDataProvider, QgsSettings
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QInputDialog
@@ -37,7 +36,6 @@ class EdrRootItem(QgsDataCollectionItem):
             server_item = EdrServerItem(self.plugin, server_url, self)
             server_item.setState(QgsDataItem.Populated)
             server_item.refresh()
-            sip.transferto(server_item, self)
             items.append(server_item)
             self.server_items.append(server_item)
         return items
@@ -98,7 +96,6 @@ class EdrServerItem(EdrRootItem):
             query_item = SavedQueryItem(self.plugin, self.server_url, query_name, self)
             query_item.setState(QgsDataItem.Populated)
             query_item.refresh()
-            sip.transferto(query_item, self)
             items.append(query_item)
             self.query_items.append(query_item)
         return items
@@ -179,7 +176,6 @@ class SavedQueriesItemProvider(QgsDataItemProvider):
     def createDataItem(self, path, parentItem):
         if not parentItem:
             ri = EdrRootItem(plugin=self.plugin)
-            sip.transferto(ri, None)
             self.root_item = ri
             return ri
         else:
