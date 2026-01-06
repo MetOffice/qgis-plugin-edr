@@ -61,7 +61,7 @@ class UICommunication:
             print(msg)
 
     @staticmethod
-    def ask(parent, title, question, box_icon=QMessageBox.Question):
+    def ask(parent, title, question, box_icon=QMessageBox.question):
         """Ask for operation confirmation."""
         msg_box = QMessageBox(parent)
         msg_box.setIcon(box_icon)
