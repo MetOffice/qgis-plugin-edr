@@ -5,14 +5,14 @@
 
 [general]
 name=Environmental Data Retrieval
-qgisMinimumVersion=3.28
-qgisMaximumVersion=3.99
+qgisMinimumVersion=3.99
+qgisMaximumVersion=4.99
 description=Environmental Data Retrieval QGIS plugin
-version=1.0.0
+version=1.1.0
 author=Lutra Consulting
 email=info@lutraconsulting.co.uk
-
 about=QGIS Client for viewing and manipulating data from the OGC Environmental Data Retrieval API endpoint.
+supportsQt6=True
 
 tracker=https://github.com/MetOffice/qgis-plugin-edr/issues
 repository=https://github.com/MetOffice/qgis-plugin-edr/
@@ -23,6 +23,7 @@ repository=https://github.com/MetOffice/qgis-plugin-edr/
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=<p>
+ <p>1.1.0 update to support Qt6 and QGIS 4.0 
  <p>1.0.0 release version
  <p>0.13.5 Minor redesign of line selection tools, line selection only exports dimensions supported by the collection, spatial extent of query is retained on collection change (if the attributes are the same) 
  <p>0.13.3 More updates to line selection tool, GUI text updates, minor fixes
