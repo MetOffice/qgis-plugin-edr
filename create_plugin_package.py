@@ -20,6 +20,13 @@ if __name__ == "__main__":
     plugin_dirname = "edr_plugin"
     plugin_path = os.path.join(this_dir, plugin_dirname)
     plugin_version = get_version(plugin_path)
+
+    # Remove all __pycache__ directories
+    for root, dirs, files in os.walk(plugin_path):
+        if "__pycache__" in dirs:
+            pycache_path = os.path.join(root, "__pycache__")
+            shutil.rmtree(pycache_path)
+
     zip_filename = f"{plugin_dirname}-{plugin_version}"
     plugin_zip_path = os.path.join(this_dir, zip_filename)
     shutil.make_archive(plugin_zip_path, "zip", this_dir, plugin_dirname)
