@@ -691,8 +691,8 @@ class RepeatQueryDialog(QDialog):
         """Collect variables from the dialog."""
         instance_id = self.instance_cbo.currentText() if self.instance_grp.isEnabled() else None
         if self.temporal_grp.isEnabled():
-            from_datetime = self.from_datetime.dateTime().toTimeSpec(Qt.UTC).toString(Qt.ISODate)
-            to_datetime = self.to_datetime.dateTime().toTimeSpec(Qt.UTC).toString(Qt.ISODate)
+            from_datetime = self.from_datetime.dateTime().toTimeSpec(Qt.TimeSpec.UTC).toString(Qt.DateFormat.ISODate)
+            to_datetime = self.to_datetime.dateTime().toTimeSpec(Qt.TimeSpec.UTC).toString(Qt.DateFormat.ISODate)
             temporal_range = (
                 (from_datetime,)
                 if not to_datetime
