@@ -380,7 +380,7 @@ class LineStringQueryBuilderTool(QDialog):
         self.linestring_tw.setColumnCount(4)
         self.linestring_tw.setHorizontalHeaderLabels(["x", "y", "z", "Time"])
         header = self.linestring_tw.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.Stretch)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
     def _fill_table(self) -> None:
         """Fill table with vertices from selected geometry."""
