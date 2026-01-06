@@ -124,7 +124,7 @@ class UICommunication:
         pb.setMinimum(minimum)
         pb.setMaximum(maximum)
         pb.setValue(init_value)
-        pb.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        pb.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         pmb.layout().addWidget(pb)
         self.iface.messageBar().pushWidget(pmb, Qgis.Info)
         return pb
