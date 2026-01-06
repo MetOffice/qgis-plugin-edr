@@ -61,16 +61,16 @@ class UICommunication:
             print(msg)
 
     @staticmethod
-    def ask(parent, title, question, box_icon=QMessageBox.Question):
+    def ask(parent, title, question, box_icon=QMessageBox.question):
         """Ask for operation confirmation."""
         msg_box = QMessageBox(parent)
         msg_box.setIcon(box_icon)
         msg_box.setWindowTitle(title)
-        msg_box.setTextFormat(Qt.RichText)
+        msg_box.setTextFormat(Qt.TextFormat.RichText)
         msg_box.setText(question)
         msg_box.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
         msg_box.setDefaultButton(QMessageBox.No)
-        res = msg_box.exec_()
+        res = msg_box.exec()
         if res == QMessageBox.No:
             return False
         else:
@@ -82,11 +82,11 @@ class UICommunication:
         msg_box = QMessageBox(parent)
         msg_box.setIcon(QMessageBox.Question)
         msg_box.setWindowTitle(title)
-        msg_box.setTextFormat(Qt.RichText)
+        msg_box.setTextFormat(Qt.TextFormat.RichText)
         msg_box.setText(question)
         for button_txt in buttons_labels:
             msg_box.addButton(QPushButton(button_txt), QMessageBox.YesRole)
-        msg_box.exec_()
+        msg_box.exec()
         clicked_button = msg_box.clickedButton()
         clicked_button_text = clicked_button.text()
         return clicked_button_text
@@ -124,7 +124,7 @@ class UICommunication:
         pb.setMinimum(minimum)
         pb.setMaximum(maximum)
         pb.setValue(init_value)
-        pb.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        pb.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         pmb.layout().addWidget(pb)
         self.iface.messageBar().pushWidget(pmb, Qgis.Info)
         return pb

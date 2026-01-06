@@ -15,7 +15,7 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="sizeConstraint">
-    <enum>QLayout::SetNoConstraint</enum>
+    <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
    </property>
    <item row="21" column="0" colspan="3">
     <layout class="QHBoxLayout" name="horizontalLayout">
@@ -37,7 +37,7 @@
      <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -67,7 +67,6 @@
        <property name="font">
         <font>
          <pointsize>11</pointsize>
-         <weight>75</weight>
          <bold>true</bold>
         </font>
        </property>
@@ -81,7 +80,7 @@
    <item row="0" column="0" colspan="3">
     <widget class="QScrollArea" name="scrollArea">
      <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+      <enum>QFrame::Shape::NoFrame</enum>
      </property>
      <property name="widgetResizable">
       <bool>true</bool>
@@ -92,7 +91,7 @@
         <x>0</x>
         <y>0</y>
         <width>782</width>
-        <height>748</height>
+        <height>749</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_8">
@@ -152,7 +151,7 @@
           <item row="2" column="3">
            <spacer name="horizontalSpacer_5">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -235,7 +234,7 @@
             </font>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
            <property name="readOnly">
             <bool>true</bool>
@@ -270,7 +269,7 @@
           <string>Data query:</string>
          </property>
          <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+          <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
          </property>
         </widget>
        </item>
@@ -378,7 +377,7 @@
              </font>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -402,14 +401,14 @@
              </font>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
           </item>
           <item row="0" column="2">
            <spacer name="horizontalSpacer_2">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -439,7 +438,6 @@
          <property name="font">
           <font>
            <pointsize>10</pointsize>
-           <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
@@ -448,11 +446,10 @@
          </property>
          <layout class="QGridLayout" name="gridLayout_7">
           <item row="2" column="1" colspan="4">
-           <widget class="QgsAuthConfigSelect" name="server_auth_config">
+           <widget class="QgsAuthConfigSelect" name="server_auth_config" native="true">
             <property name="font">
              <font>
               <pointsize>10</pointsize>
-              <weight>50</weight>
               <bold>false</bold>
              </font>
             </property>
@@ -478,7 +475,6 @@
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
-                <weight>50</weight>
                 <bold>false</bold>
                </font>
               </property>
@@ -492,7 +488,6 @@
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
-                <weight>75</weight>
                 <bold>true</bold>
                </font>
               </property>
@@ -508,7 +503,6 @@
             <property name="font">
              <font>
               <pointsize>10</pointsize>
-              <weight>50</weight>
               <bold>false</bold>
              </font>
             </property>
@@ -522,7 +516,6 @@
             <property name="font">
              <font>
               <pointsize>10</pointsize>
-              <weight>50</weight>
               <bold>false</bold>
              </font>
             </property>
@@ -536,7 +529,6 @@
             <property name="font">
              <font>
               <pointsize>10</pointsize>
-              <weight>50</weight>
               <bold>false</bold>
              </font>
             </property>
@@ -577,7 +569,7 @@
           <string>Vertical extent:</string>
          </property>
          <property name="alignment">
-          <set>Qt::AlignCenter</set>
+          <set>Qt::AlignmentFlag::AlignCenter</set>
          </property>
          <layout class="QGridLayout" name="gridLayout_3">
           <item row="0" column="1" colspan="6">
@@ -610,7 +602,7 @@
           <item row="1" column="3">
            <spacer name="horizontalSpacer_3">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -731,7 +723,7 @@
          <item row="1" column="0">
           <spacer name="horizontalSpacer_4">
            <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+            <enum>Qt::Orientation::Horizontal</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -790,7 +782,7 @@
           <string>Parameters:</string>
          </property>
          <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+          <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
          </property>
         </widget>
        </item>
@@ -809,7 +801,7 @@
        <item row="12" column="1">
         <spacer name="verticalSpacer">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>

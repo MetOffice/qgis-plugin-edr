@@ -1,6 +1,5 @@
 import json
 
-import sip
 from qgis.core import QgsDataCollectionItem, QgsDataItem, QgsDataItemProvider, QgsDataProvider, QgsSettings
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QInputDialog
@@ -17,9 +16,7 @@ class EdrRootItem(QgsDataCollectionItem):
         name=None,
         parent=None,
     ):
-        name = plugin.PLUGIN_NAME if not name else name
-        provider_key = plugin.PLUGIN_ENTRY_NAME
-        QgsDataCollectionItem.__init__(self, parent, name, provider_key)
+        super().__init__(parent, plugin.PLUGIN_NAME if not name else name, plugin.PLUGIN_ENTRY_NAME)
         self.plugin = plugin
         self.setIcon(QIcon(icon_filepath("edr.png")))
         self.server_items = []
@@ -37,7 +34,6 @@ class EdrRootItem(QgsDataCollectionItem):
             server_item = EdrServerItem(self.plugin, server_url, self)
             server_item.setState(QgsDataItem.Populated)
             server_item.refresh()
-            sip.transferto(server_item, self)
             items.append(server_item)
             self.server_items.append(server_item)
         return items
@@ -66,7 +62,7 @@ class EdrServerItem(EdrRootItem):
     """EDR server data item. Contains saved queries."""
 
     def __init__(self, plugin, server_url, parent):
-        EdrRootItem.__init__(self, plugin, server_url, parent)
+        super().__init__(plugin, server_url, parent)
         self.plugin = plugin
         self.server_url = server_url
         self.setIcon(QIcon(icon_filepath("server.png")))
@@ -98,7 +94,6 @@ class EdrServerItem(EdrRootItem):
             query_item = SavedQueryItem(self.plugin, self.server_url, query_name, self)
             query_item.setState(QgsDataItem.Populated)
             query_item.refresh()
-            sip.transferto(query_item, self)
             items.append(query_item)
             self.query_items.append(query_item)
         return items
@@ -116,10 +111,10 @@ class SavedQueryItem(QgsDataItem):
     """Saved query item."""
 
     def __init__(self, plugin, server_url, query_name, parent):
+        super().__init__(QgsDataItem.Collection, parent, query_name, f"/{server_url}/{query_name}")
         self.plugin = plugin
         self.server_url = server_url
         self.query_name = query_name
-        QgsDataItem.__init__(self, QgsDataItem.Collection, parent, query_name, f"/{server_url}/{query_name}")
         self.setIcon(QIcon(icon_filepath("request.png")))
 
     def repeat_query(self):
@@ -166,7 +161,7 @@ class SavedQueriesItemProvider(QgsDataItemProvider):
     """Saved queries provider."""
 
     def __init__(self, plugin):
-        QgsDataItemProvider.__init__(self)
+        super().__init__()
         self.root_item = None
         self.plugin = plugin
 
@@ -179,7 +174,6 @@ class SavedQueriesItemProvider(QgsDataItemProvider):
     def createDataItem(self, path, parentItem):
         if not parentItem:
             ri = EdrRootItem(plugin=self.plugin)
-            sip.transferto(ri, None)
             self.root_item = ri
             return ri
         else:

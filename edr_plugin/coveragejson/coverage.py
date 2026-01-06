@@ -13,7 +13,7 @@ from qgis.core import (
     QgsRasterLayer,
     QgsVectorLayer,
 )
-from qgis.PyQt.QtCore import QDateTime, Qt, QVariant
+from qgis.PyQt.QtCore import QDateTime, QMetaType, Qt
 
 from edr_plugin.coveragejson.utils import (
     ArrayWithTZ,
@@ -174,7 +174,7 @@ class Coverage:
         for dimension_values in dim_accessor.iter_product:
             data_dict[dim_accessor.dimensions_to_string_description(dimension_values)] = ArrayWithTZ(
                 values[dimension_values],
-                QDateTime.fromString(dim_accessor.t(dimension_values), Qt.ISODate),
+                QDateTime.fromString(dim_accessor.t(dimension_values), Qt.DateFormat.ISODate),
                 dim_accessor.z(dimension_values),
             )
 
@@ -204,8 +204,8 @@ class Coverage:
             if len(t) < 2:
                 return None
 
-            t0 = QDateTime.fromString(t[0], Qt.ISODate)
-            t1 = QDateTime.fromString(t[1], Qt.ISODate)
+            t0 = QDateTime.fromString(t[0], Qt.DateFormat.ISODate)
+            t1 = QDateTime.fromString(t[1], Qt.DateFormat.ISODate)
 
             if t0.isValid() and t1.isValid():
                 return t0.secsTo(t1)
@@ -275,8 +275,8 @@ class Coverage:
         """Extract time range from `t` axis if it exists."""
         if self.has_t:
             t = self.axe_values("t")
-            t0 = QDateTime.fromString(t[0], Qt.ISODate)
-            t1 = QDateTime.fromString(t[-1], Qt.ISODate)
+            t0 = QDateTime.fromString(t[0], Qt.DateFormat.ISODate)
+            t1 = QDateTime.fromString(t[-1], Qt.DateFormat.ISODate)
 
             if t0.isValid() and t1.isValid():
                 return QgsDateTimeRange(t0, t1)
@@ -311,7 +311,7 @@ class Coverage:
         for geom, attrs in zip(geoms, attributes):
             feature = QgsFeature(layer.fields())
             if self.has_t:
-                attrs.append(QDateTime.fromString(t_values[i], Qt.ISODate))
+                attrs.append(QDateTime.fromString(t_values[i], Qt.DateFormat.ISODate))
             feature.setAttributes(attrs)
             feature.setGeometry(geom)
             features.append(feature)
@@ -331,7 +331,7 @@ class Coverage:
         layer = prepare_vector_layer(self.domain_type, self.crs)
         layer.dataProvider().addAttributes(prepare_fields(self.ranges, self.parameters_units))
         if self.has_t:
-            layer.dataProvider().addAttributes([QgsField(self.FIELD_NAME_TIME, QVariant.Type.DateTime)])
+            layer.dataProvider().addAttributes([QgsField(self.FIELD_NAME_TIME, QMetaType.Type.DateTime)])
         layer.updateFields()
         return layer
 

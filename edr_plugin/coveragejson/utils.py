@@ -23,7 +23,7 @@ from qgis.core import (
     QgsSymbol,
     QgsVectorLayer,
 )
-from qgis.PyQt.QtCore import QDateTime, QVariant
+from qgis.PyQt.QtCore import QDateTime, QMetaType
 from qgis.PyQt.QtGui import QColor
 
 
@@ -334,13 +334,13 @@ def prepare_fields(
     return fields
 
 
-def parameter_data_type_to_qgis_type(param_type: str) -> QVariant.Type:
+def parameter_data_type_to_qgis_type(param_type: str) -> QMetaType.Type:
     if param_type == "integer":
-        return QVariant.Type.Int
+        return QMetaType.Type.Int
     elif param_type == "float":
-        return QVariant.Type.Double
+        return QMetaType.Type.Double
     elif param_type == "string":
-        return QVariant.Type.String
+        return QMetaType.Type.QString
 
     raise ValueError(f"Unknown parameter data type: {param_type}")
 

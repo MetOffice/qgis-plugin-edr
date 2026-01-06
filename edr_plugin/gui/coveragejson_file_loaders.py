@@ -1,7 +1,7 @@
-from PyQt5.QtGui import QIcon
 from qgis.core import QgsApplication, QgsDataItem, QgsDataItemProvider, QgsDataProvider, QgsMimeDataUtils
 from qgis.gui import QgsCustomDropHandler
 from qgis.PyQt.QtCore import QCoreApplication, QDir, QFileInfo
+from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
 COVERAGE_JSON_PROVIDERKEY = "coveragejson"

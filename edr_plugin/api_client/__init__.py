@@ -1,8 +1,8 @@
 import json
 
-from PyQt5.QtNetwork import QNetworkRequest
 from qgis.core import QgsBlockingNetworkRequest
 from qgis.PyQt.QtCore import QUrl, QUrlQuery
+from qgis.PyQt.QtNetwork import QNetworkRequest
 
 
 class EdrApiClientError(Exception):

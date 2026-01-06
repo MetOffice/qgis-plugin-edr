@@ -380,7 +380,7 @@ class LineStringQueryBuilderTool(QDialog):
         self.linestring_tw.setColumnCount(4)
         self.linestring_tw.setHorizontalHeaderLabels(["x", "y", "z", "Time"])
         header = self.linestring_tw.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.Stretch)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
     def _fill_table(self) -> None:
         """Fill table with vertices from selected geometry."""
@@ -630,11 +630,7 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         self.active_layer = self.iface.activeLayer()
 
         # Rubber band for highlighting selected feature
-        if Qgis.QGIS_VERSION_INT >= 33000:
-            type = Qgis.GeometryType.Line
-        else:
-            type = QgsWkbTypes.LineGeometry
-        self.rubber_band = QgsRubberBand(self.map_canvas, type)
+        self.rubber_band = QgsRubberBand(self.map_canvas, QgsWkbTypes.LineGeometry)
         self.rubber_band.setColor(QColor.fromRgb(255, 255, 0))
         self.rubber_band.setWidth(2)
         self.rubber_band.setOpacity(1)
@@ -664,15 +660,12 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         layer_tree_root = QgsProject.instance().layerTreeRoot()
         invisible_layers = QgsLayerTreeUtils.invisibleLayerList(layer_tree_root)
 
-        if Qgis.QGIS_VERSION_INT >= 33000:
-            type_to_select = Qgis.GeometryType.Line
-        else:
-            type_to_select = QgsWkbTypes.LineGeometry
-
         selected_layers = [
             x
             for x in map_layers.values()
-            if isinstance(x, QgsVectorLayer) and x.geometryType() == type_to_select and x.id() not in invisible_layers
+            if isinstance(x, QgsVectorLayer)
+            and x.geometryType() == QgsWkbTypes.LineGeometry
+            and x.id() not in invisible_layers
         ]
 
         return selected_layers
@@ -689,7 +682,7 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         return None
 
     def canvasPressEvent(self, event):
-        self._find_feature(event.x(), event.y())
+        self._find_feature(event.pixelPoint().x(), event.pixelPoint().y())
         if self.identify_feature:
             # returned geometry is always in project CRS for simplicity
             transform = QgsCoordinateTransform(
@@ -703,7 +696,7 @@ class LineSelectMapTool(QgsMapToolIdentifyFeature):
         self.map_canvas.unsetMapTool(self)
 
     def canvasMoveEvent(self, e: QgsMapMouseEvent) -> None:
-        self._find_feature(e.x(), e.y())
+        self._find_feature(e.pixelPoint().x(), e.pixelPoint().y())
         # highlight feature
         if self.identify_feature:
             geom = QgsGeometry(self.identify_feature.geometry())
