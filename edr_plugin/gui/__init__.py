@@ -384,7 +384,7 @@ class EdrDialog(QDialog):
                         custom_values = [str(value)]
                 else:
                     custom_values = raw_custom_values
-                self.custom_intervals_cbo.addItems(custom_values)
+                self.custom_intervals_cbo.addItems([str(x) for x in custom_values])
                 self.custom_intervals_cbo.toggleItemCheckState(0)
         except Exception as e:
             self.plugin.communication.show_error(
